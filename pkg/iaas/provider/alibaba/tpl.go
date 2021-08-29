@@ -1,4 +1,4 @@
-package dev
+package alibaba
 
 var Template = `
 {
@@ -37,8 +37,8 @@ var Template = `
     },
     "NodeCIDRMask": {
       "Type": "String",
-      "Description": "Kubernetes cluster NodeObject CIDR Mask",
-      "Label": "NodeObject CIDR Mask",
+      "Description": "Kubernetes cluster Node CIDR Mask",
+      "Label": "Node CIDR Mask",
       "Default": "24"
     },
     "SNatEntry": {
@@ -87,19 +87,13 @@ var Template = `
       "Type": "String",
       "Description": "ECS Image ID of master nodes",
       "Label": "ECS Image ID",
-      "Default": "centos_7"
-    },
-    "WorkerImageId": {
-      "Type": "String",
-      "Description": "ECS Image ID of worker nodes",
-      "Label": "ECS Image ID",
-      "Default": "centos_7"
+      "Default": "centos_7_7_x64_20G_alibase_20200426.vhd"
     },
     "MasterSystemDiskCategory": {
       "Type": "String",
       "Description": "System disk type of master nodes",
       "Label": "System disk type of master nodes",
-      "Default": "cloud_ssd"
+      "Default": "cloud_essd"
     },
     "ExecuteVersion": {
       "Type": "Number",
@@ -147,7 +141,7 @@ var Template = `
       "Type": "String",
       "Description": "Disk Category",
       "Label": "Disk Category",
-      "Default": "cloud_ssd"
+      "Default": "cloud_essd"
     },
     "MasterDataDiskSize": {
       "Type": "Number",
@@ -191,87 +185,15 @@ var Template = `
       "Default": 1,
       "Label": "Auto renew period for Prepaid instance"
     },
-    "WorkerSystemDiskCategory": {
-      "Type": "String",
-      "Description": "System disk type of worker nodes",
-      "Label": "System disk type of worker nodes",
-      "Default": "cloud_ssd"
-    },
-    "WorkerSystemDiskSize": {
-      "Type": "Number",
-      "Description": "System disk size of worker nodes",
-      "Label": "System disk size of worker nodes",
-      "Default": 40
-    },
-    "WorkerDataDisk": {
-      "Type": "Boolean",
-      "Description": "Whether or not mount a cloud disk for the Worker node",
-      "Label": "Buy a cloud disk",
-      "Default": false
-    },
-    "WorkerDataDiskCategory": {
-      "Type": "String",
-      "Description": "Disk Category",
-      "Label": "Disk Category",
-      "Default": "cloud_ssd"
-    },
-    "WorkerDataDiskSize": {
-      "Type": "Number",
-      "Description": "Disk Size",
-      "Label": "Disk Size",
-      "Default": 40
-    },
-    "WorkerDataDiskDevice": {
-      "Type": "String",
-      "Description": "The device where the volume is exposed on the instance",
-      "Label": "The device name",
-      "Default": "/dev/xvdb"
-    },
     "MasterInstanceType": {
       "Type": "String",
       "Description": "Creates ECS instances with the specification for the Master node of Kubernetes",
       "Label": "ECS instance specification of Master node",
-      "Default": "ecs.n4.large"
-    },
-    "WorkerInstanceType": {
-      "Type": "String",
-      "Description": "Create ESC instances with the specification for the Worker node of Kubernetes",
-      "Label": "ECS instance specification of Worker node",
-      "Default": "ecs.n4.large"
-    },
-    "WorkerInstanceChargeType": {
-      "Type": "String",
-      "Description": "Instance charge type: PrePaid or PostPaid",
-      "Label": "Billing methods of worker node",
-      "Default": "PostPaid"
-    },
-    "WorkerPeriod": {
-      "Type": "Number",
-      "Description": "Period",
-      "Default": 3,
-      "Label": "Period of worker node"
-    },
-    "WorkerPeriodUnit": {
-      "Type": "String",
-      "Description": "Unit",
-      "Default": "Month",
-      "Label": "Unit of worker node"
-    },
-    "WorkerAutoRenew": {
-      "Type": "Boolean",
-      "Description": "Whether the prepaid instance will renew automatically after expiration",
-      "Default": false,
-      "Label": "Auto renew for Prepaid instance"
-    },
-    "WorkerAutoRenewPeriod":{
-      "Type": "Number",
-      "Description": "The renewal of a single automatic renewal takes a long time. When PeriodUnit=Week the value is {“1”, “2”, “3”};When PeriodUnit=Month the value is {“1”, “2”, “3”, “6”, “12”}",
-      "Default": 1,
-      "Label": "Auto renew period for Prepaid instance"
+      "Default": "ecs.c5.xlarge"
     },
     "ZoneId": {
       "Type": "String",
-      "Default": "",
+      "Default": "cn-hangzhou-h",
       "Label": "Zone ID",
       "Description": "Zone ID"
     },
@@ -333,29 +255,23 @@ var Template = `
     "CA": {
       "NoEcho": true,
       "Type": "String",
-      "Description": "Config ca，if not provided, create new one.",
-      "Label": "Config CA",
+      "Description": "Cluster ca，if not provided, create new one.",
+      "Label": "Cluster CA",
       "Default": "None"
     },
     "Key": {
       "NoEcho": true,
       "Type": "String",
-      "Description": "Config CAkey，if not provided, create new one.",
-      "Label": "Config CAKey",
+      "Description": "Cluster CAkey，if not provided, create new one.",
+      "Label": "Cluster CAKey",
       "Default": "None"
     },
     "ClientCA": {
       "NoEcho": true,
       "Type": "String",
-      "Description": "Ros Certficate",
+      "Description": "Client Certficate",
       "Label": "Console Certficate",
       "Default": "None"
-    },
-    "NumOfNodes": {
-      "Type": "Number",
-      "Description": "Specifies the number of Worker nodes to create Kubernetes",
-      "Label": "The number of worker node",
-      "Default": "2"
     },
     "CloudMonitorFlags": {
       "Type": "Boolean",
@@ -369,24 +285,11 @@ var Template = `
       "Label": "Key Pair Name Of master node",
       "Default": ""
     },
-    "WorkerKeyPair": {
-      "Type": "String",
-      "Description": "Key Pair Name Of worker node",
-      "Label": "Key Pair Name Of worker node",
-      "Default": ""
-    },
     "MasterLoginPassword": {
       "NoEcho": true,
       "Type": "String",
       "Description": "Password Of master node",
       "Label": "Password Of master node",
-      "Default": "Just4Test"
-    },
-    "WorkerLoginPassword": {
-      "NoEcho": true,
-      "Type": "String",
-      "Description": "Password Of worker node",
-      "Label": "Password Of worker node",
       "Default": "Just4Test"
     },
     "BetaVersion": {
@@ -444,7 +347,7 @@ var Template = `
         "Version": "1",
         "Statement": [
           {
-            "Key": [
+            "Action": [
               "ecs:Describe*",
               "ecs:AttachDisk",
               "ecs:CreateDisk",
@@ -469,7 +372,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "cr:Get*",
               "cr:List*",
               "cr:PullRepository"
@@ -480,7 +383,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "slb:*"
             ],
             "Resource": [
@@ -489,7 +392,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "cms:*"
             ],
             "Resource": [
@@ -498,7 +401,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "vpc:*"
             ],
             "Resource": [
@@ -507,7 +410,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "log:*"
             ],
             "Resource": [
@@ -525,7 +428,7 @@ var Template = `
         "Version": "1",
         "Statement": [
           {
-            "Key": [
+            "Action": [
               "ecs:AttachDisk",
               "ecs:DetachDisk",
               "ecs:DescribeDisks",
@@ -545,7 +448,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "cr:Get*",
               "cr:List*",
               "cr:PullRepository"
@@ -556,7 +459,7 @@ var Template = `
             "Effect": "Allow"
           },
           {
-            "Key": [
+            "Action": [
               "eci:CreateContainerGroup",
               "eci:DeleteContainerGroup",
               "eci:DescribeContainerGroups",
@@ -565,9 +468,9 @@ var Template = `
             "Resource": ["*"],
             "Effect": "Allow"
           },
-          { "Key": [ "log:*" ], "Resource": [ "*" ], "Effect": "Allow" },
-          { "Key": [ "cms:*" ], "Resource": [ "*" ], "Effect": "Allow" },
-          { "Key": [ "vpc:*" ], "Resource": [ "*" ], "Effect": "Allow" }
+          { "Action": [ "log:*" ], "Resource": [ "*" ], "Effect": "Allow" },
+          { "Action": [ "cms:*" ], "Resource": [ "*" ], "Effect": "Allow" },
+          { "Action": [ "vpc:*" ], "Resource": [ "*" ], "Effect": "Allow" }
         ]
       }
     }
@@ -648,37 +551,11 @@ var Template = `
     "public_slb_ssh_enable": {
       "Fn::And": ["create_public_slb", "ssh_enable"]
     },
-    "create_worker_nodes": {
-      "Fn::Not": {
-        "Fn::Equals": [
-          0,
-          {
-            "Ref": "NumOfNodes"
-          }
-        ]
-      }
-    },
-    "no_create_worker_nodes": {
-      "Fn::Equals": [
-        0,
-        {
-          "Ref": "NumOfNodes"
-        }
-      ]
-    },
     "create_master_data_disk": {
       "Fn::Equals": [
         true,
         {
           "Ref": "MasterDataDisk"
-        }
-      ]
-    },
-    "create_worker_data_disk": {
-      "Fn::Equals": [
-        true,
-        {
-          "Ref": "WorkerDataDisk"
         }
       ]
     },
@@ -842,27 +719,11 @@ var Template = `
         }
       ]
     },
-    "worker_no_password": {
-      "Fn::Equals": [
-        "",
-        {
-          "Ref": "WorkerLoginPassword"
-        }
-      ]
-    },
     "master_no_keypair": {
       "Fn::Equals": [
         "",
         {
           "Ref": "MasterKeyPair"
-        }
-      ]
-    },
-    "worker_no_keypair": {
-      "Fn::Equals": [
-        "",
-        {
-          "Ref": "WorkerKeyPair"
         }
       ]
     }
@@ -886,7 +747,7 @@ var Template = `
         "AssumeRolePolicyDocument": {
           "Statement": [
             {
-              "Key": "sts:AssumeRole",
+              "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
                 "Service": [
@@ -935,7 +796,7 @@ var Template = `
         "AssumeRolePolicyDocument": {
           "Statement": [
             {
-              "Key": "sts:AssumeRole",
+              "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
                 "Service": [
@@ -968,7 +829,7 @@ var Template = `
     },
     "k8s_NAT_Gateway": {
       "Condition": "create_nat_gateway",
-      "Type": "ALIYUN::ECS::NatGateway",
+      "Type": "ALIYUN::VPC::NatGateway",
       "Properties": {
         "VpcId": {
           "Fn::If": [
@@ -1049,8 +910,8 @@ var Template = `
       "Properties": {
         "LoadBalancerName": "K8sMasterSlbInternet",
         "InternetChargeType": "paybytraffic",
-        "LoadBalancerSpec": "slb.s1.small",
         "AddressType": "internet",
+        "LoadBalancerSpec": "slb.s1.small",
         "Tags": [
           {
             "Key": "kubernetes.do.not.delete",
@@ -1118,13 +979,10 @@ var Template = `
           "Ref": "k8s_master_slb_internet"
         },
         "Protocol": "tcp",
-        "Bandwidth": -1,
-        "VServerGroupId": {
-          "Ref": "k8s_master_ssh_internet_vgroup"
-        }
+        "Bandwidth": -1
       }
     },
-    "k8s_master_slb_listener_bootstrap": {
+    "k8s_master_listener_boot": {
       "Type": "ALIYUN::SLB::Listener",
       "Properties": {
         "ListenerPort": 9443,
@@ -1133,188 +991,11 @@ var Template = `
           "Ref": "k8s_master_slb"
         },
         "Protocol": "tcp",
-        "BackendServerPort": 32443,
-        "VServerGroupId": {
-          "Ref": "bootstrap_intranet_vgroup"
-        }
-      }
-    },
-    "k8s_master_2": {
-      "Type": "ALIYUN::ECS::InstanceGroup",
-      "Properties": {
-        "WillReplace": {
-          "Ref": "WillReplace"
+        "HealthCheck": {
+          "Interval": 10,
+          "Port": 32443
         },
-        "IoOptimized": "optimized",
-        "InstanceChargeType": {
-          "Ref": "MasterInstanceChargeType"
-        },
-        "Period": {
-          "Ref": "MasterPeriod"
-        },
-        "PeriodUnit": {
-          "Ref": "MasterPeriodUnit"
-        },
-        "AutoRenew": {
-          "Ref": "MasterAutoRenew"
-        },
-        "AutoRenewPeriod": {
-          "Ref": "MasterAutoRenewPeriod"
-        },
-        "VpcId": {
-          "Fn::If": [
-            "create_new_vpc",
-            {
-              "Ref": "k8s_vpc"
-            },
-            {
-              "Ref": "VpcId"
-            }
-          ]
-        },
-        "DiskMappings": {
-          "Fn::If": [
-            "create_master_data_disk",
-            [{
-              "Category": {
-                "Ref": "MasterDataDiskCategory"
-              },
-              "Size": {
-                "Ref": "MasterDataDiskSize"
-              },
-              "Device": {
-                "Ref": "MasterDataDiskDevice"
-              },
-              "DiskName": {
-                "Fn::Join": [
-                  "-",
-                  [
-                    {
-                      "Ref": "ALIYUN::StackName"
-                    },
-                    "disk"
-                  ]
-                ]
-              }
-            }],
-            {
-              "Ref":"ALIYUN::NoValue"
-            }
-          ]
-        },
-        "RamRoleName": {
-          "Fn::GetAtt": [
-            "KubernetesMasterRole",
-            "RoleName"
-          ]
-        },
-        "UserData": {
-          "Fn::Replace": [
-            {
-              "ros-notify": {
-                "Fn::GetAtt": [
-                  "k8s_cluster_cloudinit_wait_cond_handle",
-                  "CurlCli"
-                ]
-              }
-            },
-            {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/sh\n",
-                  "\n",
-                  "set -x\n",
-                  "ros-notify\n",
-                  "echo notify success immediately\n",
-                  "echo 'current node is master2, the bootstrap master'\n",
-                  "#############################################################\n",
-                  "# This is where parameter started.\n",
-                  "# \n",
-                  "# \n",
-                  "export NAMESPACE=",
-                  {
-                    "Ref": "BetaVersion"
-                  },
-                  "\n",
-                  "export TOKEN=abcd.efghxxxxxxxx\n",
-                  "export OOC_VERSION=0.1.0\n",
-                  "export REGION=$(curl --retry 5  -sSL http://100.100.100.200/latest/meta-data/region-id) \n",
-                  "export PKG_FILE_SERVER=http://host-oc-${REGION}.oss-${REGION}-internal.aliyuncs.com\n",
-                  "export INTRANET_LB=",{"Fn::GetAtt": ["k8s_master_slb", "IpAddress"]}, "\n",
-                  "# \n",
-                  "# ------------------------------------------------------------\n",
-                  "curl --retry 5 -sSL -o /root/run.replace.sh ",
-                  "     ${PKG_FILE_SERVER}/ack/${NAMESPACE}/public/run/2.0/run.replace.sh\n",
-                  "chmod +x /root/run.replace.sh\n",
-                  "ROLE=BOOTSTRAP bash /root/run.replace.sh \n"
-                ]
-              ]
-            }
-          ]
-        },
-        "SecurityGroupId": {
-          "Ref": "k8s_sg"
-        },
-        "VSwitchId": {
-          "Fn::If": [
-            "create_new_vswitch",
-            {
-              "Ref": "k8s_vswitch"
-            },
-            {
-              "Ref": "VSwitchId"
-            }
-          ]
-        },
-        "ImageId": {
-          "Ref": "MasterImageId"
-        },
-        "AllocatePublicIP": false,
-        "InstanceType": {
-          "Ref": "MasterInstanceType"
-        },
-        "InstanceName": {
-          "Fn::Join": [
-            "-",
-            [
-              "master-02",
-              {
-                "Ref": "ALIYUN::StackName"
-              }
-            ]
-          ]
-        },
-        "MaxAmount": "1",
-        "MinAmount":"1",
-        "SystemDiskSize": {
-          "Ref": "MasterSystemDiskSize"
-        },
-        "SystemDiskCategory": {
-          "Ref": "MasterSystemDiskCategory"
-        },
-        "Password": {
-          "Fn::If": [
-            "master_no_password",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "MasterLoginPassword"
-            }
-          ]
-        },
-        "KeyPairName": {
-          "Fn::If": [
-            "master_no_keypair",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "MasterKeyPair"
-            }
-          ]
-        }
+        "BackendServerPort": 32443
       }
     },
     "k8s_master_slb_listener": {
@@ -1326,14 +1007,60 @@ var Template = `
           "Ref": "k8s_master_slb"
         },
         "Protocol": "tcp",
+        "HealthCheck": {
+          "Interval": 10,
+          "Port": 6443
+        },
         "BackendServerPort": 6443
       }
     },
-    "k8s_master_3": {
-      "Type": "ALIYUN::ECS::InstanceGroup",
+    "k8s_master_sg": {
+      "Type": "ALIYUN::ESS::ScalingGroup",
+      "DependsOn": ["k8s_master_listener_boot","k8s_master_slb_listener","k8s_sg"],
       "Properties": {
-        "WillReplace": {
-          "Ref": "WillReplace"
+        "MinSize": "1",
+        "MaxSize": "5",
+        "DefaultCooldown": 0,
+        "ScalingGroupName": {
+          "Fn::Join": [
+            "-",
+            [
+              "kubernetes-master",
+              {
+                "Ref": "ALIYUN::StackId"
+              }
+            ]
+          ]
+        },
+        "GroupDeletionProtection": false,
+        "VSwitchId": {
+          "Fn::If": [
+            "create_new_vswitch",
+            {
+              "Ref": "k8s_vswitch"
+            },
+            {
+              "Ref": "VSwitchId"
+            }
+          ]
+        },
+        "LoadBalancerIds": [
+          { "Ref": "k8s_master_slb"},
+          { "Fn::If": ["create_public_slb", {"Ref": "k8s_master_slb_internet"},{"Ref":"ALIYUN::NoValue"}]}
+        ],
+        "MultiAZPolicy": "BALANCE",
+        "ProtectedInstances": {
+          "Ref": "ProtectedInstances"
+        },
+        "RemovalPolicys": ["OldestScalingConfiguration", "NewestInstance"],
+        "HealthCheckType": "ECS"
+      }
+    },
+    "k8s_master_sconfig": {
+      "Type": "ALIYUN::ESS::ScalingConfiguration",
+      "Properties": {
+        "ScalingGroupId": {
+          "Ref": "k8s_master_sg"
         },
         "IoOptimized": "optimized",
         "InstanceChargeType": {
@@ -1351,23 +1078,6 @@ var Template = `
         "AutoRenewPeriod": {
           "Ref": "MasterAutoRenewPeriod"
         },
-        "RamRoleName": {
-          "Fn::GetAtt": [
-            "KubernetesMasterRole",
-            "RoleName"
-          ]
-        },
-        "VpcId": {
-          "Fn::If": [
-            "create_new_vpc",
-            {
-              "Ref": "k8s_vpc"
-            },
-            {
-              "Ref": "VpcId"
-            }
-          ]
-        },
         "DiskMappings": {
           "Fn::If": [
             "create_master_data_disk",
@@ -1380,17 +1090,6 @@ var Template = `
               },
               "Device": {
                 "Ref": "MasterDataDiskDevice"
-              },
-              "DiskName": {
-                "Fn::Join": [
-                  "-",
-                  [
-                    {
-                      "Ref": "ALIYUN::StackName"
-                    },
-                    "disk"
-                  ]
-                ]
               }
             }],
             {
@@ -1398,86 +1097,37 @@ var Template = `
             }
           ]
         },
-        "UserData": {
-          "Fn::Replace": [
-            {
-              "ros-notify": {
-                "Fn::GetAtt": [
-                  "k8s_cluster_cloudinit_wait_cond_handle",
-                  "CurlCli"
-                ]
-              }
-            },
-            {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/sh\n",
-                  "\n",
-                  "set -x\n",
-                  "echo 'current node is master3, the join master'\n",
-                  "#############################################################\n",
-                  "# This is where parameter started.\n",
-                  "# \n",
-                  "export NAMESPACE=",{"Ref": "BetaVersion"},"\n",
-                  "export TOKEN=abcd.efghxxxxxxxx\n",
-                  "export OOC_VERSION=0.1.0\n",
-                  "export REGION=$(curl --retry 5  -sSL http://100.100.100.200/latest/meta-data/region-id) \n",
-                  "export PKG_FILE_SERVER=http://host-oc-${REGION}.oss-${REGION}-internal.aliyuncs.com\n",
-                  "export ENDPOINT=",{"Fn::Join": ["", ["http://", {"Fn::GetAtt": ["k8s_master_slb", "IpAddress"]}, ":9443"]]}, "\n",
-                  "# \n",
-                  "# ------------------------------------------------------------\n",
-                  "curl --retry 5 -sSL -o /root/run.replace.sh ",
-                  "     ${PKG_FILE_SERVER}/ack/${NAMESPACE}/public/run/2.0/run.replace.sh\n",
-                  "chmod +x /root/run.replace.sh\n",
-
-                  "ROLE=MASTER bash /root/run.replace.sh \n",
-
-                  "ros-notify\n"
-                ]
-              ]
-            }
+        "RamRoleName": {
+          "Fn::GetAtt": [
+            "KubernetesMasterRole",
+            "RoleName"
           ]
         },
         "SecurityGroupId": {
           "Ref": "k8s_sg"
         },
-        "VSwitchId": {
-          "Fn::If": [
-            "create_new_vswitch",
-            {
-              "Ref": "k8s_vswitch"
-            },
-            {
-              "Ref": "VSwitchId"
-            }
-          ]
-        },
         "ImageId": {
           "Ref": "MasterImageId"
         },
-        "AllocatePublicIP": false,
-        "InstanceType": {
+        "InstanceTypes": [{
           "Ref": "MasterInstanceType"
-        },
-        "InstanceName": {
-          "Fn::Join": [
-            "-",
-            [
-              "master-03",
-              {
-                "Ref": "ALIYUN::StackName"
-              }
-            ]
-          ]
-        },
-        "MaxAmount": "1",
-        "MinAmount":"1",
+        }],
         "SystemDiskSize": {
           "Ref": "MasterSystemDiskSize"
         },
         "SystemDiskCategory": {
           "Ref": "MasterSystemDiskCategory"
+        },
+        "InstanceName": {
+          "Fn::Join": [
+            "-",
+            [
+              "k8s-master",
+              {
+                "Ref": "ALIYUN::StackName"
+              }
+            ]
+          ]
         },
         "Password": {
           "Fn::If": [
@@ -1503,178 +1153,46 @@ var Template = `
         }
       }
     },
-    "k8s_master_1": {
-      "Type": "ALIYUN::ECS::InstanceGroup",
-      "Condition": "create_snat_entry",
+    "k8s_master_srule": {
+      "Type": "ALIYUN::ESS::ScalingRule",
       "Properties": {
-        "WillReplace": {
-          "Ref": "WillReplace"
-        },
-        "IoOptimized": "optimized",
-        "InstanceChargeType": {
-          "Ref": "MasterInstanceChargeType"
-        },
-        "Period": {
-          "Ref": "MasterPeriod"
-        },
-        "PeriodUnit": {
-          "Ref": "MasterPeriodUnit"
-        },
-        "AutoRenew": {
-          "Ref": "MasterAutoRenew"
-        },
-        "AutoRenewPeriod": {
-          "Ref": "MasterAutoRenewPeriod"
-        },
-        "RamRoleName": {
-          "Fn::GetAtt": [
-            "KubernetesMasterRole",
-            "RoleName"
-          ]
-        },
-        "VpcId": {
-          "Fn::If": [
-            "create_new_vpc",
-            {
-              "Ref": "k8s_vpc"
-            },
-            {
-              "Ref": "VpcId"
-            }
-          ]
-        },
-        "DiskMappings": {
-          "Fn::If": [
-            "create_master_data_disk",
-            [{
-              "Category": {
-                "Ref": "MasterDataDiskCategory"
-              },
-              "Size": {
-                "Ref": "MasterDataDiskSize"
-              },
-              "Device": {
-                "Ref": "MasterDataDiskDevice"
-              },
-              "DiskName": {
-                "Fn::Join": [
-                  "-",
-                  [
-                    {
-                      "Ref": "ALIYUN::StackName"
-                    },
-                    "disk"
-                  ]
-                ]
-              }
-            }],
-            {
-              "Ref":"ALIYUN::NoValue"
-            }
-          ]
-        },
-        "UserData": {
-          "Fn::Replace": [
-            {
-              "ros-notify": {
-                "Fn::GetAtt": [
-                  "k8s_cluster_cloudinit_wait_cond_handle",
-                  "CurlCli"
-                ]
-              }
-            },
-            {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/sh\n",
-                  "\n",
-                  "set -x\n",
-                  "echo 'current node is master1, the join master'\n",
-                  "#############################################################\n",
-                  "# This is where parameter started.\n",
-                  "# \n",
-                  "export NAMESPACE=",{"Ref": "BetaVersion"},"\n",
-                  "export TOKEN=abcd.efghxxxxxxxx\n",
-                  "export OOC_VERSION=0.1.0\n",
-                  "export REGION=$(curl --retry 5 -sSL http://100.100.100.200/latest/meta-data/region-id) \n",
-                  "export PKG_FILE_SERVER=http://host-oc-${REGION}.oss-${REGION}-internal.aliyuncs.com\n",
-                  "export ENDPOINT=",{"Fn::Join": ["", ["http://", {"Fn::GetAtt": ["k8s_master_slb", "IpAddress"]}, ":9443"]]}, "\n",
-                  "# \n",
-                  "# ------------------------------------------------------------\n",
-                  "curl --retry 5 -sSL -o /root/run.replace.sh ",
-                  "     ${PKG_FILE_SERVER}/ack/${NAMESPACE}/public/run/2.0/run.replace.sh\n",
-                  "chmod +x /root/run.replace.sh\n",
-
-                  "ROLE=MASTER bash /root/run.replace.sh \n",
-
-                  "ros-notify\n"
-                ]
-              ]
-            }
-          ]
-        },
-        "SecurityGroupId": {
-          "Ref": "k8s_sg"
-        },
-        "VSwitchId": {
-          "Fn::If": [
-            "create_new_vswitch",
-            {
-              "Ref": "k8s_vswitch"
-            },
-            {
-              "Ref": "VSwitchId"
-            }
-          ]
-        },
-        "ImageId": {
-          "Ref": "MasterImageId"
-        },
-        "AllocatePublicIP": false,
-        "InstanceType": {
-          "Ref": "MasterInstanceType"
-        },
-        "InstanceName": {
-          "Fn::Join": [
-            "-",
-            [
-              "master-01",
-              {
-                "Ref": "ALIYUN::StackName"
-              }
+        "AdjustmentType": "TotalCapacity",
+        "ScalingGroupId": { "Ref": "k8s_master_sg" },
+        "AdjustmentValue": 1
+      }
+    },
+    "k8s_master_sg_enable": {
+      "Type": "ALIYUN::ESS::ScalingGroupEnable",
+      "DependsOn": ["k8s_master_listener_boot","k8s_master_slb_listener","k8s_sg"],
+      "Properties": {
+        "ScalingGroupId": { "Ref": "k8s_master_sg" },
+        "ScalingConfigurationId": { "Ref": "k8s_master_sconfig" },
+        "ScalingRuleAris": [
+          {
+            "Fn::GetAtt": [
+              "k8s_master_srule",
+              "ScalingRuleAri"
             ]
-          ]
+          }
+        ],
+        "ScalingRuleArisExecuteVersion": {
+          "Ref": "ExecuteVersion"
         },
-        "MaxAmount": "1",
-        "MinAmount":"1",
-        "SystemDiskSize": {
-          "Ref": "MasterSystemDiskSize"
-        },
-        "SystemDiskCategory": {
-          "Ref": "MasterSystemDiskCategory"
-        },
-        "Password": {
-          "Fn::If": [
-            "master_no_password",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "MasterLoginPassword"
-            }
-          ]
-        },
-        "KeyPairName": {
-          "Fn::If": [
-            "master_no_keypair",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "MasterKeyPair"
-            }
-          ]
+        "RemoveInstanceIds": {
+          "Ref": "RemoveInstanceIds"
+        }
+      }
+    },
+    "k8s_master_waiter_handle": {
+      "Type": "ALIYUN::ROS::WaitConditionHandle"
+    },
+    "k8s_master_waiter": {
+      "Type": "ALIYUN::ROS::WaitCondition",
+      "Properties": {
+        "Timeout": 300,
+        "Count": 1,
+        "Handle": {
+          "Ref": "k8s_master_waiter_handle"
         }
       }
     },
@@ -1695,98 +1213,6 @@ var Template = `
           ]
         }
       }
-    },
-    "k8s_master_slb_attachements": {
-      "Type": "ALIYUN::SLB::BackendServerAttachment",
-      "Properties": {
-        "BackendServerList": [
-          {
-            "Ref": "k8s_master_1"
-          },
-          {
-            "Ref": "k8s_master_2"
-          },
-          {
-            "Ref": "k8s_master_3"
-          }
-        ],
-        "LoadBalancerId": {
-          "Ref": "k8s_master_slb"
-        }
-      }
-    },
-    "k8s_master_slb_attachements_bootstrap": {
-      "Type": "ALIYUN::SLB::BackendServerAttachment",
-      "Properties": {
-        "BackendServerList": [
-          {
-            "Ref": "k8s_master_2"
-          }
-        ],
-        "LoadBalancerId": {
-          "Ref": "k8s_master_slb"
-        }
-      }
-    },
-    "k8s_master_slb_internet_attachements": {
-      "Condition": "create_public_slb",
-      "Type": "ALIYUN::SLB::BackendServerAttachment",
-      "Properties": {
-        "BackendServerList": [
-          {
-            "Ref": "k8s_master_1"
-          },
-          {
-            "Ref": "k8s_master_2"
-          },
-          {
-            "Ref": "k8s_master_3"
-          }
-        ],
-        "LoadBalancerId": {
-          "Ref": "k8s_master_slb_internet"
-        }
-      }
-    },
-    "k8s_master_ssh_internet_vgroup": {
-      "Condition": "create_public_slb",
-      "Type": "ALIYUN::SLB::VServerGroup",
-      "Properties": {
-        "VServerGroupName": "sshVirtualGroup",
-        "BackendServers": [
-          {
-            "ServerId": {
-              "Ref": "k8s_master_3"
-            },
-            "Weight": 100,
-            "Port": 22
-          }
-        ],
-        "LoadBalancerId": {
-          "Ref": "k8s_master_slb_internet"
-        }
-      }
-    },
-    "bootstrap_intranet_vgroup": {
-      "Type": "ALIYUN::SLB::VServerGroup",
-      "Properties": {
-        "VServerGroupName": "bootstrap9443",
-        "BackendServers": [
-          {
-            "ServerId": {
-              "Ref": "k8s_master_2"
-            },
-            "Weight": 100,
-            "Port": 32443
-          }
-        ],
-        "LoadBalancerId": {
-          "Ref": "k8s_master_slb"
-        }
-      }
-    },
-    "k8s_cluster_cloudinit_wait_cond_handle": {
-      "Type": "ALIYUN::ROS::WaitConditionHandle"
     },
     "k8s_sg": {
       "Type": "ALIYUN::ECS::SecurityGroup",
@@ -1825,6 +1251,15 @@ var Template = `
             "Description" : "This is used by kubernetes. Do not delete please!",
             "SourceCidrIp": "0.0.0.0/0",
             "IpProtocol": "icmp",
+            "NicType": "intranet",
+            "Policy": "accept",
+            "PortRange": "-1/-1",
+            "Priority": 1
+          },
+          {
+            "Description" : "This is used by kubernetes. Do not delete please!",
+            "SourceCidrIp": "100.104.0.0/16",
+            "IpProtocol": "all",
             "NicType": "intranet",
             "Policy": "accept",
             "PortRange": "-1/-1",
@@ -1887,254 +1322,26 @@ var Template = `
           ]
         }
       }
-    },
-    "k8s_cluster_cloudinit_wait_cond": {
-      "Type": "ALIYUN::ROS::WaitCondition",
-      "Properties": {
-        "Timeout": 1800,
-        "Count": {"Fn::Add": [{"Ref": "NumOfNodes"}, 2]},
-        "Handle": {
-          "Ref": "k8s_cluster_cloudinit_wait_cond_handle"
-        }
-      }
-    },
-    "k8s_nodes_sg": {
-      "Type": "ALIYUN::ESS::ScalingGroup",
-      "Properties": {
-        "MinSize": "0",
-        "MaxSize": "1000",
-        "DefaultCooldown": 0,
-        "ScalingGroupName": {
-          "Fn::Join": [
-            "-",
-            [
-              "k8s",
-              {
-                "Ref": "ALIYUN::StackId"
-              }
-            ]
-          ]
-        },
-        "VSwitchId": {
-          "Fn::If": [
-            "create_new_vswitch",
-            {
-              "Ref": "k8s_vswitch"
-            },
-            {
-              "Ref": "VSwitchId"
-            }
-          ]
-        },
-        "MultiAZPolicy": "BALANCE",
-        "ProtectedInstances": {
-          "Ref": "ProtectedInstances"
-        },
-        "RemovalPolicys": ["OldestScalingConfiguration", "NewestInstance"],
-        "HealthCheckType": {
-          "Ref": "HealthCheckType"
-        }
-      }
-    },
-    "k8s_nodes_config": {
-      "Type": "ALIYUN::ESS::ScalingConfiguration",
-      "Properties": {
-        "ScalingGroupId": {
-          "Ref": "k8s_nodes_sg"
-        },
-        "IoOptimized": "optimized",
-        "InstanceChargeType": {
-          "Ref": "WorkerInstanceChargeType"
-        },
-        "Period": {
-          "Ref": "WorkerPeriod"
-        },
-        "PeriodUnit": {
-          "Ref": "WorkerPeriodUnit"
-        },
-        "AutoRenew": {
-          "Ref": "WorkerAutoRenew"
-        },
-        "AutoRenewPeriod": {
-          "Ref": "WorkerAutoRenewPeriod"
-        },
-        "DiskMappings": {
-          "Fn::If": [
-            "create_worker_data_disk",
-            [{
-              "Category": {
-                "Ref": "WorkerDataDiskCategory"
-              },
-              "Size": {
-                "Ref": "WorkerDataDiskSize"
-              },
-              "Device": {
-                "Ref": "WorkerDataDiskDevice"
-              }
-            }],
-            {
-              "Ref":"ALIYUN::NoValue"
-            }
-          ]
-        },
-        "RamRoleName": {
-          "Fn::GetAtt": [
-            "KubernetesWorkerRole",
-            "RoleName"
-          ]
-        },
-        "UserData": {
-          "Fn::Replace": [
-            {
-              "ros-notify": {
-                "Fn::GetAtt": [
-                  "k8s_cluster_cloudinit_wait_cond_handle",
-                  "CurlCli"
-                ]
-              }
-            },
-            {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/sh\n",
-                  "\n",
-                  "set -x\n",
-                  "echo 'current node is workernodes, the join nodes'\n",
-                  "#############################################################\n",
-                  "# This is where parameter started.\n",
-                  "# \n",
-                  "# \n",
-                  "export NAMESPACE=",{"Ref": "BetaVersion"},"\n",
-                  "export TOKEN=abcd.efghxxxxxxxx\n",
-                  "export OOC_VERSION=0.1.0\n",
-                  "export REGION=$(curl --retry 5 -sSL http://100.100.100.200/latest/meta-data/region-id) \n",
-                  "export PKG_FILE_SERVER=http://host-oc-${REGION}.oss-${REGION}-internal.aliyuncs.com\n",
-                  "export ENDPOINT=",{"Fn::Join": ["", ["http://", {"Fn::GetAtt": ["k8s_master_slb", "IpAddress"]}, ":9443"]]}, "\n",
-                  "# \n",
-                  "# ------------------------------------------------------------\n",
-                  "curl --retry 5 -sSL -o /root/run.replace.sh ",
-                  "     ${PKG_FILE_SERVER}/ack/${NAMESPACE}/public/run/2.0/run.replace.sh\n",
-                  "chmod +x /root/run.replace.sh\n",
-
-                  "ROLE=WORKER bash /root/run.replace.sh\n",
-
-                  "ros-notify\n"
-                ]
-              ]
-            }
-          ]
-        },
-        "SecurityGroupId": {
-          "Ref": "k8s_sg"
-        },
-        "ImageId": {
-          "Ref": "WorkerImageId"
-        },
-        "InstanceTypes": [{
-          "Ref": "WorkerInstanceType"
-        }],
-        "SystemDiskSize": {
-          "Ref": "WorkerSystemDiskSize"
-        },
-        "SystemDiskCategory": {
-          "Ref": "WorkerSystemDiskCategory"
-        },
-        "InstanceName": {
-          "Fn::Join": [
-            "-",
-            [
-              "worker",
-              {
-                "Ref": "ALIYUN::StackName"
-              }
-            ]
-          ]
-        },
-        "Password": {
-          "Fn::If": [
-            "worker_no_password",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "WorkerLoginPassword"
-            }
-          ]
-        },
-        "KeyPairName": {
-          "Fn::If": [
-            "worker_no_keypair",
-            {
-              "Ref": "ALIYUN::NoValue"
-            },
-            {
-              "Ref": "WorkerKeyPair"
-            }
-          ]
-        }
-      }
-    },
-    "k8s_nodes_scaling_rule": {
-      "Type": "ALIYUN::ESS::ScalingRule",
-      "Condition": "create_worker_nodes",
-      "Properties": {
-        "AdjustmentType": {
-          "Ref": "AdjustmentType"
-        },
-        "ScalingGroupId": {
-          "Ref": "k8s_nodes_sg"
-        },
-        "AdjustmentValue": {
-          "Ref": "NumOfNodes"
-        }
-      }
-    },
-    "k8s_nodes": {
-      "Type": "ALIYUN::ESS::ScalingGroupEnable",
-      "Condition": "create_worker_nodes",
-      "Properties": {
-        "ScalingGroupId": {
-          "Ref": "k8s_nodes_sg"
-        },
-        "ScalingConfigurationId": {
-          "Ref": "k8s_nodes_config"
-        },
-        "ScalingRuleAris": [
-          {
-            "Fn::GetAtt": [
-              "k8s_nodes_scaling_rule",
-              "ScalingRuleAri"
-            ]
-          }
-        ],
-        "ScalingRuleArisExecuteVersion": {
-          "Ref": "ExecuteVersion"
-        },
-        "RemoveInstanceIds": {
-          "Ref": "RemoveInstanceIds"
-        }
-      }
     }
   },
   "Outputs": {
     "APIServerIntranet": {
       "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": [
-                "k8s_master_slb",
-                "IpAddress"
-              ]
-            },
-            ":6443"
+          "Fn::GetAtt": [
+            "k8s_master_slb",
+            "IpAddress"
           ]
+      },
+      "Description": "API Server Inner IP"
+    },
+    "APIServerIntranetIP": {
+      "Value": {
+        "Fn::GetAtt": [
+          "k8s_master_slb",
+          "IpAddress"
         ]
       },
-      "Description": "API Server Ros IP"
+      "Description": "API Server Inner IP"
     },
     "APIServerInternet": {
       "Description": "API Server Public IP",
@@ -2142,23 +1349,12 @@ var Template = `
         "Fn::If": [
           "create_public_slb",
           {
-            "Fn::Join": [
-              "",
-              [
-                "https://",
-                {
-                  "Fn::GetAtt": [
-                    "k8s_master_slb_internet",
-                    "IpAddress"
-                  ]
-                },
-                ":6443"
-              ]
-            ]
+            "Fn::GetAtt": ["k8s_master_slb_internet", "IpAddress"]
           },
-          ""
+          {
+            "Ref":"ALIYUN::NoValue"
+          }
         ]
-
       }
     },
     "JumpHost": {
@@ -2178,121 +1374,12 @@ var Template = `
       }
     },
     "MasterIPs": {
-      "Value": [
-        { "Fn::Select" : [
-          "0",
-          {
-            "Fn::GetAtt": [
-              "k8s_master_1",
-              "PrivateIps"
-            ]
-          }
-        ]},
-        {
-          "Fn::Select" : [
-            "0",
-            {
-              "Fn::GetAtt": [
-                "k8s_master_2",
-                "PrivateIps"
-              ]
-            }
-          ]
-        },
-        {
-          "Fn::Select" : [
-            "0",
-            {
-              "Fn::GetAtt": [
-                "k8s_master_3",
-                "PrivateIps"
-              ]
-            }
-          ]
-        }
-      ],
+      "Value": [],
       "Description": "Private IP Master node"
     },
     "MasterInstanceIDs": {
-      "Value": [
-        { "Fn::Select" : [
-          "0",
-          {
-            "Fn::GetAtt": [
-              "k8s_master_1",
-              "PrivateIps"
-            ]
-          }
-        ]},
-        {
-          "Fn::Select" : [
-            "0",
-            {
-              "Fn::GetAtt": [
-                "k8s_master_2",
-                "InstanceIds"
-              ]
-            }
-          ]
-        },
-        {
-          "Fn::Select" : [
-            "0",
-            {
-              "Fn::GetAtt": [
-                "k8s_master_3",
-                "InstanceIds"
-              ]
-            }
-          ]
-        }
-      ],
+      "Value": [],
       "Description": "Ids of master node"
-    },
-    "NodeInstanceIDs": {
-      "Value": {
-        "Fn::If": [
-          "create_worker_nodes",
-          {
-            "Fn::GetAtt": [
-              "k8s_nodes",
-              "ScalingInstances"
-            ]
-          },
-          ""
-        ]
-      },
-      "Description": "Ids of worker node"
-    },
-    "NodesScalingAddedInstances": {
-      "Description": "Count of ess scaling instance",
-      "Value": {
-        "Fn::If": [
-          "create_worker_nodes",
-          {
-            "Fn::GetAtt": [
-              "k8s_nodes",
-              "ScalingRuleArisExecuteResultNumberOfAddedInstances"
-            ]
-          },
-          ""
-        ]
-      }
-    },
-    "NodesScalingErrorInfo": {
-      "Description": "Error msg of ess scaling instance",
-      "Value": {
-        "Fn::If": [
-          "create_worker_nodes",
-          {
-            "Fn::GetAtt": [
-              "k8s_nodes",
-              "ScalingRuleArisExecuteErrorInfo"
-            ]
-          },
-          ""
-        ]
-      }
     },
     "VpcId": {
       "Value": {
@@ -2371,15 +1458,7 @@ var Template = `
     },
     "LastKnownError": {
       "Description": "Log Info Output",
-      "Value":
-      {
-        "Fn::Join":[
-          "",
-          [
-            {"Fn::GetJsonValue": ["errmsg", { "Fn::GetAtt": ["k8s_cluster_cloudinit_wait_cond", "Data"]}]},
-          ]
-        ]
-      }
+      "Value": {}
     }
   }
 }

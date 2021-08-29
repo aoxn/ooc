@@ -5,8 +5,9 @@ import (
 	"fmt"
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/dev"
+	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -32,16 +33,12 @@ func Now() string {
 	return time.Now().Format("2006-01-02T15:04:05Z")
 }
 
-func HourNow() string {
-	return time.Now().Format("20060102-1504")
-}
-
 func WaitNodeReady(
 	cclient client.Client, id string,
 ) error {
 	return wait.Poll(
-		5 * time.Second,
-		4 * time.Minute,
+		5*time.Second,
+		4*time.Minute,
 		func() (done bool, err error) {
 			klog.Infof("[WaitNodeReady] wait master ready: %s", id)
 
@@ -51,7 +48,7 @@ func WaitNodeReady(
 				return false, nil
 			}
 			for _, n := range nodes {
-				if strings.Contains(n.Spec.ProviderID,id) {
+				if strings.Contains(n.Spec.ProviderID, id) {
 					return NodeReady(&n), nil
 				}
 			}
@@ -62,25 +59,30 @@ func WaitNodeReady(
 
 func LoadStack(
 	prvd provider.Interface,
-	ctx  *provider.Context,
+	ctx *provider.Context,
 	spec *api.Cluster,
 ) (map[string]provider.Value, error) {
 	if spec.Spec.Bind.ResourceId == "" {
 		resource, err := prvd.GetStackOutPuts(
-			provider.NewContext(&spec.Spec),
-			&provider.Id{Name: spec.Spec.ClusterID},
+			provider.NewEmptyContext(&spec.Spec),
+			&api.ClusterId{ObjectMeta: metav1.ObjectMeta{Name: spec.Spec.ClusterID}},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("provider: list resource fail, %s", err.Error())
 		}
-		spec.Spec.Bind.ResourceId = resource[dev.StackID].Val.(string)
+		spec.Spec.Bind.ResourceId = resource[alibaba.StackID].Val.(string)
 	}
-	return prvd.GetInfraStack(ctx,&provider.Id{ResourceId: spec.Spec.Bind.ResourceId})
+	id := &api.ClusterId{
+		Spec: api.ClusterIdSpec{
+			ResourceId: spec.Spec.Bind.ResourceId,
+		},
+	}
+	return prvd.GetInfraStack(ctx, id)
 }
 
 func Cluster(
 	rclient client.Client,
-	name 	string,
+	name string,
 ) (*api.Cluster, error) {
 	cluster := &api.Cluster{}
 	err := rclient.Get(
@@ -100,7 +102,7 @@ func MyCluster(
 		context.TODO(),
 		client.ObjectKey{
 			Namespace: "kube-system",
-			Name: "kubernetes-cluster",
+			Name:      "kubernetes-cluster",
 		},
 		cluster,
 	)
@@ -109,12 +111,12 @@ func MyCluster(
 
 func MasterSet(
 	rclient client.Client,
-	name 	string,
+	name string,
 ) (*api.MasterSet, error) {
 	cluster := &api.MasterSet{}
 	err := rclient.Get(
 		context.TODO(),
-		client.ObjectKey{ Name: name},
+		client.ObjectKey{Name: name},
 		cluster,
 	)
 	return cluster, err
@@ -124,7 +126,7 @@ func Nodes(
 	rclient client.Client,
 ) ([]v1.Node, error) {
 	require, _ := labels.NewRequirement(
-		"node-role.kubernetes.io/master","=", []string{""},
+		"node-role.kubernetes.io/master", "=", []string{""},
 	)
 	mnode := &v1.NodeList{}
 	err := rclient.List(
@@ -149,22 +151,22 @@ func Masters(
 
 func Master(
 	rclient client.Client,
-	name 	string,
+	name string,
 ) (*api.Master, error) {
 	master := &api.Master{}
 	err := rclient.Get(
-		context.TODO(),client.ObjectKey{Name: name}, master,
+		context.TODO(), client.ObjectKey{Name: name}, master,
 	)
 	return master, err
 }
 
 func Node(
 	rclient client.Client,
-	name 	string,
+	name string,
 ) (*v1.Node, error) {
 	node := &v1.Node{}
 	err := rclient.Get(
-		context.TODO(),client.ObjectKey{Name: name}, node,
+		context.TODO(), client.ObjectKey{Name: name}, node,
 	)
 	return node, err
 }
@@ -199,14 +201,14 @@ func IsMaster(node *v1.Node) bool {
 	if lbl == nil {
 		lbl = make(map[string]string)
 	}
-	_,ok := lbl["node-role.kubernetes.io/master"]
+	_, ok := lbl["node-role.kubernetes.io/master"]
 	return ok
 }
 
 func Condition(
 	node v1.Node,
 ) *v1.NodeCondition {
-	for _, v:= range node.Status.Conditions {
+	for _, v := range node.Status.Conditions {
 		if v.Type == "Ready" {
 			return &v
 		}
@@ -216,7 +218,7 @@ func Condition(
 
 func NewDelay(i int64) reconcile.Result {
 	return reconcile.Result{
-		Requeue: true,
+		Requeue:      true,
 		RequeueAfter: time.Duration(i * int64(time.Second)),
 	}
 }
@@ -230,7 +232,7 @@ func Has(m []string, tar string) bool {
 	return false
 }
 
-func Remove(m []string, tar string) []string{
+func Remove(m []string, tar string) []string {
 	var result []string
 	for _, v := range m {
 		if v == tar {

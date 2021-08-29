@@ -33,7 +33,7 @@ func NewCommand() *cobra.Command {
 func runE(flags *flagpole, cmd *cobra.Command, args []string) error {
 	token, err := util.GenerateBootstrapToken()
 	if err != nil {
-		return fmt.Errorf("gen token: %s",err.Error())
+		return fmt.Errorf("gen token: %s", err.Error())
 	}
 	fmt.Println(token)
 

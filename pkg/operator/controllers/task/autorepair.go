@@ -15,7 +15,7 @@ func (r *ReconcileTask) doAutoRepair(task *acv1.Task, node *corev1.Node) (reconc
 	klog.Infof("try to restart ecs[%s] to fix node notReady problem", task.Spec.NodeName)
 	// TODO: fix this validate
 	id := strings.Split(node.Spec.ProviderID, ".")
-	err := r.prvd.RestartECS(r.sharedCtx.ProviderCtx(),id[1])
+	err := r.prvd.RestartECS(r.sharedCtx.ProviderCtx(), id[1])
 	if err != nil {
 		// restart ecs fail, fail immediately
 		reason := fmt.Sprintf("restart ecs failed: %s, stop autorepair", err.Error())

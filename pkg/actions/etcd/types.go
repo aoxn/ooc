@@ -10,16 +10,16 @@ import (
 // Endpoint Status
 type EndpointStatus struct {
 	Endpoint string `json:"Endpoint,omitempty" protobuf:"bytes,1,opt,name=Endpoint"`
-	Status   Status   `json:"Status,omitempty" protobuf:"bytes,2,opt,name=Status"`
+	Status   Status `json:"Status,omitempty" protobuf:"bytes,2,opt,name=Status"`
 }
 
 type Status struct {
-	Header    Header `json:"header,omitempty" protobuf:"bytes,1,opt,name=header"`
-	Version   string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
-	DBsize    *big.Int  `json:"dbsize,omitempty" protobuf:"bytes,3,opt,name=dbsize"`
-	Leader    *big.Int  `json:"leader,omitempty" protobuf:"bytes,4,opt,name=leader"`
-	RaftIndex *big.Int  `json:"raftIndex,omitempty" protobuf:"bytes,5,opt,name=raftIndex"`
-	RaftTerm  *big.Int  `json:"raftTerm,omitempty" protobuf:"bytes,6,opt,name=raftTerm"`
+	Header    Header   `json:"header,omitempty" protobuf:"bytes,1,opt,name=header"`
+	Version   string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
+	DBsize    *big.Int `json:"dbsize,omitempty" protobuf:"bytes,3,opt,name=dbsize"`
+	Leader    *big.Int `json:"leader,omitempty" protobuf:"bytes,4,opt,name=leader"`
+	RaftIndex *big.Int `json:"raftIndex,omitempty" protobuf:"bytes,5,opt,name=raftIndex"`
+	RaftTerm  *big.Int `json:"raftTerm,omitempty" protobuf:"bytes,6,opt,name=raftTerm"`
 }
 
 type Header struct {
@@ -44,7 +44,6 @@ type Members struct {
 	Header  Header   `json:"header,omitempty" protobuf:"bytes,1,opt,name=header"`
 	Members []Member `json:"members,omitempty" protobuf:"bytes,2,opt,name=members"`
 }
-
 
 func Load(r []string, o interface{}) error {
 	result := strings.Join(r, "\n")

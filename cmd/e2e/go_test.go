@@ -58,7 +58,6 @@ func returnError() error {
 	return fmt.Errorf("error hahsh")
 }
 
-
 func TestClojour(t *testing.T) {
 	var id provider.Id
 	id = provider.Id{
@@ -66,11 +65,11 @@ func TestClojour(t *testing.T) {
 	}
 
 	defer func(id *provider.Id) {
-		fmt.Printf("Defer: %x, %v\n",id, *id)
+		fmt.Printf("Defer: %x, %v\n", id, *id)
 	}(&id)
 
 	id = provider.Id{
-		Name:  "YYYYYY",
+		Name: "YYYYYY",
 	}
 	fmt.Printf("normal: %v\n", id)
 }

@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	NodeCacheCtx  = "NodeCacheCtx"
-	ProviderIAAS  = "ProviderIAAS"
-	MemberHeal    = "MemberHeal"
-	ProviderCtx   = "ProviderCtx"
+	NodeCacheCtx = "NodeCacheCtx"
+	ProviderIAAS = "ProviderIAAS"
+	MemberHeal   = "MemberHeal"
+	ProviderCtx  = "ProviderCtx"
 )
 
 func NewOperatorContext(
 	cache *context.CachedContext,
-	prvd  provider.Interface,
-	mem   *heal.MemberHeal,
-	pctx  *provider.Context,
+	prvd provider.Interface,
+	mem *heal.MemberHeal,
+	pctx *provider.Context,
 ) *SharedOperatorContext {
 	ctxs := SharedOperatorContext{}
 	ctxs.SetKV(ProviderIAAS, prvd)
@@ -39,7 +39,6 @@ func (c *SharedOperatorContext) ProvdIAAS() provider.Interface {
 	return c.Value(ProviderIAAS).(provider.Interface)
 }
 
-
 func (c *SharedOperatorContext) MemberHeal() *heal.MemberHeal {
 	return c.Value(MemberHeal).(*heal.MemberHeal)
 }
@@ -47,4 +46,3 @@ func (c *SharedOperatorContext) MemberHeal() *heal.MemberHeal {
 func (c *SharedOperatorContext) ProviderCtx() *provider.Context {
 	return c.Value(ProviderCtx).(*provider.Context)
 }
-

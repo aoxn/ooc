@@ -1,7 +1,7 @@
 package addons
 
 var METRICS_SERVER = ConfigTpl{
-	Name: 		  "metrics-server",
+	Name:         "metrics-server",
 	Tpl:          metrics,
 	ImageVersion: "v1.0.0.2-cc3b2d6-aliyun",
 }

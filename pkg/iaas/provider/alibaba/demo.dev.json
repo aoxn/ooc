@@ -826,7 +826,7 @@
     },
     "k8s_NAT_Gateway": {
       "Condition": "create_nat_gateway",
-      "Type": "ALIYUN::ECS::NatGateway",
+      "Type": "ALIYUN::VPC::NatGateway",
       "Properties": {
         "VpcId": {
           "Fn::If": [

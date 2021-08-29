@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -21,9 +22,9 @@ package kubeadm
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"github.com/aoxn/ooc/pkg/actions"
 	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 

@@ -1,7 +1,7 @@
 package addons
 
 var CCM = ConfigTpl{
-	Name:  		  "ccm",
+	Name:         "ccm",
 	Tpl:          ccmtpl,
 	ImageVersion: "v1.9.3.144-g2a99860-aliyun",
 }

@@ -11,12 +11,14 @@ import (
 	"github.com/aoxn/ooc/pkg/context/base"
 	"github.com/aoxn/ooc/pkg/context/shared"
 	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/dev"
+	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
 	"github.com/aoxn/ooc/pkg/operator/controllers/backup"
 	"github.com/aoxn/ooc/pkg/operator/controllers/heal"
 	"github.com/aoxn/ooc/pkg/utils/crd"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/rest"
@@ -26,27 +28,18 @@ import (
 	"time"
 )
 
-type Flagpole struct {
-	MetricsAddr  string
-	EnableLeader bool
-	BindAddr     string
-	Token        string
-	MetaConfig   string
-	InitialCount int
-}
-
 func NewOperatorServer(
-	flags *Flagpole,
+	options *api.OocOptions,
 ) *Operator {
 
 	cfg := apiserver.Configuration{
-		BindAddr: flags.BindAddr,
+		BindAddr: options.OperatorCFG.BindAddr,
 	}
 	if cfg.BindAddr == "" {
 		cfg.BindAddr = ":443"
 	}
 	return &Operator{
-		Flags: flags,
+		Options: options,
 		Server: apiserver.Server{
 			Config: cfg,
 			//CachedCtx: context.NewCachedContext(boot),
@@ -58,11 +51,10 @@ func NewOperatorServer(
 type Operator struct {
 	apiserver.Server
 	Initialized bool
+
 	RestCfg  *rest.Config
-
-	Shared *shared.SharedOperatorContext
-
-	Flags    *Flagpole
+	Shared   *shared.SharedOperatorContext
+	Options  *api.OocOptions
 	Mgr      ctrl.Manager
 	Client   client.Client
 	Provider provider.Interface
@@ -85,10 +77,11 @@ func (v *Operator) CompleteSetting() error {
 		return fmt.Errorf("cluster: %s", err.Error())
 	}
 	v.CachedCtx = sctx.NewCachedContext(&spec.Spec)
-	v.Provider, err = dev.NewDevInitialized(&spec.Spec)
+	ctx, err := provider.NewContext(v.Options, &spec.Spec)
 	if err != nil {
-		return fmt.Errorf("initialize provider: %s", err.Error())
+		return errors.Wrap(err, "build provider context")
 	}
+	v.Provider = ctx.Provider()
 	// initialize ctrl.Manager, and start it
 	err = v.startManager(spec)
 	if err != nil {
@@ -101,9 +94,9 @@ func (v *Operator) CompleteSetting() error {
 	return v.initializeClusterResource(spec)
 }
 
-func (v *Operator) cluster(cfg *rest.Config) (*api.Cluster, error){
-	if v.Flags.MetaConfig != "" {
-		klog.Infof("Initialized from metaconfig: %s", v.Flags.MetaConfig)
+func (v *Operator) cluster(cfg *rest.Config) (*api.Cluster, error) {
+	if v.Options.OperatorCFG.MetaConfig != "" {
+		klog.Infof("Initialized from metaconfig: %s", v.Options.OperatorCFG.MetaConfig)
 		return &api.Cluster{}, nil
 	}
 	mcfg := *cfg
@@ -113,7 +106,7 @@ func (v *Operator) cluster(cfg *rest.Config) (*api.Cluster, error){
 
 	mclient, err := rest.RESTClientFor(&mcfg)
 	if err != nil {
-		return nil, fmt.Errorf("make rest client: %s",err.Error())
+		return nil, fmt.Errorf("make rest client: %s", err.Error())
 	}
 	cluster := &api.Cluster{}
 	err = mclient.Get().
@@ -131,8 +124,10 @@ func (v *Operator) initializeClusterResource(spec *api.Cluster) error {
 	if spec.Spec.Endpoint.Intranet == "" ||
 		spec.Spec.Bind.ResourceId == "" {
 		resource, err := v.Provider.GetStackOutPuts(
-			provider.NewContext(&spec.Spec),
-			&provider.Id{Name: spec.Spec.ClusterID},
+			provider.NewEmptyContext(&spec.Spec),
+			&api.ClusterId{
+				ObjectMeta: metav1.ObjectMeta{Name: spec.Spec.ClusterID},
+			},
 		)
 		if err != nil {
 			return fmt.Errorf("provider: list resource fail, %s", err.Error())
@@ -142,10 +137,10 @@ func (v *Operator) initializeClusterResource(spec *api.Cluster) error {
 		if err != nil {
 			return fmt.Errorf("find slb endpoint: %s", err.Error())
 		}
-		klog.Infof("intranet endpoint is empty, try update: %s/%s/%s", internet,intranet, resource[dev.StackID].Val.(string))
+		klog.Infof("intranet endpoint is empty, try update: %s/%s/%s", internet, intranet, resource[alibaba.StackID].Val.(string))
 		spec.Spec.Endpoint.Intranet = intranet
 		spec.Spec.Endpoint.Internet = internet
-		stackid := resource[dev.StackID].Val.(string)
+		stackid := resource[alibaba.StackID].Val.(string)
 		if stackid == "" {
 			panic("stack id should not be empty")
 		}
@@ -253,16 +248,16 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 	if err != nil {
 		klog.Errorf("add MemberHeal runner: %s", err.Error())
 	}
-	err = mgr.Add(backup.NewSnapshot(v.Provider))
+	err = mgr.Add(backup.NewSnapshot())
 	if err != nil {
 		klog.Errorf("add Snapshot runner: %s", err.Error())
 	}
 
-	pctx, err := LoadContextIAAS(v.Provider,spec)
+	pctx, err := LoadContextIAAS(v.Provider, spec)
 	if err != nil {
 		return fmt.Errorf("provider context: %s", err.Error())
 	}
-	v.Shared = shared.NewOperatorContext(v.CachedCtx,v.Provider, mh, pctx)
+	v.Shared = shared.NewOperatorContext(v.CachedCtx, v.Provider, mh, pctx)
 
 	// add controllers
 	err = AddControllers(mgr, v.Shared)
@@ -300,26 +295,27 @@ func (v *Operator) RefreshNodeCache() error {
 	return nil
 }
 
-
 func LoadContextIAAS(
 	prvd provider.Interface,
 	spec *api.Cluster,
 ) (*provider.Context, error) {
-	ctx := provider.NewContext(&spec.Spec)
+	ctx := provider.NewEmptyContext(&spec.Spec)
 	if spec.Spec.Bind.ResourceId == "" {
 		resource, err := prvd.GetStackOutPuts(
 			ctx,
-			&provider.Id{
-				Name: spec.Spec.ClusterID,
+			&api.ClusterId{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: spec.Spec.ClusterID,
+				},
 			},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("provider: list resource fail, %s", err.Error())
 		}
-		spec.Spec.Bind.ResourceId = resource[dev.StackID].Val.(string)
+		spec.Spec.Bind.ResourceId = resource[alibaba.StackID].Val.(string)
 	}
 	stack, err := prvd.GetInfraStack(
-		ctx, &provider.Id{ResourceId: spec.Spec.Bind.ResourceId},
+		ctx, &api.ClusterId{Spec: api.ClusterIdSpec{ResourceId: spec.Spec.Bind.ResourceId}},
 	)
 	if err != nil {
 		return ctx, err

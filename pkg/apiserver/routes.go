@@ -14,7 +14,7 @@ var routes = map[string]map[string]api.HandlerFunc{
 		"/api/v1/nodes":            api.Debug,
 		"/fake":                    api.FakeHandler,
 		"/api/v1/credentials/{id}": api.Credentials,
-		"/api/v1/clusters/{id}": 	api.Cluster,
+		"/api/v1/clusters/{id}":    api.Cluster,
 	},
 	"PUT": {},
 	"POST": {

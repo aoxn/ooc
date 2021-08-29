@@ -88,7 +88,7 @@ ooc: make-cache out-dir
 		--user $(UID):$(GID) \
 		$(GO_IMAGE) \
 		go build -v -o /out/$(KIND_BINARY_NAME) \
-		    -ldflags "-X github.com/aoxn/ooc.Version=$(TAG)" .
+		    -ldflags "-X github.com/aoxn/ooc.Version=$(TAG) -s -w" .
 	@echo + Built ooc binary to $(OUT_DIR)/$(KIND_BINARY_NAME)
 
 # alias for building ooc
@@ -117,7 +117,7 @@ oocmac:
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build -v -o build/bin/ooc \
-       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG)" cmd/main.go
+       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG) -s -w" cmd/main.go
 
 ooclinux:
 	GOARCH=amd64 \
@@ -125,21 +125,21 @@ ooclinux:
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build -v -o build/bin/ooc.amd64 \
-       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG)" cmd/main.go
+       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG) -s -w" cmd/main.go
 oocwin:
 	GOARCH=amd64 \
 	GOOS=windows \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build -v -o build/bin/ooc.exe \
-       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG)" cmd/main.go
+       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG) -s -w" cmd/main.go
 oocarm64:
 	GOARCH=arm64 \
 	GOOS=linux \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build -v -o build/bin/ooc.arm64 \
-       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG)" cmd/main.go
+       -ldflags "-X github.com/aoxn/ooc.Version=$(TAG) -s -w" cmd/main.go
 
 log:
 	kubectl --kubeconfig ~/.kube/config.ooc -n kube-system scale deploy ooc --replicas 0
@@ -153,6 +153,8 @@ clean: clean-cache clean-output
 deploy: ooclinux image push
 
 build: oocmac
-	build/bin/ooc build --arch amd64 --os centos --ooc-version 0.1.1
+	build/bin/ooc build --arch amd64 --os centos --ooc-version 0.1.1 --run-version 2.0
+
+release: build deploy
 
 .PHONY: all make-cache clean-cache out-dir clean-output ooc build install clean

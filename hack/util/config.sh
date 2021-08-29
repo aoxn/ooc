@@ -3,13 +3,6 @@
 cat > $CUR_DIR/config.txt << EOF
 clusterid: "${CLUSTER_NAME}"
 iaas:
-  provider:
-    name: dev
-    value:
-      region: "${REGION}"
-      accessKey: "${ACCESS_KEY_ID}"
-      accessSecret: "${ACCESS_KEY_SECRET}"
-      template: ${SRC_DIR}/pkg/iaas/provider/dev/demo.dev.json
   workerCount: 1
   image: "${IMAGE_ID}"
   disk:

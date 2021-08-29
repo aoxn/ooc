@@ -27,7 +27,7 @@ func NewCommand() *cobra.Command {
 			return runE(flags, cmd, args)
 		},
 	}
-	typs:=fmt.Sprintf(
+	typs := fmt.Sprintf(
 		"%s, %s, %s, %s",
 		utils.BootTypeLocal,
 		utils.BootTypeRecover,

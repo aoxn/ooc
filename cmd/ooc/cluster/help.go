@@ -2,47 +2,70 @@ package cluster
 
 import (
 	"fmt"
+	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
+	"github.com/aoxn/ooc/pkg/utils"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 )
 
 type flagpole struct {
-	Show bool
-	Kubeconfig bool
+	Show string
 }
 
-// NewCommand returns a new cobra.Command for cluster creation
 func NewCommandConfig() *cobra.Command {
 	flags := &flagpole{}
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "Kubernetes config --show-tpl",
-		Long:  "kubernetes show tpl config",
+		Short: "Kubernetes config --show context.cfg",
+		Long:  "kubernetes show template config",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			//return test(flags,cmd,args)
 			return show(flags)
 		},
 	}
-	cmd.Flags().BoolVar(&flags.Show, "show-tpl", true, "show config template")
-	cmd.Flags().BoolVar(&flags.Kubeconfig, "show-kubeconfig", true, "show kubeconfig")
+	cmd.Flags().StringVar(&flags.Show, "show", "context.cfg", "show config template:  context.cfg|kubeconfig")
 	return cmd
 }
 
+func NewContextCFG() *v1.ContextCFG {
+	alibabadev := alibaba.AlibabaDev{
+		BucketName:      "ovm-index",
+		Region:          "cn-hangzhou",
+		AccessKeyId:     "xxxxxxxxxx",
+		AccessKeySecret: "YYYYYYYYYYYYYYY",
+	}
 
+	raw, err := v1.ToRawMessage(alibabadev)
+	if err != nil {
+		klog.Errorf("some error occurred: %s", err.Error())
+	}
+	cfg := v1.ContextCFG{
+		Kind:           "Config",
+		APIVersion:     v1.SchemeGroupVersion.String(),
+		CurrentContext: "devEnv",
+		Contexts: []v1.ContextItem{
+			{Name: "devEnv", Context: &v1.Context{ProviderKey: "alibaba.dev"}},
+		},
+		Providers: []v1.ProviderItem{
+			{Name: "alibaba.dev", Provider: &v1.Provider{Name: "alibaba", Value: raw}},
+		},
+	}
+	return &cfg
+}
 
 func show(flag *flagpole) error {
-	fmt.Printf("%s\n", help)
+	switch flag.Show {
+	case "kubeconfig":
+		fmt.Printf("%s\n", help)
+	case "context.cfg":
+		fmt.Printf(utils.PrettyYaml(NewContextCFG()))
+	}
 	return nil
 }
 
 var help = `
-## --provider-config-file for ROS provider
-"
-accessKey: abcdefg.hsxx
-accessKeySecret: amkkdiillllddkmmmmmmmm
-templateFile: /Users/aoxn/work/ooc/pkg/iaas/provider/ros/demo.dev.json
-"
-
 ## --cluster-config config cluster specification
 "
 clusterid: ${CLUSTER_ID}

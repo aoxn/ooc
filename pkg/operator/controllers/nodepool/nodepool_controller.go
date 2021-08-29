@@ -39,7 +39,7 @@ func AddNodePoolController(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
 ) error {
-	return add(mgr, newReconciler(mgr,ctx))
+	return add(mgr, newReconciler(mgr, ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -53,11 +53,11 @@ func newReconciler(
 	}
 
 	return &ReconcileNodePool{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
 		sharedCtx: ctx,
-		prvd:   ctx.ProvdIAAS(),
-		recd:   mgr.GetEventRecorderFor("task-controller"),
+		prvd:      ctx.ProvdIAAS(),
+		recd:      mgr.GetEventRecorderFor("task-controller"),
 	}
 }
 
@@ -129,7 +129,7 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 	//	return reconcile.Result{}, gerr.Wrap(err, "find cluster")
 	//}
 	//fmt.Printf("%s\n",hash.PrettyYaml(np))
-	if ! np.DeletionTimestamp.IsZero() {
+	if !np.DeletionTimestamp.IsZero() {
 		klog.Infof("nodepool has been deleted, [%s], %v", np.Name, np.Spec.Infra.Bind)
 		err := r.prvd.DeleteNodeGroup(mctx, np)
 		if err != nil {
@@ -140,14 +140,14 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 			mp.Finalizers = help.Remove(mp.Finalizers, NODE_POOL_FINALIZER)
 			return mp, nil
 		}
-		return reconcile.Result{},help.Patch(r.client,np,diff,help.PatchSpec)
+		return reconcile.Result{}, help.Patch(r.client, np, diff, help.PatchSpec)
 	}
 	hasho, err := hash.HashObject(np.Spec)
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("hash np: %s", err.Error())
 	}
 	if hasho == nodePoolHash(np) {
-		klog.Infof("hash does not change, " +
+		klog.Infof("hash does not change, "+
 			"skip reconcile, np=%s, node=%s", hasho, nodePoolHash(np))
 
 		return reconcile.Result{}, nil
@@ -161,8 +161,8 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 		diff := func(copy runtime.Object) (client.Object, error) {
 			mp := copy.(*acv1.NodePool)
 			mp.Spec.Infra.Bind = bind
-			if ! help.Has(mp.Finalizers, NODE_POOL_FINALIZER) {
-				mp.Finalizers =  append(mp.Finalizers, NODE_POOL_FINALIZER)
+			if !help.Has(mp.Finalizers, NODE_POOL_FINALIZER) {
+				mp.Finalizers = append(mp.Finalizers, NODE_POOL_FINALIZER)
 			}
 			return mp, nil
 		}
@@ -185,7 +185,7 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 		np.Labels[acv1.NodePoolHashLabel] = hasho
 		return np, nil
 	}
-	err = help.Patch(r.client,np, diff, help.PatchSpec)
+	err = help.Patch(r.client, np, diff, help.PatchSpec)
 	if err != nil {
 		klog.Warningf("patch nodepool hash label fail, %s, %s", np.Name, err.Error())
 	}
@@ -265,4 +265,3 @@ func nodePoolHash(node *acv1.NodePool) string {
 	}
 	return lbl[acv1.NodePoolHashLabel]
 }
-

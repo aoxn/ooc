@@ -41,4 +41,3 @@ func (p *Path) URI() string {
 func (p *Path) Name() string {
 	return fmt.Sprintf("%s-%s.tar.gz", p.Pkg, p.Version)
 }
-

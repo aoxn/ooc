@@ -53,7 +53,7 @@ func replaceSystemDisk(r *ReconcileTask, task *acv1.Task, node *v1.Node) (reconc
 			Duration: 5 * time.Second,
 		},
 		func() (done bool, err error) {
-			err = r.prvd.ReplaceSystemDisk(r.sharedCtx.ProviderCtx(),id[1],provider.Option{})
+			err = r.prvd.ReplaceSystemDisk(r.sharedCtx.ProviderCtx(), id[1], "", provider.Option{})
 			if err != nil {
 				klog.Infof("replace system disk: %s, requeue after %d minute", err.Error(), 1)
 				return false, nil

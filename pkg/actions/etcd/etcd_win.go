@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package etcd
@@ -78,10 +79,10 @@ func LoadOrSign(node *v1.Master) error {
 		"server-ca.key": node.Status.BootCFG.Etcd.ServerCA.Key,
 		"client.crt":    ccert,
 		"client.key":    ckey,
-		"peer.crt":    cert,
-		"peer.key":    key,
-		"peer-ca.crt": node.Status.BootCFG.Etcd.PeerCA.Cert,
-		"peer-ca.key": node.Status.BootCFG.Etcd.PeerCA.Key,
+		"peer.crt":      cert,
+		"peer.key":      key,
+		"peer-ca.crt":   node.Status.BootCFG.Etcd.PeerCA.Cert,
+		"peer-ca.key":   node.Status.BootCFG.Etcd.PeerCA.Key,
 	} {
 		if err := ioutil.WriteFile(certHome(name), v, 0644); err != nil {
 			return fmt.Errorf("write file %s: %s", name, err.Error())

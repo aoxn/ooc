@@ -1,4 +1,4 @@
-package dev
+package alibaba
 
 import (
 	"encoding/json"
@@ -65,7 +65,7 @@ func (n *Devel) ScalingGroupDetail(
 	switch action {
 	case ActionInstanceIDS:
 		req := ess.CreateDescribeScalingInstancesRequest()
-		req.RegionId = ctx.BootCFG().Bind.Region
+		req.RegionId = n.Cfg.Region
 		req.ScalingGroupId = gid
 		ins, err := n.ESS.DescribeScalingInstances(req)
 		if err != nil {
@@ -78,7 +78,7 @@ func (n *Devel) ScalingGroupDetail(
 		data, _ := json.Marshal(mins)
 		ireq := ecs.CreateDescribeInstancesRequest()
 		ireq.InstanceIds = string(data)
-		ireq.RegionId = ctx.BootCFG().Bind.Region
+		ireq.RegionId = n.Cfg.Region
 		attri, err := n.ECS.DescribeInstances(ireq)
 		if err != nil {
 			return result, fmt.Errorf("instance detail call: %s", err.Error())
@@ -102,8 +102,8 @@ func (n *Devel) ScalingGroupDetail(
 	return result, fmt.Errorf("[ScalingGroupDetail] unknown action: %s", action)
 }
 
-func normalize(t string) string{
-	return strings.Replace(t,"Z", ":30Z",-1)
+func normalize(t string) string {
+	return strings.Replace(t, "Z", ":30Z", -1)
 }
 
 func WaitActivity(
@@ -140,7 +140,7 @@ func (n *Devel) ScaleMasterGroup(
 	stack := ctx.Stack()
 	sgid := stack["k8s_master_sg"].Val.(string)
 	srid := stack["k8s_master_srule"].Val.(string)
-	region := ctx.BootCFG().Bind.Region
+	region := n.Cfg.Region
 
 	req := ess.CreateModifyScalingRuleRequest()
 	req.RegionId = region
@@ -161,6 +161,7 @@ func (n *Devel) ScaleMasterGroup(
 	if len(rules.ScalingRules.ScalingRule) != 1 {
 		return fmt.Errorf("multiple scaling rule found: %d by id %s", len(rules.ScalingRules.ScalingRule), srid)
 	}
+	klog.Infof("wait for activities: %s", sgid)
 	// check for running scalingActivities first.
 	// wait for activity available
 	// n.ESS.DescribeScalingActivities()
@@ -168,11 +169,16 @@ func (n *Devel) ScaleMasterGroup(
 	if err != nil {
 		return fmt.Errorf("wait for activity enable: %s", sgid)
 	}
+
 	ereq := ess.CreateExecuteScalingRuleRequest()
 	ereq.ScalingRuleAri = rules.ScalingRules.ScalingRule[0].ScalingRuleAri
 	_, err = n.ESS.ExecuteScalingRule(ereq)
 	if err != nil {
-		return fmt.Errorf("execute scaling rule failed: %s", err.Error())
+		if !strings.Contains(err.Error(), "IncorrectCapacity.NoChange") {
+			return fmt.Errorf("execute scaling rule failed: %s", err.Error())
+		}
+		klog.Errorf("master group ess "+
+			"desired count not change[%d], continue: %s", desired, err.Error())
 	}
 	klog.Infof("[ScaleMasterGroup] execute scale rule: target=%d, wait for finish", desired)
 	// wait for scale finish. success or fail
@@ -184,7 +190,7 @@ func (n *Devel) ScaleNodeGroup(
 ) error {
 	// load scaling group id from stack
 	sgid := gid
-	region := ctx.BootCFG().Bind.Region
+	region := n.Cfg.Region
 
 	req := ess.CreateDescribeScalingRulesRequest()
 	req.RegionId = region
@@ -263,7 +269,7 @@ func (n *Devel) RemoveScalingGroupECS(
 				req := ess.CreateDescribeScalingActivitiesRequest()
 				req.ScalingGroupId = id
 				req.StatusCode = "InProgress"
-				req.RegionId = ctx.BootCFG().Bind.Region
+				req.RegionId = n.Cfg.Region
 				result, err := n.ESS.DescribeScalingActivities(req)
 				if err != nil {
 					klog.Errorf("[RemoveScalingGroupECS] wait scaling activity to complete: %s", err.Error())
@@ -320,7 +326,7 @@ func (n *Devel) RestartECS(ctx *provider.Context, id string) error {
 	}
 	sreq := ecs.CreateStartInstanceRequest()
 	sreq.InstanceId = id
-	_,err = n.ECS.StartInstance(sreq)
+	_, err = n.ECS.StartInstance(sreq)
 	if err != nil {
 		return fmt.Errorf("start instance[%s]: %s", id, err.Error())
 	}
@@ -334,11 +340,10 @@ type ReplaceConfig struct {
 }
 
 func (n *Devel) ReplaceSystemDisk(
-	ctx *provider.Context, eid string, opt provider.Option,
+	ctx *provider.Context, eid string, userdata string, opt provider.Option,
 ) error {
 
 	//cfg := opt.Value.Val.(*ReplaceConfig)
-	udata := ""
 
 	klog.Infof("[ReplaceSystemDisk] try stop intance: %s", eid)
 	ids, _ := json.Marshal([]string{eid})
@@ -356,7 +361,7 @@ func (n *Devel) ReplaceSystemDisk(
 		klog.Infof("[ReplaceSystemDisk] instance is in [Running] state, try stop %s", eid)
 		req := ecs.CreateStopInstanceRequest()
 		req.InstanceId = eid
-		_,err = n.ECS.StopInstance(req)
+		_, err = n.ECS.StopInstance(req)
 		if err != nil {
 			return fmt.Errorf("stop instance error: %s", err.Error())
 		}
@@ -367,11 +372,11 @@ func (n *Devel) ReplaceSystemDisk(
 		return fmt.Errorf("wait %s stop: %s", eid, err.Error())
 	}
 
-	if len(udata) != 0 {
+	if len(userdata) != 0 {
 		klog.Infof("[ReplaceSystemDisk] update userdata for instance: %s", eid)
 		req := ecs.CreateModifyInstanceAttributeRequest()
 		req.InstanceId = eid
-		req.UserData = udata
+		req.UserData = userdata
 		_, err = n.ECS.ModifyInstanceAttribute(req)
 		if err != nil {
 			return fmt.Errorf("replace instance userdata: %s", err.Error())
@@ -438,22 +443,22 @@ func (n *Devel) TagECS(
 		atags = append(atags, atag)
 	}
 	req := ecs.CreateUntagResourcesRequest()
-	req.RegionId = ctx.BootCFG().Bind.Region
+	req.RegionId = n.Cfg.Region
 	req.ResourceId = &[]string{id}
 	req.TagKey = &rtags
 	req.ResourceType = "instance"
-	_,err := n.ECS.UntagResources(req)
-	if err != nil && strings.Contains(err.Error(), "NotFound"){
+	_, err := n.ECS.UntagResources(req)
+	if err != nil && strings.Contains(err.Error(), "NotFound") {
 		return fmt.Errorf("remove tag: %s, %s, %s", err.Error(), id, rtags)
 	}
 
 	areq := ecs.CreateTagResourcesRequest()
 	areq.ResourceType = "instance"
-	areq.RegionId = ctx.BootCFG().Bind.Region
+	areq.RegionId = n.Cfg.Region
 	areq.ResourceId = &[]string{id}
 	areq.Tag = &atags
 
-	_,err = n.ECS.TagResources(areq)
+	_, err = n.ECS.TagResources(areq)
 	return err
 }
 

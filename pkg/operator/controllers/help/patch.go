@@ -30,8 +30,8 @@ type Setter func(copy runtime.Object) (client.Object, error)
 //	return tools.PatchM(mclient,yourObject, diff, tools.PatchStatus)
 func Patch(
 	mclient client.Client,
-	target  client.Object,
-	setter  Setter,
+	target client.Object,
+	setter Setter,
 	resource string,
 ) error {
 	err := mclient.Get(

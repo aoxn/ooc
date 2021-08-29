@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func ToUnstructured(tpl string) (*Unstructured,error) {
+func ToUnstructured(tpl string) (*Unstructured, error) {
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(tpl), &m)
 	if err != nil {
@@ -37,7 +37,7 @@ func NewUnstructured(m map[string]interface{}) *Unstructured {
 func (u *Unstructured) ToJson() (string, error) {
 	data, err := json.Marshal(u.Object)
 	if err != nil {
-		return "", fmt.Errorf("marshal json: %s",err.Error())
+		return "", fmt.Errorf("marshal json: %s", err.Error())
 	}
 	return string(data), err
 }

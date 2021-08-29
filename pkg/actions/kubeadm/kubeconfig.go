@@ -1,3 +1,4 @@
+//go:build linux || darwin || windows
 // +build linux darwin windows
 
 package kubeadm
@@ -41,7 +42,10 @@ func (a *ActionKubeAuth) Execute(ctx *actions.ActionContext) error {
 	if err != nil {
 		return fmt.Errorf("sign kubernetes client crt: %s", err.Error())
 	}
-
+	err = os.MkdirAll("/etc/ooc", 0755)
+	if err != nil {
+		return fmt.Errorf("make ooc dir: %s", err.Error())
+	}
 	err = ioutil.WriteFile(
 		"/etc/ooc/ooc.cfg.gen",
 		[]byte(utils.PrettyYaml(ctx.Config())), 0755,

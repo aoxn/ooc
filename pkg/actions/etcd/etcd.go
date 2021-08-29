@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/aoxn/ooc/pkg/actions"
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	//"github.com/aoxn/ooc/pkg/boot"
-	h "github.com/aoxn/ooc/pkg/operator/controllers/help"
+	"github.com/aoxn/ooc/pkg/iaas/provider"
+
 	"github.com/aoxn/ooc/pkg/utils"
 	"github.com/aoxn/ooc/pkg/utils/cmd"
 	"github.com/aoxn/ooc/pkg/utils/sign"
@@ -65,13 +65,7 @@ func (a *action) Execute(ctx *actions.ActionContext) error {
 			return fmt.Errorf("join etcd peer on bootType=%s: %s", ctx.OocFlags().BootType, err.Error())
 		}
 	case utils.BootTypeRecover:
-		// download snapshot db
-		prvd := ctx.ProviderCtx()
-		if prvd == nil {
-			return fmt.Errorf("empty provider, restore etcd fail")
-		}
-
-		err = etcd.Restore(node,h.SnapshotTMP)
+		err = etcd.Restore(node, provider.SnapshotTMP)
 		if err != nil {
 			return errors.Wrapf(err, "restore snapshot")
 		}
@@ -254,7 +248,7 @@ func (m *Etcd) Restore(node *api.Master, dir string) error {
 	bakDir := filepath.Join(dataDir, ".bak")
 	exist, err := utils.FileExist(bakDir)
 	if err != nil {
-		return errors.Wrap(err,"etcd backup file check")
+		return errors.Wrap(err, "etcd backup file check")
 	}
 	if !exist {
 		err = os.Rename(dataDir, bakDir)
@@ -269,12 +263,12 @@ func (m *Etcd) Restore(node *api.Master, dir string) error {
 	cm := cmd.NewCmd(
 		"etcdctl", "snapshot", "restore", dir,
 		"--data-dir", dataDir,
-		"--name",memberName(node.Spec.IP),
-		"--initial-cluster",InitialEtcdCluster(node, NewEmptyMembers()),
-		"--initial-cluster-token",node.Status.BootCFG.Spec.Etcd.InitToken,
-		"--initial-advertise-peer-urls",advertise(node.Spec.IP, "2380"),
-		"--cacert",certHome(m.Home(), "server-ca.crt"),
-		"--cert",certHome(m.Home(), "server.crt"),
+		"--name", memberName(node.Spec.IP),
+		"--initial-cluster", InitialEtcdCluster(node, NewEmptyMembers()),
+		"--initial-cluster-token", node.Status.BootCFG.Spec.Etcd.InitToken,
+		"--initial-advertise-peer-urls", advertise(node.Spec.IP, "2380"),
+		"--cacert", certHome(m.Home(), "server-ca.crt"),
+		"--cert", certHome(m.Home(), "server.crt"),
 	)
 	cm.Env = []string{"ETCDCTL_API=3"}
 	result := <-cm.Start()
@@ -502,7 +496,7 @@ func (m *Etcd) FlushEtcdContent(
 	)
 }
 
-func NewEmptyMembers() []Member{ return []Member{} }
+func NewEmptyMembers() []Member { return []Member{} }
 
 type Member struct {
 	ID         *big.Int `json:"ID,omitempty" protobuf:"bytes,1,opt,name=ID"`

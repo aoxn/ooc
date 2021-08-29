@@ -4,8 +4,7 @@ import (
 	"fmt"
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/iaas/provider/dev"
-	h "github.com/aoxn/ooc/pkg/operator/controllers/help"
+	"github.com/aoxn/ooc/pkg/iaas/provider"
 	"github.com/aoxn/ooc/pkg/utils"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -52,10 +51,10 @@ func InitFromOperator(ctx *context.NodeContext) error {
 	client := ctx.BootClusterClient()
 	var cluster *api.Cluster
 	err := wait.PollImmediate(
-		5 * time.Second,
-		5 * time.Minute,
+		5*time.Second,
+		5*time.Minute,
 		func() (done bool, err error) {
-			mc,err := client.Get("kubernetes-cluster")
+			mc, err := client.Get("kubernetes-cluster")
 			if err != nil {
 				klog.Infof("trying to retrieve bootcfg: %s", err.Error())
 				return false, nil
@@ -66,7 +65,7 @@ func InitFromOperator(ctx *context.NodeContext) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("retrieve bootcfg: %s",err.Error())
+		return fmt.Errorf("retrieve bootcfg: %s", err.Error())
 	}
 	fmt.Println("bootcfg from operator: ", utils.PrettyYaml(cluster))
 	meta := ctx.NodeMetaData()
@@ -92,7 +91,7 @@ func InitFromOperator(ctx *context.NodeContext) error {
 			Role: ctx.OocFlags().Role,
 		},
 		Status: api.MasterStatus{
-			Peer:	cluster.Status.Peers,
+			Peer:    cluster.Status.Peers,
 			BootCFG: cluster,
 		},
 	}
@@ -195,8 +194,8 @@ func InitFromCfg(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("meta data error node ip: %s", err.Error())
 	}
-	utils.SetDefaultCredential(cluster)
-	spec := api.NewDefaultCluster("kubernetes-cluster",*cluster)
+	SetDefaultCredential(cluster)
+	spec := api.NewDefaultCluster("kubernetes-cluster", *cluster)
 	AddExtraSans(spec)
 	node := api.Master{
 		ObjectMeta: metav1.ObjectMeta{
@@ -219,7 +218,7 @@ func InitFromRecover(ctx *context.NodeContext) error {
 
 	/*
 		Build an empty api.Master object
-	 */
+	*/
 	meta := ctx.NodeMetaData()
 	if meta == nil {
 		return fmt.Errorf("nil client, meta: %v", meta)
@@ -234,8 +233,13 @@ func InitFromRecover(ctx *context.NodeContext) error {
 		return fmt.Errorf("meta data error node ip: %s", err.Error())
 	}
 
-	mflag := ctx.OocFlags()
-	spec := api.NewRecoverCluster(mflag.ClusterName, mflag.Region,mflag.AccessKeyID, mflag.AccessSecret)
+	region, err := meta.Region()
+	if err != nil {
+		return fmt.Errorf("meta data error region: %s", err.Error())
+	}
+
+	opts := ctx.OocFlags()
+	spec := api.NewRecoverCluster(opts.ClusterName, region, nil)
 	node := api.Master{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ip,
@@ -249,37 +253,22 @@ func InitFromRecover(ctx *context.NodeContext) error {
 			BootCFG: spec,
 		},
 	}
-
-	prvd, err := dev.NewDevInitialized(&spec.Spec)
+	// we use ~/.ooc/config to initializing provider
+	pctx, err := provider.NewContext(&opts, &spec.Spec)
 	if err != nil {
 		return errors.Wrap(err, "initialize provider")
 	}
-	ctx.SetKV(context.ProviderCtx, prvd)
-
-
-	mindex := h.NewIndex(mflag.ClusterName)
-	in, err := prvd.GetObject(mindex.IndexLocation())
-	if err != nil {
-		return errors.Wrapf(err, "get backup index: %s", mindex.IndexLocation())
-	}
-	err = mindex.LoadIndex(in)
-	if err != nil {
-		return errors.Wrap(err, "load index fail")
-	}
-	backup := mindex.LatestBackup()
-	if backup == nil {
-		return fmt.Errorf("no backup found: %s", string(in))
-	}
-	err = prvd.GetFile(mindex.Path(*backup), h.SnapshotTMP)
+	ctx.SetKV(context.ProviderCtx, pctx)
+	mindex := pctx.Indexer()
+	mspec, err := mindex.LatestBackup(spec.Spec.ClusterID, provider.SnapshotTMP)
 	if err != nil {
 		return errors.Wrap(err, "download backup db file")
 	}
-	node.Status.BootCFG = mindex.Spec
+	node.Status.BootCFG = api.NewDefaultCluster("kubernetes-cluster", *mspec)
 	ctx.SetKV(context.NodeInfoObject, &node)
-	klog.Infof("read cluster config from oss backup %s: %+v", mindex.IndexLocation(), utils.PrettyYaml(node))
+	klog.Infof("read cluster config from oss backup %s: %+v", mindex.Index().IndexLocation(), utils.PrettyYaml(node))
 	return nil
 }
-
 
 func InitFromCoordinator(ctx *context.NodeContext) error {
 	err := RegisterMyself(ctx)

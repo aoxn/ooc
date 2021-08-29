@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 /*
@@ -39,9 +40,6 @@ import (
 	"path/filepath"
 )
 
-// kubeadmInitAction implements ActionInit for executing the kubadm init
-// and a set of default post init operations like e.g. install the
-// CNI network plugin.
 type ActionInit struct{}
 
 type ConfigTpl struct {
@@ -139,6 +137,37 @@ func (a *ActionInit) Execute(ctx *actions.ActionContext) error {
 		"--v=6",
 	).Start()
 	return cmd.CmdError(status)
+}
+
+func setOriginalPki(boot *v1.ClusterSpec) error {
+	err := os.MkdirAll("/etc/kubernetes/", 0755)
+	if err != nil {
+		return fmt.Errorf("ensure dir /etc/kubernetes for admin.local:%s", err.Error())
+	}
+	counts := map[string][]byte{}
+	root := boot.Kubernetes.RootCA
+	if root != nil {
+		counts["ca.crt"] = root.Cert
+		counts["ca.key"] = root.Key
+	}
+
+	front := boot.Kubernetes.FrontProxyCA
+	if front != nil {
+		counts["front-proxy-ca.crt"] = front.Cert
+		counts["front-proxy-ca.key"] = front.Key
+	}
+
+	sa := boot.Kubernetes.SvcAccountCA
+	if sa != nil {
+		counts["sa.key"] = sa.Key
+		counts["sa.pub"] = sa.Cert
+	}
+	for name, v := range counts {
+		if err := ioutil.WriteFile(certHome(name), v, 0644); err != nil {
+			return fmt.Errorf("write file %s: %s", name, err.Error())
+		}
+	}
+	return nil
 }
 
 // getKubeadmConfig generates the kubeadm config contents for the cluster

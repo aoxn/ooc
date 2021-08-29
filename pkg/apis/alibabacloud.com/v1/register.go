@@ -13,17 +13,17 @@ const (
 
 // PodTerminator constants
 const (
-	ClusterKind         = "Cluster"
-	ClusterName         = "cluster"
-	ClusterNamePlural   = "clusters"
-	MasterKind          = "Master"
-	MasterSetKind       = "MasterSet"
-	MasterName          = "master"
-	MasterNamePlural    = "masters"
+	ClusterKind       = "Cluster"
+	ClusterName       = "cluster"
+	ClusterNamePlural = "clusters"
+	MasterKind        = "Master"
+	MasterSetKind     = "MasterSet"
+	MasterName        = "master"
+	MasterNamePlural  = "masters"
 
-	NodePoolKind          = "NodePool"
-	NodePoolName          = "nodepool"
-	NodePoolPlural        = "nodepools"
+	NodePoolKind   = "NodePool"
+	NodePoolName   = "nodepool"
+	NodePoolPlural = "nodepools"
 
 	MasterSetName       = "masterset"
 	MasterSetNamePlural = "mastersets"
@@ -35,9 +35,9 @@ const (
 var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: version}
 
 var (
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-   ParameterCodec = runtime.NewParameterCodec(Scheme)
+	Scheme         = runtime.NewScheme()
+	Codecs         = serializer.NewCodecFactory(Scheme)
+	ParameterCodec = runtime.NewParameterCodec(Scheme)
 )
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind

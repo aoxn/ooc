@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
+
 var (
 	defaultCacheDir = filepath.Join(homedir.HomeDir(), ".kube", "http-cache")
 )

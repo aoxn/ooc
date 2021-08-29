@@ -33,7 +33,7 @@ func TestE2E(t *testing.T) {
 	fmt.Printf(fmt.Sprintf("%x\n", me))
 
 	zero := big.NewInt(0)
-	fmt.Printf("%t\n", zero.String()=="0")
+	fmt.Printf("%t\n", zero.String() == "0")
 	fmt.Printf(fmt.Sprintf("%x\n", zero))
 
 }

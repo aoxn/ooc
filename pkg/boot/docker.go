@@ -44,14 +44,14 @@ func initDocker(
 		[]file.File{
 			{
 				VersionedPath: file.Path{
-					Project: "ack",
-					Pkg:     file.PKG_DOCKER,
-					CType:   cfg.CloudType,
-					Ftype:   file.FILE_BINARY,
-					OS:      os,
-					Arch:    arch,
-					Namespace:  cfg.Namespace,
-					Version: cfg.Runtime.Version,
+					Project:   "ack",
+					Pkg:       file.PKG_DOCKER,
+					CType:     cfg.CloudType,
+					Ftype:     file.FILE_BINARY,
+					OS:        os,
+					Arch:      arch,
+					Namespace: cfg.Namespace,
+					Version:   cfg.Runtime.Version,
 				},
 			},
 		},

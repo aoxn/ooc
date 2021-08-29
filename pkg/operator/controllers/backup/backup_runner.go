@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aoxn/ooc/pkg/actions/etcd"
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
+	prvd "github.com/aoxn/ooc/pkg/iaas/provider"
 	h "github.com/aoxn/ooc/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -13,7 +13,6 @@ import (
 	"k8s.io/klog/v2"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,10 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-func NewSnapshot(
-	prvd provider.Interface,
-) *Snapshot {
-	recon := &Snapshot{ prvd: prvd, lock: &sync.RWMutex{}}
+func NewSnapshot() *Snapshot {
+	recon := &Snapshot{lock: &sync.RWMutex{}}
 	return recon
 }
 
@@ -32,10 +29,9 @@ var _ manager.Runnable = &Snapshot{}
 
 type Snapshot struct {
 	lock   *sync.RWMutex
-	prvd   provider.Interface
 	cache  cache.Cache
 	client client.Client
-	index  *h.Index
+	index  *prvd.Indexer
 	//record event recorder
 	record record.EventRecorder
 }
@@ -55,12 +51,12 @@ func (s *Snapshot) Start(ctx context.Context) error {
 	if !s.cache.WaitForCacheSync(ctx) {
 		return fmt.Errorf("wait for cache sync failed")
 	}
-	if err := s.initialize();err != nil {
+	if err := s.initialize(); err != nil {
 		return errors.Wrap(err, "start snapshot")
 	}
 	klog.Info("snapshot index data: ")
-	fmt.Printf(s.index.String())
-	go wait.Forever(s.CleanUp, 10 * time.Minute)
+	fmt.Printf(s.index.Index().String())
+	go wait.Forever(s.CleanUp, 10*time.Minute)
 	klog.Infof("snapshot controller started... ")
 
 	backup := func() {
@@ -69,7 +65,7 @@ func (s *Snapshot) Start(ctx context.Context) error {
 			klog.Errorf("backup etcd: %s", err.Error())
 		}
 	}
-	wait.Forever(backup, 10 *time.Minute)
+	wait.Forever(backup, 10*time.Minute)
 	return nil
 }
 
@@ -78,54 +74,24 @@ func (s *Snapshot) initialize() error {
 	if err != nil {
 		return fmt.Errorf("member: spec not found,%s", err.Error())
 	}
-
-	s.index = h.NewIndex(spec.Spec.ClusterID)
-	oc, err := s.prvd.GetObject(s.index.IndexLocation())
+	ctx, err := prvd.NewContext(&api.OocOptions{}, &spec.Spec)
 	if err != nil {
-		if strings.Contains(
-			err.Error(), "NoSuchKey",
-		) {
-			// empty backup index information
-			klog.Infof("no index.json found, default empty")
-			return nil
-		}
-		return errors.Wrapf(err, "get index for %s", spec.Spec.ClusterID)
+		return errors.Wrapf(err, "new provider context")
 	}
-	return s.index.LoadIndex(oc)
+	s.index = ctx.Indexer()
+	return s.index.LoadIndex(spec.Spec.ClusterID)
 }
-
-const KEEP_COPIES_CNT = 4
 
 func (s *Snapshot) CleanUp() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if len(s.index.Copies) <= KEEP_COPIES_CNT {
-		return
+	klog.Infof("start gc backups: %s", s.index.Index().Name)
+	err := s.index.BackupGC(s.index.Index().Name)
+	if err != nil {
+		klog.Errorf("gc backup fail: %s", err.Error())
 	}
-	s.index.SortBackups()
-	deleted := false
-	var bck []h.Backup
-	for k, backup := range s.index.Copies {
-		if k < KEEP_COPIES_CNT {
-			bck = append(bck, backup)
-			continue
-		}
-		deleted = true
-		err := s.prvd.DeleteObject(s.index.Path(backup))
-		klog.Infof("remove etcd backup copies: %s, %v",s.index.Path(backup), err)
-	}
-	if deleted {
-		s.index.Copies = bck
-		err := s.prvd.PutObject(s.index.Bytes(),s.index.IndexLocation())
-		if err != nil {
-			klog.Errorf("clean up, put index object fail: %s", err.Error())
-		}
-	}
-	klog.Infof("clean up backups: %d", len(s.index.Copies))
-	return
 }
-
 
 func (s *Snapshot) doBackup() error {
 	s.lock.Lock()
@@ -143,24 +109,20 @@ func (s *Snapshot) doBackup() error {
 	if err != nil {
 		return fmt.Errorf("new etcd: %s", err.Error())
 	}
-	now := h.HourNow()
-	src := filepath.Join("/tmp",now,"snapshot.db")
+
+	src := filepath.Join(prvd.SnapshotTMP)
 	err = metcd.Snapshot(src)
 	if err != nil {
 		return errors.Wrap(err, "snapshot etcd")
 	}
-	backup := h.Backup{Identity: h.HourNow()}
-	klog.Infof("trying to backup etcd to oss: [%s]", s.index.Path(backup))
-	err = s.prvd.PutFile(src, s.index.Path(backup))
+	mid, err := s.index.Get(spec.Spec.ClusterID)
 	if err != nil {
-		return errors.Wrapf(err, "put file: %s", src)
+		return errors.Wrap(err, "load cluster id")
 	}
-	s.index.Copies = append(s.index.Copies, backup)
-	s.index.Spec   = spec
-	err = s.prvd.PutObject(s.index.Bytes(),s.index.IndexLocation())
+	mid.Spec.Cluster = spec.Spec
+	err = s.index.Save(mid)
 	if err != nil {
-		return errors.Wrapf(err, "put index object: %s", src)
+		return errors.Wrapf(err, "save cluster spec")
 	}
-	klog.Infof("backup etcd finished: %s", s.index.Path(backup))
-	return nil
+	return s.index.Backup(spec.Spec)
 }

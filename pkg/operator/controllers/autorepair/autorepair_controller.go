@@ -41,7 +41,7 @@ func AddAutoRepairController(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
 ) error {
-	return add(mgr, newReconciler(mgr,ctx))
+	return add(mgr, newReconciler(mgr, ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -165,7 +165,7 @@ func (r *ReconcileAutoRepair) Reconcile(ctx context.Context, request reconcile.R
 	//}
 
 	notReady, reason := utils.KubeletNotReady(node)
-	if ! notReady {
+	if !notReady {
 		// node is ready. return immediately
 		return reconcile.Result{}, nil
 	}
@@ -196,10 +196,10 @@ func (r *ReconcileAutoRepair) fixKubeletNotReady(node *corev1.Node) (reconcile.R
 			klog.Infof("restart a previous completed task immediately")
 			return reconcile.Result{}, restartTask(r.client, vtask)
 		case acv1.PhaseFailed:
-			klog.Infof("task has failed previously, " +
+			klog.Infof("task has failed previously, "+
 				"wait for %f minutes to restart", RestartInterval/time.Minute)
 			if taskNeedRestart(tasks, vtask) {
-				klog.Infof("try to restart failed task after " +
+				klog.Infof("try to restart failed task after "+
 					"failing for %f minutes, %s", vtask.Name, RestartInterval/time.Minute)
 				return reconcile.Result{}, restartTask(r.client, vtask)
 			}
@@ -338,7 +338,7 @@ func isManagedNodePool(rclient client.Client, node *corev1.Node) (bool, string) 
 	err := rclient.Get(
 		context.TODO(),
 		client.ObjectKey{
-			Name:      id,
+			Name: id,
 		}, pool,
 	)
 	if err != nil {

@@ -45,7 +45,7 @@ func AddTaskController(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
 ) error {
-	return add(mgr, newReconciler(mgr,ctx))
+	return add(mgr, newReconciler(mgr, ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -70,12 +70,12 @@ func newReconciler(
 	}
 
 	return &ReconcileTask{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		drain:  drainer,
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		drain:     drainer,
 		sharedCtx: ctx,
-		prvd:   ctx.ProvdIAAS(),
-		recd:   mgr.GetEventRecorderFor("task-controller"),
+		prvd:      ctx.ProvdIAAS(),
+		recd:      mgr.GetEventRecorderFor("task-controller"),
 	}
 }
 

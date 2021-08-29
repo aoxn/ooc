@@ -21,7 +21,7 @@ import (
 
 // NewCommand returns a new cobra.Command for cluster creation
 func NewCommand() *cobra.Command {
-	flags := &operator.Flagpole{}
+	flags := &v1.OperatorFlag{}
 	cmd := &cobra.Command{
 		Use:   "operator",
 		Short: "Kubernetes cluster operator",
@@ -42,9 +42,13 @@ func NewCommand() *cobra.Command {
 	return cmd
 }
 
-func runE(flags *operator.Flagpole, cmd *cobra.Command, args []string) error {
+func runE(flags *v1.OperatorFlag, cmd *cobra.Command, args []string) error {
+	opts := &v1.OocOptions{
+		OperatorCFG: *flags,
+	}
+
 	klog.Infof("try start operator at [%s]", flags.BindAddr)
-	server := operator.NewOperatorServer(flags)
+	server := operator.NewOperatorServer(opts)
 	err := server.Start()
 	if err != nil {
 		panic(fmt.Sprintf("run apiserver: %s", err.Error()))

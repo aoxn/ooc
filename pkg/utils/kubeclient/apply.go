@@ -29,6 +29,7 @@ import (
 	"os"
 	"time"
 )
+
 const (
 	// maxPatchRetry is the maximum number of conflicts retry
 	// for during a patch operation before returning failure
@@ -57,12 +58,12 @@ func BuildClientGetter(
 	return NewClientGetter(apicfg)
 }
 
-func ApplyInCluster(yml string) error{
-	return doApply(bytes.NewBufferString(yml),"")
+func ApplyInCluster(yml string) error {
+	return doApply(bytes.NewBufferString(yml), "")
 }
 
-func ApplyWithKubeconfig(yml,kubeconfig string) error {
-	return doApply(bytes.NewBufferString(yml),kubeconfig)
+func ApplyWithKubeconfig(yml, kubeconfig string) error {
+	return doApply(bytes.NewBufferString(yml), kubeconfig)
 }
 
 func doApply(
@@ -97,63 +98,63 @@ func doApply(
 
 	return r.Visit(
 		func(info *resource.Info, err error) error {
-		if err != nil {
-			return fmt.Errorf("visit object: %s, info=%v", err.Error(), info)
-		}
-		// Get the modified configuration of the object. Embed the result
-		// as an annotation in the modified configuration, so that it will appear
-		// in the patch sent to the server.
-		modified, err := GetModifiedConfiguration(
-			info.Object, true, unstructured.UnstructuredJSONScheme,
-		)
-		if err != nil {
-			return cmdutil.AddSourceToErr(
-				fmt.Sprintf("retrieving modified configuration from:\n%v\nfor:", info),
-				info.Source, err,
+			if err != nil {
+				return fmt.Errorf("visit object: %s, info=%v", err.Error(), info)
+			}
+			// Get the modified configuration of the object. Embed the result
+			// as an annotation in the modified configuration, so that it will appear
+			// in the patch sent to the server.
+			modified, err := GetModifiedConfiguration(
+				info.Object, true, unstructured.UnstructuredJSONScheme,
 			)
-		}
-
-		if err := info.Get(); err != nil {
-			if !errors.IsNotFound(err) {
+			if err != nil {
 				return cmdutil.AddSourceToErr(
-					fmt.Sprintf("retrieving current configuration of:\n%v\nfrom server for:", info),
+					fmt.Sprintf("retrieving modified configuration from:\n%v\nfor:", info),
 					info.Source, err,
 				)
 			}
-			if err := createAndRefresh(info); err != nil {
-				return cmdutil.AddSourceToErr("creating", info.Source, err)
-			}
-			return nil
-		}
-		dClient, err := f.DynamicClient()
-		if err != nil {
-			return err
-		}
-		helper := resource.NewHelper(info.Client, info.Mapping)
-		patcher := &patcher{
-			// encoder:       encoder,
-			// decoder:       decoder,
-			mapping:       info.Mapping,
-			helper:        helper,
-			dynamicClient: dClient,
-			overwrite:     true,
-			backOff:       clockwork.NewRealClock(),
-			force:         true,
-			cascade:       true,
-			timeout:       30 * time.Second,
-			gracePeriod:   30,
-			openapiSchema: nil,
-		}
-		patchBytes, patchedObject, err := patcher.patch(info.Object, modified, info.Source, info.Namespace, info.Name, os.Stderr)
-		if err != nil {
-			return cmdutil.AddSourceToErr(
-				fmt.Sprintf("applying patch:\n%s\nto:\n%v\nfor:", patchBytes, info),
-				info.Source, err,
-			)
-		}
 
-		return info.Refresh(patchedObject, true)
-	})
+			if err := info.Get(); err != nil {
+				if !errors.IsNotFound(err) {
+					return cmdutil.AddSourceToErr(
+						fmt.Sprintf("retrieving current configuration of:\n%v\nfrom server for:", info),
+						info.Source, err,
+					)
+				}
+				if err := createAndRefresh(info); err != nil {
+					return cmdutil.AddSourceToErr("creating", info.Source, err)
+				}
+				return nil
+			}
+			dClient, err := f.DynamicClient()
+			if err != nil {
+				return err
+			}
+			helper := resource.NewHelper(info.Client, info.Mapping)
+			patcher := &patcher{
+				// encoder:       encoder,
+				// decoder:       decoder,
+				mapping:       info.Mapping,
+				helper:        helper,
+				dynamicClient: dClient,
+				overwrite:     true,
+				backOff:       clockwork.NewRealClock(),
+				force:         true,
+				cascade:       true,
+				timeout:       30 * time.Second,
+				gracePeriod:   30,
+				openapiSchema: nil,
+			}
+			patchBytes, patchedObject, err := patcher.patch(info.Object, modified, info.Source, info.Namespace, info.Name, os.Stderr)
+			if err != nil {
+				return cmdutil.AddSourceToErr(
+					fmt.Sprintf("applying patch:\n%s\nto:\n%v\nfor:", patchBytes, info),
+					info.Source, err,
+				)
+			}
+
+			return info.Refresh(patchedObject, true)
+		})
 }
 
 var metadataAccessor = meta.NewAccessor()
@@ -209,7 +210,6 @@ func GetModifiedConfiguration(obj runtime.Object, annotate bool, codec runtime.E
 
 	return modified, nil
 }
-
 
 // GetOriginalConfiguration retrieves the original configuration of the object
 // from the annotation, or nil if no annotation was found.
@@ -355,7 +355,7 @@ func (p *patcher) patchSimple(
 		return patch, obj, nil
 	}
 
-	patchedObj, err := p.helper.Patch(namespace, name, patchType, patch,  &metav1.PatchOptions{})
+	patchedObj, err := p.helper.Patch(namespace, name, patchType, patch, &metav1.PatchOptions{})
 	return patch, patchedObj, err
 }
 
@@ -411,8 +411,8 @@ func (p *patcher) deleteAndCreate(
 		// but still propagate and advertise error to user
 		recreated, recreateErr := p.helper.Create(namespace, true, original)
 		if recreateErr != nil {
-			err = fmt.Errorf("An error occurred force-replacing the existing " +
-				"object with the newly provided one:\n\n%v.\n\nAdditionally, an error " +
+			err = fmt.Errorf("An error occurred force-replacing the existing "+
+				"object with the newly provided one:\n\n%v.\n\nAdditionally, an error "+
 				"occurred attempting to restore the original object:\n\n%v\n", err, recreateErr)
 		} else {
 			createdObject = recreated
@@ -420,17 +420,6 @@ func (p *patcher) deleteAndCreate(
 	}
 	return modified, createdObject, err
 }
-
-
-
-
-
-
-
-
-
-
-
 
 //func applyOneObject(info *resource.Info) error {
 //

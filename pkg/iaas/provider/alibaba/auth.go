@@ -1,4 +1,3 @@
-
 /*
 Copyright 2018 The Kubernetes Authors.
 
@@ -15,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dev
+package alibaba
 
 import (
 	b64 "encoding/base64"
@@ -53,7 +52,7 @@ type ProviderConfig struct {
 	Region       string `json:"region,omitempty" protobuf:"bytes,2,opt,name=region"`
 	AccessKey    string `json:"accessKey,omitempty" protobuf:"bytes,2,opt,name=accessKey"`
 	AccessSecret string `json:"accessSecret,omitempty" protobuf:"bytes,2,opt,name=accessSecret"`
-	UID 		 string `json:"uid,omitempty" protobuf:"bytes,2,opt,name=uid"`
+	UID          string `json:"uid,omitempty" protobuf:"bytes,2,opt,name=uid"`
 }
 
 var CFG = &ProviderConfig{}
@@ -68,7 +67,7 @@ func init() {
 
 // NewClientMgr return a new client manager
 func NewClientAuth() *ClientAuth {
-	eclient, err := ecs.NewClientWithAccessKey("cn-hangzhou","key", "secret")
+	eclient, err := ecs.NewClientWithAccessKey("cn-hangzhou", "key", "secret")
 	if err != nil {
 		panic(errors.Wrap(err, "new client auth"))
 	}
@@ -122,7 +121,7 @@ func (mgr *ClientAuth) Start(
 	)
 }
 
-func LoadCfg(cfg string) error{
+func LoadCfg(cfg string) error {
 	content, err := ioutil.ReadFile(cfg)
 	if err != nil {
 		return fmt.Errorf("read config file: %s", content)
@@ -241,7 +240,7 @@ func (f *ServiceToken) NextToken() (*Token, error) {
 	if err == nil {
 		return token, nil
 	}
-	return nil, fmt.Errorf("unmarshal Token: %s, %s, %s", err.Error(), status.Stdout,status.Stderr)
+	return nil, fmt.Errorf("unmarshal Token: %s, %s, %s", err.Error(), status.Stdout, status.Stderr)
 }
 
 // IMetaData metadata interface
@@ -378,4 +377,3 @@ func (m *fakeMetaData) RamRoleToken(role string) (metadata.RoleAuth, error) {
 
 	return m.base.RamRoleToken(role)
 }
-

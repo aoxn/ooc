@@ -43,7 +43,6 @@ import (
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
 )
 
-
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func AddMaster(
@@ -109,7 +108,6 @@ func addMaster(mgr manager.Manager, r reconcile.Reconciler) error {
 // blank assignment to verify that ReconcileRolling implements reconcile.Reconciler
 var _ reconcile.Reconciler = &NodeReconciler{}
 
-
 // MasterSetReconciler reconciles a NodePool object
 type NodeReconciler struct {
 	drain *drain.Helper
@@ -128,7 +126,7 @@ type NodeReconciler struct {
 
 func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	//klog.Infof("update master cache: %s", req.NamespacedName)
-	m,err := help.Masters(r.client)
+	m, err := help.Masters(r.client)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.

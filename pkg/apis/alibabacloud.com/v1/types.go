@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
@@ -114,38 +115,110 @@ const (
 	KUBERNETES_CLUSTER = "kubernetes-cluster"
 )
 
+type ClusterId struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object metadata.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Spec              ClusterIdSpec
+}
+
+type ClusterIdSpec struct {
+	ResourceId string      `json:"resourceId,omitempty" protobuf:"bytes,1,opt,name=resourceId"`
+	ExtraRIDs  []string    `json:"extraRIDs,omitempty" protobuf:"bytes,2,opt,name=extraRIDs"`
+	CreatedAt  string      `json:"createdAt,omitempty" protobuf:"bytes,3,opt,name=createdAt"`
+	UpdatedAt  string      `json:"updatedAt,omitempty" protobuf:"bytes,4,opt,name=updatedAt"`
+	Options    *OocOptions `json:"options,omitempty" protobuf:"bytes,5,opt,name=options"`
+	Cluster    ClusterSpec `json:"cluster,omitempty" protobuf:"bytes,6,opt,name=cluster"`
+}
+
+type ContextCFG struct {
+	Kind string `json:"kind,omitempty"`
+	// +k8s:conversion-gen=false
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty"`
+
+	// CurrentContext is the name of the context that you would like to use by default
+	CurrentContext string `json:"current-context"`
+
+	// Contexts is a map of referencable names to context configs
+	Contexts  []ContextItem  `json:"contexts"`
+	Providers []ProviderItem `json:"providers"`
+}
+
+type ContextItem struct {
+	Name    string   `json:"name"`
+	Context *Context `json:"context"`
+}
+
+type ProviderItem struct {
+	Name     string    `json:"name"`
+	Provider *Provider `json:"provider"`
+}
+
+type Context struct {
+	ProviderKey string `json:"provider-key"`
+}
+
+func (in *ContextCFG) CurrentPrvdCFG() *Provider {
+	for _, v := range in.Contexts {
+		if v.Name == in.CurrentContext {
+			for _, p := range in.Providers {
+				if p.Name == v.Context.ProviderKey {
+					return p.Provider
+				}
+			}
+		}
+	}
+	// no provider found, should we panic?
+	klog.Errorf("no current provider named [%s] found", in.CurrentContext)
+	return nil
+}
+
+type CommandLineArgs struct {
+	WriteTo      string
+	OutPutFormat string
+}
+
 type OocOptions struct {
 	// Endpoint coordinator bootstrap server endpoint
 	Endpoint string
 	// Role role of nodes.
-	Role string
-	//
+	Role   string
 	Token  string
 	Config string
 
 	// BootType 'local' 'coordinator' ''
 	BootType string
-
-	// ooc command options
-	// Region
-	Region string
 	// Resource type
 	Resource string
 	// TargetCount scale target nodes count
 	TargetCount int
 	ClusterName string
 
-	AccessKeyID  string
-	AccessSecret string
+	// Default is an important data structure which contains Context config
+	Default *ContextCFG
+
 	// Addons install addons
 	// `*` means all.  comma separated
 	Addons string
 
 	//Provider          string
 	ExpectedMasterCnt int
-
 	// RecoverMode
-	RecoverMode  string
+	RecoverMode string
+
+	//OperatorCFG Config
+	OperatorCFG OperatorFlag
+}
+
+type OperatorFlag struct {
+	MetricsAddr  string
+	EnableLeader bool
+	BindAddr     string
+	Token        string
+	MetaConfig   string
+	InitialCount int
 }
 
 // +genclient
@@ -228,22 +301,38 @@ type Network struct {
 }
 
 type BindInfra struct {
-	Image       string   `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
-	Disk        Disk     `json:"disk,omitempty" protobuf:"bytes,2,opt,name=disk"`
-	Secret      Secret   `json:"secret,omitempty" protobuf:"bytes,3,opt,name=secret"`
-	Kernel      Kernel   `json:"kernel,omitempty" protobuf:"bytes,4,opt,name=kernel"`
-	Region      string   `json:"region,omitempty" protobuf:"bytes,5,opt,name=region"`
-	ZoneId      string   `json:"zoneid,omitempty" protobuf:"bytes,6,opt,name=zoneid"`
-	Instance    string   `json:"instance,omitempty" protobuf:"bytes,7,opt,name=instance"`
-	WorkerCount int      `json:"workerCount,omitempty" protobuf:"bytes,8,opt,name=workerCount"`
-	Provider    Provider `json:"provider,omitempty" protobuf:"bytes,9,opt,name=provider"`
-	ResourceId  string   `json:"resourceId,omitempty" protobuf:"bytes,10,opt,name=resourceId"`
+	Image       string    `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
+	Disk        Disk      `json:"disk,omitempty" protobuf:"bytes,2,opt,name=disk"`
+	Secret      Secret    `json:"secret,omitempty" protobuf:"bytes,3,opt,name=secret"`
+	Kernel      Kernel    `json:"kernel,omitempty" protobuf:"bytes,4,opt,name=kernel"`
+	Region      string    `json:"region,omitempty" protobuf:"bytes,5,opt,name=region"`
+	ZoneId      string    `json:"zoneid,omitempty" protobuf:"bytes,6,opt,name=zoneid"`
+	Instance    string    `json:"instance,omitempty" protobuf:"bytes,7,opt,name=instance"`
+	WorkerCount int       `json:"workerCount,omitempty" protobuf:"bytes,8,opt,name=workerCount"`
+	Provider    *Provider `json:"provider,omitempty" protobuf:"bytes,9,opt,name=provider"`
+	ResourceId  string    `json:"resourceId,omitempty" protobuf:"bytes,10,opt,name=resourceId"`
 }
 
 type Provider struct {
+	//Id   string `json:"id" protobuf:"bytes,2,opt,name=id"`
 	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 	// ProviderSource is an iaas provider
 	Value json.RawMessage `json:"value"`
+}
+
+func (in *Provider) Decode(i interface{}) error { return json.Unmarshal(in.Value, i) }
+
+func ToRawMessage(i interface{}) (json.RawMessage, error) {
+	data, err := json.Marshal(i)
+	if err != nil {
+		return nil, errors.Wrap(err, "marshal to raw message")
+	}
+	raw := json.RawMessage{}
+	err = json.Unmarshal(data, &raw)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshal to raw message")
+	}
+	return raw, nil
 }
 
 type Disk struct {
@@ -276,8 +365,6 @@ type CA struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 
-// MasterList is a top-level list type. The client methods for lists are automatically created.
-// You are not supposed to create a separated client for this one.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
@@ -288,28 +375,12 @@ type ClusterList struct {
 
 func NewRecoverCluster(
 	id, region string,
-	keyid, keysec string,
+	prvdCfg *Provider,
 ) *Cluster {
-	cfg := struct {
-		AccessKey    string
-		AccessSecret string
-	}{
-		AccessKey: keyid,
-		AccessSecret: keysec,
-	}
-	mcfg,err := json.Marshal(cfg)
-	if err != nil {
-		klog.Errorf("marshal cfg: %s", err.Error())
-	}
-	raw := json.RawMessage{}
-	err = json.Unmarshal(mcfg, &raw)
-	if err != nil {
-		panic(fmt.Sprintf("should not happen, %s", err.Error()))
-	}
 	return &Cluster{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: "alibabacloud.com/v1",
+			Kind:       ClusterKind,
+			APIVersion: SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes-cluster",
@@ -317,7 +388,7 @@ func NewRecoverCluster(
 		Spec: ClusterSpec{
 			Bind: BindInfra{
 				Region:   region,
-				Provider: Provider{Name: "dev", Value: raw},
+				Provider: prvdCfg,
 			},
 			ClusterID: id,
 		},

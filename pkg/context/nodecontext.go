@@ -45,13 +45,12 @@ func NewNodeContext(
 
 type NodeContext struct{ base.Context }
 
-// metadata for cloud node
 func (c *NodeContext) NodeMetaData() node.Interface {
 	return c.Value(NodeMetaData).(node.Interface)
 }
 
-func (c *NodeContext) ProviderCtx() provider.Interface {
-	return c.Value(ProviderCtx).(provider.Interface)
+func (c *NodeContext) ProviderCtx() *provider.Context {
+	return c.Value(ProviderCtx).(*provider.Context)
 }
 
 // BootNodeClient ooc bootstrap client

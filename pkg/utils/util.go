@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
-	"github.com/docker/distribution/uuid"
+
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"html/template"
 	corev1 "k8s.io/api/core/v1"
 	validate "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cluster-bootstrap/token/util"
 	"k8s.io/klog/v2"
 	"math/big"
 	"net"
@@ -41,7 +38,7 @@ func (e Errors) Error() string {
 	return result
 }
 
-func (e Errors) HasError() error{
+func (e Errors) HasError() error {
 	if len(e) != 0 {
 		return e
 	}
@@ -114,64 +111,6 @@ func RenderConfig(
 	return buff.String(), err
 }
 
-func SetDefaultCredential(spec *v1.ClusterSpec) {
-	if spec.Kubernetes.RootCA == nil {
-		root, err := context.NewKeyCert()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Kubernetes.RootCA = root
-	}
-	if spec.Kubernetes.FrontProxyCA == nil {
-		front, err := context.NewKeyCert()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Kubernetes.FrontProxyCA = front
-	}
-	if spec.Kubernetes.SvcAccountCA == nil {
-		sa, err := context.NewKeyCertForSA()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Kubernetes.SvcAccountCA = sa
-	}
-	if spec.Kubernetes.KubeadmToken == "" {
-		token, err := util.GenerateBootstrapToken()
-		if err != nil {
-			panic(fmt.Sprintf("token generate: %s", err.Error()))
-		}
-		spec.Kubernetes.KubeadmToken = token
-	}
-	if spec.Etcd.ServerCA == nil {
-		serca, err := context.NewKeyCert()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Etcd.ServerCA = serca
-	}
-	if spec.Etcd.PeerCA == nil {
-		serca, err := context.NewKeyCert()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Etcd.PeerCA = serca
-	}
-	if spec.Etcd.InitToken == "" {
-		spec.Etcd.InitToken = uuid.Generate().String()
-	}
-}
-
-func SetDefaultCA(spec *v1.ClusterSpec) {
-	if spec.Kubernetes.RootCA == nil {
-		root, err := context.NewKeyCert()
-		if err != nil {
-			panic("new self signed cert pair fail")
-		}
-		spec.Kubernetes.RootCA = root
-	}
-}
-
 var KubeConfigTpl = `
 apiVersion: v1
 clusters:
@@ -194,7 +133,6 @@ users:
     client-key-data: {{ .ClientKey }}
 `
 
-
 func KubeletNotReady(node *corev1.Node) (bool, string) {
 	cond := findCondition(node.Status.Conditions, corev1.NodeReady)
 	if cond.Type != corev1.NodeReady {
@@ -202,7 +140,7 @@ func KubeletNotReady(node *corev1.Node) (bool, string) {
 		return true, "ConditionNotFound"
 	}
 	if cond.Status == corev1.ConditionFalse ||
-		cond.Status == corev1.ConditionUnknown{
+		cond.Status == corev1.ConditionUnknown {
 		klog.Infof("kubelet in not ready state, wait heartbeat timeout: %s", cond.LastHeartbeatTime)
 	}
 	return (cond.Status == corev1.ConditionFalse ||

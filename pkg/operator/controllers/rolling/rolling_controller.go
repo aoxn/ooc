@@ -29,7 +29,7 @@ func AddRollingController(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
 ) error {
-	return add(mgr, newReconciler(mgr,ctx))
+	return add(mgr, newReconciler(mgr, ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler

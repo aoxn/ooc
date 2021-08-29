@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package runtime
@@ -111,7 +112,7 @@ var cfgs = map[string]string{
 	"/lib/systemd/system/docker.socket":      dockersock,
 	"/etc/containerd/config.toml":            containerdcfg,
 	"/lib/systemd/system/containerd.service": containerdsvc,
-	"/etc/docker/daemon.json":               daemonjson,
+	"/etc/docker/daemon.json":                daemonjson,
 }
 
 var dockerunit = `

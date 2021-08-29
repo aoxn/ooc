@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	defCategories     = []string{"all", "kooper"}
+	defCategories = []string{"all", "kooper"}
 )
 
 // Scope is the scope of a CRD.
@@ -227,4 +227,3 @@ func (c *Client) addDefaultCaregories(categories []string) []string {
 
 	return categories
 }
-

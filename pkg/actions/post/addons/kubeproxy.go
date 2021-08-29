@@ -12,7 +12,7 @@ var KUBEPROXY_WORKER = ConfigTpl{
 	ImageVersion: "v1.16.9-aliyun.1",
 }
 
-var kubeproxyMaster=`
+var kubeproxyMaster = `
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -45,7 +45,7 @@ spec:
         resources: {}
         securityContext:
           privileged: true
-        terminationMessagePath: /dev/termination-log
+        terminationMessagePath: /alibaba/termination-log
         terminationMessagePolicy: File
         env:
         - name: NODE_NAME
@@ -172,7 +172,7 @@ spec:
         resources: {}
         securityContext:
           privileged: true
-        terminationMessagePath: /dev/termination-log
+        terminationMessagePath: /alibaba/termination-log
         terminationMessagePolicy: File
         env:
         - name: NODE_NAME

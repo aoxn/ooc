@@ -2,10 +2,10 @@ package cluster
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"github.com/aoxn/ooc/cmd/ooc/version"
 	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/iaas"
+	"github.com/spf13/cobra"
 )
 
 const HelpLong = `
@@ -37,7 +37,7 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Kubernetes create cluster",
-		Long: HelpLong,
+		Long:  HelpLong,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Printf(version.Logo)
 			//return test(flags,cmd,args)
@@ -49,11 +49,9 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVar(&flags.Config, "config", "", "cluster boot config")
 	//cmd.OocFlags().StringVar(&flags.Options, "provider", "ros", "cluster name, support ros")
 	cmd.Flags().StringVar(&flags.ClusterName, "name", "", "cluster name")
-	cmd.Flags().StringVar(&flags.Region, "region", "", "region")
 	return cmd
 }
 
-// NewCommand returns a new cobra.Command for cluster creation
 func NewCommandDelete() *cobra.Command {
 	flags := &v1.OocOptions{}
 	cmd := &cobra.Command{
@@ -61,7 +59,6 @@ func NewCommandDelete() *cobra.Command {
 		Short: "Kubernetes delete --resource cluster --name clusterid --provider ros",
 		Long:  "kubernetes delete cluster. configuration management, lifecycle management",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			//return test(flags,cmd,args)
 			return delete(flags)
 		},
@@ -79,7 +76,6 @@ func NewCommandScale() *cobra.Command {
 		Short: "Kubernetes scale --resource cluster --name clusterid --target-count 3",
 		Long:  "kubernetes scale cluster. configuration management, lifecycle management",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			//return test(flags,cmd,args)
 			return scale(flags)
 		},
@@ -98,7 +94,6 @@ func NewCommandWatch() *cobra.Command {
 		Short: "Kubernetes watch --resource cluster --name clusterid ",
 		Long:  "kubernetes watch cluster. configuration management, lifecycle management",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			//return test(flags,cmd,args)
 			return watch(flags)
 		},
@@ -108,50 +103,30 @@ func NewCommandWatch() *cobra.Command {
 	return cmd
 }
 
-// NewCommandKubeConfig generate kubeconfig
-func NewCommandKubeConfig() *cobra.Command {
-	flags := &v1.OocOptions{}
-	cmd := &cobra.Command{
-		Use:   "kubeconfig",
-		Short: "Kubernetes kubeconfig --name clusterid ",
-		Long:  "kubernetes kubeconfig generate kubeconfig file for cluster {clusterid}",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			//return test(flags,cmd,args)
-			return kubeconfig(flags)
-		},
-	}
-	cmd.Flags().StringVar(&flags.ClusterName, "name", "", "cluster name")
-	return cmd
-}
-// NewCommand returns a new cobra.Command for cluster creation
+var cmdLine = v1.CommandLineArgs{}
+
 func NewCommandGet() *cobra.Command {
 	flags := &v1.OocOptions{}
 	cmd := &cobra.Command{
 		Use:   "get",
-		Short: "Kubernetes watch --resource cluster --name clusterid ",
-		Long:  "kubernetes watch cluster. configuration management, lifecycle management",
+		Short: "Kubernetes get -r cluster -n clusterid ",
+		Long:  "kubernetes get cluster information. ",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			//return test(flags,cmd,args)
 			return get(flags)
 		},
 	}
-	cmd.Flags().StringVar(&flags.Resource, "resource", "cluster", "resource eg. cluster")
-	cmd.Flags().StringVar(&flags.ClusterName, "name", "", "cluster name")
+	cmd.Flags().StringVarP(&flags.Resource, "resource", "r", "cluster", "resource eg. [cluster|kubeconfig|backup]")
+	cmd.Flags().StringVarP(&flags.ClusterName, "name", "n", "", "cluster name")
+	cmd.Flags().StringVarP(&cmdLine.WriteTo, "write-to", "w", "", "write config file to the specified destination")
+	cmd.Flags().StringVarP(&cmdLine.OutPutFormat, "output", "o", "", "output format [yaml|json]")
 	return cmd
 }
 
-func get(flags *v1.OocOptions) error    { return iaas.Get(flags.ClusterName) }
+func get(flags *v1.OocOptions) error    { return iaas.Get(flags, &cmdLine) }
 func create(flags *v1.OocOptions) error { return iaas.Create(flags) }
-func delete(flags *v1.OocOptions) error { return iaas.Delete(flags.ClusterName, flags.Region) }
+func delete(flags *v1.OocOptions) error { return iaas.Delete(flags, flags.ClusterName) }
 func scale(flags *v1.OocOptions) error {
-	return iaas.Scale(flags.ClusterName, flags.TargetCount)
+	return iaas.Scale(flags, flags.ClusterName, flags.TargetCount)
 }
-func watch(flags *v1.OocOptions) error { return iaas.WatchResult(flags.ClusterName) }
-
-func kubeconfig(flags *v1.OocOptions) error {
-	if flags.ClusterName == "" {
-		return fmt.Errorf("cluster name must be provided with --name")
-	}
-	return iaas.KubeConfig(flags.ClusterName)
-}
+func watch(flags *v1.OocOptions) error { return iaas.WatchResult(flags, flags.ClusterName) }

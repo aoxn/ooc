@@ -3,9 +3,9 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"github.com/ghodss/yaml"
 	"github.com/aoxn/ooc/pkg/actions"
 	v12 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	"github.com/ghodss/yaml"
 	"html/template"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"

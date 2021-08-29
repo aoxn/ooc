@@ -83,14 +83,14 @@ func NewConcurrentPkgDL(
 				[]file.File{
 					{
 						VersionedPath: file.Path{
-							Namespace:  cfg.Namespace,
-							Version: cfg.Kubernetes.Version,
-							Pkg:     file.PKG_KUBERNETES,
-							CType:   cfg.CloudType,
-							Ftype:   file.FILE_BINARY,
-							Project: "ack",
-							OS:      os,
-							Arch:    arch,
+							Namespace: cfg.Namespace,
+							Version:   cfg.Kubernetes.Version,
+							Pkg:       file.PKG_KUBERNETES,
+							CType:     cfg.CloudType,
+							Ftype:     file.FILE_BINARY,
+							Project:   "ack",
+							OS:        os,
+							Arch:      arch,
 						},
 						CacheDir: fmt.Sprintf("pkg/%s/", file.PKG_KUBERNETES),
 					},
@@ -100,7 +100,7 @@ func NewConcurrentPkgDL(
 				[]file.File{
 					{
 						VersionedPath: file.Path{
-							Namespace:      cfg.Namespace,
+							Namespace:   cfg.Namespace,
 							Version:     "0.8.6",
 							Pkg:         file.PKG_CNI,
 							CType:       cfg.CloudType,

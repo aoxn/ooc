@@ -1,17 +1,15 @@
 package utils
 
-
 func DefaultImage(id string) string {
-	if id != ""{
+	if id != "" {
 		return id
 	}
 	return ""
 }
 
-
 const (
-	BootTypeLocal 	 = "local"
+	BootTypeLocal    = "local"
 	BootTypeRecover  = "recover"
-	BootTypeCoord 	 = "coordinator"
+	BootTypeCoord    = "coordinator"
 	BootTypeOperator = "operator"
 )

@@ -3,40 +3,85 @@ package provider
 import (
 	"fmt"
 	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ooc/pkg/utils/cmd"
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	"io/ioutil"
 	"k8s.io/klog/v2"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
-type Id struct {
-	Name       string
-	ResourceId string
-	ExtraRIDs  []string
-	CreatedAt  string
-	UpdatedAt  string
-	Options    *v1.OocOptions
-}
-
-func (i *Id) String() string {
-	return fmt.Sprintf("id://%s/%s/%s", i.ResourceId, i.Name, i.UpdatedAt)
-}
-
 func NewContext(
-	spec *v1.ClusterSpec,
-) *Context {
-	return NewOocContext(&v1.OocOptions{}, spec)
+	options *v1.OocOptions, spec *v1.ClusterSpec,
+) (*Context, error) {
+	mctx := &Context{}
+	mctx.SetKV("BootCFG", spec)
+	return mctx, mctx.Initialize(options)
 }
 
-func NewOocContext(
-	cfg *v1.OocOptions,
-	spec *v1.ClusterSpec,
-) *Context {
-	ctx := &Context{}
-	ctx.SetKV("BootCFG", spec)
-	ctx.SetKV("OocOptions", cfg)
-	return ctx
+func NewEmptyContext(spec *v1.ClusterSpec) *Context {
+	mctx := &Context{}
+	mctx.SetKV("BootCFG", spec)
+	return mctx
 }
 
 type Context struct{ sync.Map }
+
+func (n *Context) Initialize(opts *v1.OocOptions) error {
+	n.SetKV("OocOptions", opts)
+	if opts.Default == nil {
+		opts.Default = BuildContexCFG(n.BootCFG())
+	}
+	dprvd := opts.Default.CurrentPrvdCFG()
+	if opts.Config != "" {
+		bootcfg, err := LoadBootCFG(opts.Config)
+		if err != nil {
+			return fmt.Errorf("load bootcfg: %s", err.Error())
+		}
+		if bootcfg.Bind.Provider == nil {
+			bootcfg.Bind.Provider = dprvd
+		}
+		// cluster config provider is in higher priority
+		dprvd = bootcfg.Bind.Provider
+		n.SetKV("BootCFG", bootcfg)
+		klog.Infof("use command line config "+
+			"as bootconfig: [%s] with provider[%s]", opts.Config, dprvd.Name)
+	}
+
+	// GetProvider will return error if bootcfg.BindInfra.Options.Name is not correct
+	pvd := GetProvider(dprvd.Name)
+	if pvd == nil {
+		return fmt.Errorf("unexpected nil provider: %s", dprvd.Name)
+	}
+	err := pvd.Initialize(n)
+	if err != nil {
+		return fmt.Errorf("initialize provider: %s", err.Error())
+	}
+	n.SetKV("Provider", pvd)
+	n.SetKV("Indexer", NewIndexer(pvd))
+	return nil
+}
+
+func (n *Context) Indexer() *Indexer {
+	val, ok := n.Load("Indexer")
+	if !ok {
+		klog.Infof("Indexer not found")
+		return nil
+	}
+	return val.(*Indexer)
+}
+
+func (n *Context) Provider() Interface {
+	val, ok := n.Load("Provider")
+	if !ok {
+		klog.Infof("Provider not found")
+		return val.(Interface)
+	}
+	return val.(Interface)
+}
 
 func (n *Context) BootCFG() *v1.ClusterSpec {
 	val, ok := n.Load("BootCFG")
@@ -67,7 +112,7 @@ func (n *Context) Stack() map[string]Value {
 
 func (n *Context) WithStack(
 	stack map[string]Value,
-)*Context {
+) *Context {
 	n.SetKV("Stack", stack)
 	return n
 }
@@ -90,16 +135,18 @@ func GetProvider(key string) Interface {
 }
 
 type Interface interface {
+	Storage
 	Resource
 	Scaling
-	BucketOSS
+	ObjectStorage
 	NodeOperation
-	LocalCache
 	NodeGroup
+	RunCommand(ctx *Context, cmd string) error
 	Initialize(ctx *Context) error
-	Create(ctx *Context) (*Id, error)
-	WatchResult(ctx *Context, id *Id) error
-	Delete(ctx *Context, id *Id) error
+	Create(ctx *Context) (*v1.ClusterId, error)
+	Recover(ctx *Context, id *v1.ClusterId) (*v1.ClusterId, error)
+	WatchResult(ctx *Context, id *v1.ClusterId) error
+	Delete(ctx *Context, id *v1.ClusterId) error
 }
 
 // Value parameters or outputs for provider interface
@@ -109,17 +156,18 @@ type Interface interface {
 // Every provider could interpret it by themselves
 type Value struct {
 	// Key
-	Key 	string
+	Key string
 	// Val
-	Val   	interface{}
+	Val interface{}
 }
 
 type Option struct {
-	Action 	string
-	Value   Value
+	Action string
+	Value  Value
 }
 
-type BucketOSS interface {
+type ObjectStorage interface {
+	CreateBucket(name string) error
 	GetFile(src, dst string) error
 	PutFile(src, dst string) error
 	DeleteObject(f string) error
@@ -128,17 +176,17 @@ type BucketOSS interface {
 }
 
 type Resource interface {
-	GetStackOutPuts(ctx *Context, id *Id) (map[string]Value, error)
-	GetInfraStack(ctx *Context, id *Id) (map[string]Value, error)
+	GetStackOutPuts(ctx *Context, id *v1.ClusterId) (map[string]Value, error)
+	GetInfraStack(ctx *Context, id *v1.ClusterId) (map[string]Value, error)
 }
 
 type Scaling interface {
 	// ModifyScalingConfig etc. UserData
-	ModifyScalingConfig(ctx *Context, gid string,opt... Option) error
+	ModifyScalingConfig(ctx *Context, gid string, opt ...Option) error
 
 	ScalingGroupDetail(ctx *Context, gid string, opt Option) (ScaleGroupDetail, error)
 
-	ScaleNodeGroup(ctx *Context,gid string, desired int) error
+	ScaleNodeGroup(ctx *Context, gid string, desired int) error
 
 	ScaleMasterGroup(ctx *Context, gid string, desired int) error
 
@@ -154,35 +202,126 @@ type NodeGroup interface {
 }
 
 type NodeOperation interface {
-
-	TagECS(ctx *Context, id string, val... Value) error
+	TagECS(ctx *Context, id string, val ...Value) error
 
 	RestartECS(ctx *Context, id string) error
 
-	ReplaceSystemDisk(ctx *Context, id string, opt Option) error
+	ReplaceSystemDisk(ctx *Context, id string, userdata string, opt Option) error
 }
-
-type LocalCache interface {
-	Load(ctx *Context) ([]*v1.ClusterSpec, error)
-	Save(ctx *Context, id *Id, n *v1.ClusterSpec) error
-}
-
 
 type ScaleGroupDetail struct {
-	GroupId 	string
-	Instances   map[string]Instance
+	GroupId   string
+	Instances map[string]Instance
 }
 
 type Instance struct {
-	Id 	string
-	Ip  string
+	Id string
+	Ip string
 
-	Tags 	[]Value
+	Tags []Value
 
 	CreatedAt string
 
 	UpdatedAt string
 
 	// Status Stop|Running
-	Status 	  string
+	Status string
+}
+
+func LoadBootCFG(name string) (*v1.ClusterSpec, error) {
+	if name == "" {
+		return nil, fmt.Errorf("cluster config file must be specified with --config")
+	}
+	data, err := ioutil.ReadFile(name)
+	if err != nil {
+		return nil, fmt.Errorf("read boot config file: %s", err.Error())
+	}
+	spec := &v1.ClusterSpec{}
+	if err := yaml.Unmarshal(data, spec); err != nil {
+		return nil, fmt.Errorf("unmarshal bootcfg: %s", err.Error())
+	}
+	return spec, nil
+}
+
+func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
+	home, err := HomeDir()
+	if err != nil {
+		klog.Warningf("failed to find HOME dir by $(pwd ~)")
+	}
+	klog.Infof("use HOME dir: [%s]", home)
+	cacheDir := filepath.Join(home, ".ooc/")
+	/*
+		sequence:
+		1. from local ooc config, ~/.ooc/config
+		2. from cluster spec provider
+	*/
+	mctx := v1.ContextCFG{
+		Kind:       "Config",
+		APIVersion: v1.SchemeGroupVersion.String(),
+	}
+	mfi := filepath.Join(cacheDir, "config")
+	exist, err := utils.FileExist(mfi)
+	if err == nil {
+		if exist {
+			klog.Infof("trying to load context config from: %s", mfi)
+			cfg, err := ioutil.ReadFile(mfi)
+			if err != nil {
+				klog.Warningf("read ooc default config: %s", err.Error())
+			}
+			err = yaml.Unmarshal(cfg, &mctx)
+			if err != nil {
+				klog.Warningf("unmarshal config: %s", err.Error())
+			}
+			if mctx.CurrentContext == "" || len(mctx.Contexts) == 0 {
+				klog.Warningf("no current context "+
+					"or providers section: %s", mctx.CurrentContext, len(mctx.Contexts))
+			}
+		} else {
+			klog.Infof("ooc config[%s] does not exist", mfi)
+		}
+	}
+	if spec != nil {
+		klog.Infof("cluster spec not empty")
+		if spec.Bind.Provider != nil {
+			pkey := "provider01"
+			mctx.Contexts = []v1.ContextItem{
+				{Name: spec.ClusterID, Context: &v1.Context{ProviderKey: pkey}},
+			}
+
+			mctx.Providers = []v1.ProviderItem{
+				{Name: pkey, Provider: spec.Bind.Provider},
+			}
+			mctx.CurrentContext = spec.ClusterID
+			klog.Infof("build context config from cluster spec")
+		} else {
+			klog.Errorf("cluster spec provider not defined, failed to load provider information")
+		}
+	}
+	return &mctx
+}
+
+func HomeDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err == nil {
+		return home, nil
+	}
+	// cloud-init does not have a HOME env on startup
+	// workaround by using $(whoami)
+	klog.Errorf("home dir not found "+
+		"in $HOME: [%s] try command $(whoami)", err.Error())
+	cm := cmd.NewCmd("whoami")
+	result := <-cm.Start()
+	err = cmd.CmdError(result)
+	if err != nil {
+		return "", errors.Wrapf(err, "read home dir by $(pwd ~)")
+	}
+	if len(result.Stdout) <= 0 {
+		klog.Warningf("$(whoami) has no stdand output")
+		return "", nil
+	}
+	who := result.Stdout[0]
+	if who == "root" {
+		return "/root", nil
+	}
+	return fmt.Sprintf("/home/%s", result.Stdout[0]), nil
 }

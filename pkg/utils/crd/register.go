@@ -19,13 +19,13 @@ import (
 )
 
 // RegisterFromInClusterCfg register crds from in cluster config file
-func InitializeCRD(cfg *rest.Config) error{ return doRegisterCRD(cfg) }
+func InitializeCRD(cfg *rest.Config) error { return doRegisterCRD(cfg) }
 
 // RegisterFromKubeconfig register crds from kubeconfig file
 func RegisterFromKubeconfig(name string) error {
 	cfg, err := clientcmd.BuildConfigFromFlags("", name)
 	if err != nil {
-		return fmt.Errorf("register crd: build rest.config, %s",err.Error())
+		return fmt.Errorf("register crd: build rest.config, %s", err.Error())
 	}
 	return doRegisterCRD(cfg)
 }
@@ -55,7 +55,7 @@ func doRegisterCRD(cfg *rest.Config) error {
 
 type CRD interface {
 	Initialize() error
-	GetObject()  runtime.Object
+	GetObject() runtime.Object
 	GetListerWatcher() cache.ListerWatcher
 }
 
@@ -104,7 +104,6 @@ func (p *ClusterCRD) GetListerWatcher() cache.ListerWatcher {
 // GetObject satisfies resource.crd interface (and retrieve.Retriever).
 func (p *ClusterCRD) GetObject() runtime.Object { return &v1.Cluster{} }
 
-
 // MasterCRD is the cluster crd .
 type MasterCRD struct {
 	crdc Interface
@@ -112,7 +111,7 @@ type MasterCRD struct {
 }
 
 func NewMasterCRD(
-//oocClient vcset.Interface,
+	//oocClient vcset.Interface,
 	crdClient Interface,
 ) *MasterCRD {
 	return &MasterCRD{
@@ -157,7 +156,7 @@ type MasterSetCRD struct {
 }
 
 func NewMasterSetCRD(
-//oocClient vcset.Interface,
+	//oocClient vcset.Interface,
 	crdClient Interface,
 ) *MasterSetCRD {
 	return &MasterSetCRD{
@@ -195,14 +194,13 @@ func (p *MasterSetCRD) GetListerWatcher() cache.ListerWatcher {
 // GetObject satisfies resource.crd interface (and retrieve.Retriever).
 func (p *MasterSetCRD) GetObject() runtime.Object { return &v1.MasterSet{} }
 
-
 type NodePoolCRD struct {
 	crdc Interface
 	//ooc vcset.Interface
 }
 
 func NewNodePoolCRD(
-//oocClient vcset.Interface,
+	//oocClient vcset.Interface,
 	crdClient Interface,
 ) *NodePoolCRD {
 	return &NodePoolCRD{
@@ -247,7 +245,7 @@ type RollingCRD struct {
 }
 
 func NewRollingCRD(
-//oocClient vcset.Interface,
+	//oocClient vcset.Interface,
 	crdClient Interface,
 ) *RollingCRD {
 	return &RollingCRD{
@@ -293,7 +291,7 @@ type TaskCRD struct {
 }
 
 func NewTaskCRD(
-//oocClient vcset.Interface,
+	//oocClient vcset.Interface,
 	crdClient Interface,
 ) *TaskCRD {
 	return &TaskCRD{

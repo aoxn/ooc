@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package build
@@ -145,7 +146,7 @@ func (b *build) download() error {
 }
 
 func (b *build) mkExampleDir(home string) error {
-	path := filepath.Join(home,b.pkg.URL_T())
+	path := filepath.Join(home, b.pkg.URL_T())
 	klog.Infof("make dir: %s", path)
 	return os.MkdirAll(path, 0755)
 }
@@ -303,7 +304,7 @@ func BuildOOC(b *BuildContext, m *build) error { return doBuildOOC(b, m.pkg) }
 
 func BuildRunScript(b *BuildContext, m *build) error {
 
-	for _, pro := range []string{"dev", "boot", "replace"} {
+	for _, pro := range []string{"alibaba", "boot", "replace"} {
 		if err := copyRunScript(b, m.pkg, pro); err != nil {
 			return fmt.Errorf("build run script fail: %s", err.Error())
 		}
@@ -370,7 +371,7 @@ func copyRunScript(b *BuildContext, from *file.Path, provider string) error {
 
 	name := fmt.Sprintf("run.%s.sh", provider)
 
-	return f.Upload(&f,fmt.Sprintf("run/%s", name), f.To.URL())
+	return f.Upload(&f, fmt.Sprintf("run/%s", name), f.To.URL())
 }
 
 func doBuild(

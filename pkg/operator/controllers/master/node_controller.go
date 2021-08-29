@@ -44,7 +44,6 @@ import (
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
 )
 
-
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func AddNode(
@@ -112,7 +111,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 // blank assignment to verify that ReconcileRolling implements reconcile.Reconciler
 var _ reconcile.Reconciler = &RepairReconciler{}
 
-
 // MasterSetReconciler reconciles a NodePool object
 type RepairReconciler struct {
 	heal  *heal.MemberHeal
@@ -131,7 +129,7 @@ type RepairReconciler struct {
 }
 
 func (r *RepairReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	n,err := help.Node(r.client, req.Name)
+	n, err := help.Node(r.client, req.Name)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// nothing to do
@@ -139,7 +137,7 @@ func (r *RepairReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 		return ctrl.Result{}, err
 	}
-	if !help.IsMaster(n){
+	if !help.IsMaster(n) {
 		// do not process non-master node
 		return ctrl.Result{}, err
 	}
@@ -147,9 +145,8 @@ func (r *RepairReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		klog.Infof("master node not ready, try meber heal: %s", req.Name)
 		done := make(chan struct{})
 		r.heal.NotifyNodeEvent(done)
-		res := <- done
+		res := <-done
 		klog.Infof("master repair done: %v", res)
 	}
 	return ctrl.Result{}, nil
 }
-

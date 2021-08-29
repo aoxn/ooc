@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package post
@@ -47,12 +48,12 @@ func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	}
 	err := addons.InstallAddons(ctx.Config(), cfgadds)
 	if err != nil {
-		return fmt.Errorf("install addons: %s",err.Error())
+		return fmt.Errorf("install addons: %s", err.Error())
 	}
 
 	err = crd.RegisterFromKubeconfig("/etc/kubernetes/admin.conf")
 	if err != nil {
-		return fmt.Errorf("register crds: %s",err.Error())
+		return fmt.Errorf("register crds: %s", err.Error())
 	}
 	err = WriteClusterInfo(ctx.NodeContext)
 	if err != nil {
@@ -68,7 +69,7 @@ func WriteClusterInfo(ctx *context.NodeContext) error {
 	m := ctx.NodeObject()
 	node := v12.Master{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "Master",
+			Kind:       "Master",
 			APIVersion: v12.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -82,7 +83,7 @@ func WriteClusterInfo(ctx *context.NodeContext) error {
 				utils.PrettyYaml(cfg),
 				utils.PrettyYaml(node),
 			}, "---\n",
-		),"cluster-crd",
+		), "cluster-crd",
 	)
 }
 

@@ -125,7 +125,7 @@ func loadBootCfgOrDie(filen string) *v1.ClusterSpec {
 }
 
 func setDefaultCredential(file string, spec *v1.ClusterSpec) {
-	utils.SetDefaultCredential(spec)
+	boot.SetDefaultCredential(spec)
 	err := ioutil.WriteFile(file, []byte(utils.PrettyYaml(spec)), 0755)
 	if err != nil {
 		panic(fmt.Sprintf("write back file error: %s", err.Error()))

@@ -46,7 +46,6 @@ import (
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
 )
 
-
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, ctx *shared.SharedOperatorContext) error {
@@ -80,7 +79,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		scheme: mgr.GetScheme(),
 		drain:  drainer,
 		//prvd:   ecs.NewProvider(cauth.ECS),
-		recd:   mgr.GetEventRecorderFor("addon-controller"),
+		recd: mgr.GetEventRecorderFor("addon-controller"),
 	}
 }
 
@@ -109,7 +108,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 // blank assignment to verify that ReconcileRolling implements reconcile.Reconciler
 var _ reconcile.Reconciler = &AddonReconciler{}
-
 
 // AddonReconciler reconciles a NodePool object
 type AddonReconciler struct {
@@ -168,7 +166,6 @@ func (r *AddonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, patchAddonPhase(r.client, cluster)
 }
 
-
 func patchAddonPhase(
 	kcli client.Client,
 	spec *api.Cluster,
@@ -176,7 +173,7 @@ func patchAddonPhase(
 	ospec := &api.Cluster{}
 	err := kcli.Get(
 		context.TODO(),
-		client.ObjectKey{ Name: spec.Name}, ospec,
+		client.ObjectKey{Name: spec.Name}, ospec,
 	)
 	if err != nil {
 		return fmt.Errorf("load bootcfg from apiserver: %s", err.Error())

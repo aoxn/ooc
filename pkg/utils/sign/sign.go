@@ -298,17 +298,17 @@ func ParsePrivateKeyPEM(keyData []byte) (interface{}, error) {
 
 		switch privateKeyPemBlock.Type {
 		case "EC PRIVATE KEY":
-			// ECDSA Private Key in ASN.1 format
+			// ECDSA Private Id in ASN.1 format
 			if key, err := x509.ParseECPrivateKey(privateKeyPemBlock.Bytes); err == nil {
 				return key, nil
 			}
 		case "RSA PRIVATE KEY":
-			// RSA Private Key in PKCS#1 format
+			// RSA Private Id in PKCS#1 format
 			if key, err := x509.ParsePKCS1PrivateKey(privateKeyPemBlock.Bytes); err == nil {
 				return key, nil
 			}
 		case "PRIVATE KEY":
-			// RSA or ECDSA Private Key in unencrypted PKCS#8 format
+			// RSA or ECDSA Private Id in unencrypted PKCS#8 format
 			if key, err := x509.ParsePKCS8PrivateKey(privateKeyPemBlock.Bytes); err == nil {
 				return key, nil
 			}

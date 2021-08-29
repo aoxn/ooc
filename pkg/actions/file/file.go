@@ -25,9 +25,9 @@ const (
 
 func wget(f *File) string {
 	if f.BaseServer == "" {
-		f.BaseServer = fmt.Sprintf("http://host-oc-%s.oss-%s-internal.aliyuncs.com/",f.Region, f.Region)
+		f.BaseServer = fmt.Sprintf("http://host-oc-%s.oss-%s-internal.aliyuncs.com/", f.Region, f.Region)
 	}
-	return fmt.Sprintf("%s/%s",f.BaseServer, f.VersionedPath.URI())
+	return fmt.Sprintf("%s/%s", f.BaseServer, f.VersionedPath.URI())
 }
 
 func (f *File) cacheDir() string {
@@ -43,9 +43,9 @@ func withName(path, name string) string {
 }
 
 type File struct {
-	Region      string
-	BaseServer  string
-	CacheDir 	string
+	Region        string
+	BaseServer    string
+	CacheDir      string
 	VersionedPath Path
 }
 
@@ -56,7 +56,7 @@ func (f *File) Download() error {
 	switch f.VersionedPath.OS {
 	case "centos":
 		cm := cmd.NewCmd(
-			"wget",
+			"wget", "--tries", "10", "--no-check-certificate", "-q",
 			wget(f),
 			"-O", withName(f.cacheDir(), f.VersionedPath.Name()),
 		)
@@ -69,7 +69,7 @@ func (f *File) Download() error {
 }
 
 func (f *File) Tar() error {
-	return tar.Tarinate([]string{},"")
+	return tar.Tarinate([]string{}, "")
 }
 
 func (f *File) Untar() error {
@@ -91,7 +91,6 @@ func (f *File) Install() error {
 	}
 	return errs.HasError()
 }
-
 
 func doRPM(f *File) error {
 
@@ -149,7 +148,6 @@ func doBin(f *File) error {
 
 	return nil
 }
-
 
 func NewFile(
 	base string,

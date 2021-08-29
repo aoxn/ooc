@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/aoxn/ooc/pkg/node/meta"
 	alibaba "github.com/aoxn/ooc/pkg/node/meta/alibaba"
+	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {

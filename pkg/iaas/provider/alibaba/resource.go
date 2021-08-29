@@ -1,8 +1,9 @@
-package dev
+package alibaba
 
 import (
 	"encoding/json"
 	"fmt"
+	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/iaas/provider"
 	"github.com/denverdino/aliyungo/common"
 	rosc "github.com/denverdino/aliyungo/ros/standard"
@@ -12,12 +13,12 @@ const (
 	StackID = "StackID"
 )
 
-func (n *Devel) GetStackOutPuts(ctx *provider.Context, id *provider.Id) (map[string]provider.Value, error) {
+func (n *Devel) GetStackOutPuts(ctx *provider.Context, id *api.ClusterId) (map[string]provider.Value, error) {
 
 	if id.Name != "" {
 		resp, err := n.Ros.ListStacks(
 			&rosc.ListStacksRequest{
-				RegionId:common.Region(ctx.BootCFG().Bind.Region),
+				RegionId:  common.Region(n.Cfg.Region),
 				StackName: []string{id.Name},
 			},
 		)
@@ -35,7 +36,7 @@ func (n *Devel) GetStackOutPuts(ctx *provider.Context, id *provider.Id) (map[str
 			for _, stack := range resp.Stacks {
 				if stack.StackName == id.Name {
 					found = true
-					id.ResourceId = stack.StackId
+					id.Spec.ResourceId = stack.StackId
 					break
 				}
 			}
@@ -43,38 +44,37 @@ func (n *Devel) GetStackOutPuts(ctx *provider.Context, id *provider.Id) (map[str
 				return nil, fmt.Errorf("multiple ros stacks by name: %s, count=%d", id.Name, len(resp.Stacks))
 			}
 		} else {
-			id.ResourceId = resp.Stacks[0].StackId
+			id.Spec.ResourceId = resp.Stacks[0].StackId
 		}
 		// continue find stack output by stackid
 	}
-	if id.ResourceId != "" {
+	if id.Spec.ResourceId != "" {
 		resp, err := n.Ros.GetStack(
 			&rosc.GetStackRequest{
-				RegionId:common.Region(ctx.BootCFG().Bind.Region),
-				StackId: id.ResourceId,
+				RegionId: common.Region(n.Cfg.Region),
+				StackId:  id.Spec.ResourceId,
 			},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("list rsource get stack: %s", err.Error())
 		}
-		resp.Outputs = append(resp.Outputs, rosc.Output{OutputKey: StackID, OutputValue: id.ResourceId})
+		resp.Outputs = append(resp.Outputs, rosc.Output{OutputKey: StackID, OutputValue: id.Spec.ResourceId})
 		return toActionMap(resp.Outputs)
 	}
 	return nil, fmt.Errorf("empty stackid: %v", id)
 }
 
-
 func (n *Devel) GetInfraStack(
-	ctx *provider.Context, id  *provider.Id,
+	ctx *provider.Context, id *api.ClusterId,
 ) (map[string]provider.Value, error) {
 	stack := make(map[string]provider.Value)
-	if id.ResourceId == "" {
+	if id.Spec.ResourceId == "" {
 		return stack, fmt.Errorf("EmptyStackID")
 	}
 	resource, err := n.Ros.ListStackResources(
 		&rosc.ListStackResourcesRequest{
-			StackId: id.ResourceId,
-			RegionId: common.Region(ctx.BootCFG().Bind.Region),
+			StackId:  id.Spec.ResourceId,
+			RegionId: common.Region(n.Cfg.Region),
 		},
 	)
 	if err != nil {
@@ -89,7 +89,6 @@ func (n *Devel) GetInfraStack(
 	}
 	return stack, nil
 }
-
 
 func toActionMap(out interface{}) (map[string]provider.Value, error) {
 	mout := make(map[string]provider.Value)
@@ -107,4 +106,3 @@ func toActionMap(out interface{}) (map[string]provider.Value, error) {
 	}
 	return mout, nil
 }
-

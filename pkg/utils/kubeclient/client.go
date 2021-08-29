@@ -52,12 +52,12 @@ func ToClientSet(config *clientcmdapi.Config) (*kubernetes.Clientset, error) {
 
 // CreateOrUpdateSecret creates a Secret if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateSecret(client kubernetes.Interface, secret *v1.Secret) error {
-	if _, err := client.CoreV1().Secrets(secret.ObjectMeta.Namespace).Create(context.TODO(),secret,metav1.CreateOptions{}); err != nil {
+	if _, err := client.CoreV1().Secrets(secret.ObjectMeta.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{}); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("unable to create secret: %v", err)
 		}
 
-		if _, err := client.CoreV1().Secrets(secret.ObjectMeta.Namespace).Update(context.TODO(),secret, metav1.UpdateOptions{}); err != nil {
+		if _, err := client.CoreV1().Secrets(secret.ObjectMeta.Namespace).Update(context.TODO(), secret, metav1.UpdateOptions{}); err != nil {
 			return fmt.Errorf("unable to update secret: %v", err)
 		}
 	}
@@ -67,12 +67,12 @@ func CreateOrUpdateSecret(client kubernetes.Interface, secret *v1.Secret) error 
 // CreateOrUpdateSecret creates a Secret if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateConfigMap(client kubernetes.Interface, cm *v1.ConfigMap) error {
 
-	if _, err := client.CoreV1().ConfigMaps(cm.Namespace).Create(context.TODO(),cm,metav1.CreateOptions{}); err != nil {
+	if _, err := client.CoreV1().ConfigMaps(cm.Namespace).Create(context.TODO(), cm, metav1.CreateOptions{}); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("unable to create configmap: %v", err)
 		}
 
-		if _, err := client.CoreV1().ConfigMaps(cm.ObjectMeta.Namespace).Update(context.TODO(),cm, metav1.UpdateOptions{}); err != nil {
+		if _, err := client.CoreV1().ConfigMaps(cm.ObjectMeta.Namespace).Update(context.TODO(), cm, metav1.UpdateOptions{}); err != nil {
 			return fmt.Errorf("unable to update configmap: %v", err)
 		}
 	}
@@ -111,7 +111,7 @@ func FindSecret(client kubernetes.Interface, namespace, name string) (*v1.Secret
 	secret, err := client.
 		CoreV1().
 		Secrets(namespace).
-		Get(context.TODO(),name, metav1.GetOptions{})
+		Get(context.TODO(), name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, false, nil
 	}
@@ -125,11 +125,11 @@ func FindMasters(client kubernetes.Interface) ([]v1.Node, bool, error) {
 
 	nodes, err := client.
 		CoreV1().Nodes().List(
-			context.TODO(),
-			metav1.ListOptions{
-				LabelSelector: "node-role.kubernetes.io/master",
-			},
-		)
+		context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: "node-role.kubernetes.io/master",
+		},
+	)
 	if apierrors.IsNotFound(err) {
 		return nil, false, nil
 	}
@@ -144,7 +144,7 @@ func FindConfigMap(client kubernetes.Interface, namespace, name string) (*v1.Con
 	cm, err := client.
 		CoreV1().
 		ConfigMaps(namespace).
-		Get(context.TODO(),name, metav1.GetOptions{})
+		Get(context.TODO(), name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, false, nil
 	}

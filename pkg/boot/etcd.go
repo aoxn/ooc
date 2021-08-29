@@ -28,14 +28,14 @@ func InitEtcd(ctx *context.NodeContext) error {
 	files := []file.File{
 		{
 			VersionedPath: file.Path{
-				Namespace:  cfg.Spec.Namespace,
-				Pkg:     file.PKG_ETCD,
-				CType:   cfg.Spec.CloudType,
-				Ftype:   file.FILE_BINARY,
-				Project: "ack",
-				OS:      os,
-				Arch:    arch,
-				Version: cfg.Spec.Etcd.Version,
+				Namespace: cfg.Spec.Namespace,
+				Pkg:       file.PKG_ETCD,
+				CType:     cfg.Spec.CloudType,
+				Ftype:     file.FILE_BINARY,
+				Project:   "ack",
+				OS:        os,
+				Arch:      arch,
+				Version:   cfg.Spec.Etcd.Version,
 			},
 		},
 	}

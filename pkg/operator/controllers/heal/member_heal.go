@@ -6,7 +6,7 @@ import (
 	"github.com/aoxn/ooc/pkg/actions/etcd"
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/dev"
+	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
 	h "github.com/aoxn/ooc/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -28,7 +28,7 @@ type MemberHeal struct {
 	nodes      chan *Event
 	state      string
 	mutex      sync.RWMutex
-	cache 	   cache.Cache
+	cache      cache.Cache
 	client     client.Client
 	prvd       provider.Interface
 }
@@ -61,25 +61,25 @@ func NewMemberHeal(
 
 func (m *MemberHeal) Start(ctx mctx.Context) error {
 	klog.Info("try start member heal")
-	if !m.cache.WaitForCacheSync(ctx){
+	if !m.cache.WaitForCacheSync(ctx) {
 		return fmt.Errorf("member heal wait for cache sync")
 	}
 	if m.stack == nil {
-		spec,err := h.Cluster(m.client, "kubernetes-cluster")
+		spec, err := h.Cluster(m.client, "kubernetes-cluster")
 		if err != nil {
 			return errors.Wrap(err, "find my cluster:")
 		}
 		if spec.Spec.Bind.ResourceId == "" {
 			resource, err := m.prvd.GetStackOutPuts(
-				provider.NewContext(&spec.Spec),
-				&provider.Id{Name: spec.Spec.ClusterID},
+				provider.NewEmptyContext(&spec.Spec),
+				&api.ClusterId{ObjectMeta: metav1.ObjectMeta{Name: spec.Spec.ClusterID}},
 			)
 			if err != nil {
 				return errors.Wrap(err, "provider: list resource")
 			}
-			spec.Spec.Bind.ResourceId = resource[dev.StackID].Val.(string)
+			spec.Spec.Bind.ResourceId = resource[alibaba.StackID].Val.(string)
 		}
-		cctx := provider.NewContext(&spec.Spec)
+		cctx := provider.NewEmptyContext(&spec.Spec)
 		m.stack, err = h.LoadStack(m.prvd, cctx, spec)
 		if err != nil {
 			return errors.Wrap(err, "member center: lazy load stack")
@@ -109,7 +109,7 @@ func (m *MemberHeal) InjectClient(me client.Client) error {
 	return nil
 }
 
-func (m *MemberHeal) String() string{
+func (m *MemberHeal) String() string {
 	return fmt.Sprintf("member heal: %s", m.state)
 }
 
@@ -248,7 +248,7 @@ func (m *MemberHeal) doCheck(checkType string) error {
 			return fmt.Errorf("member: spec not found,%s", err.Error())
 		}
 
-		cctx := provider.NewContext(&spec.Spec).WithStack(m.stack)
+		cctx := provider.NewEmptyContext(&spec.Spec).WithStack(m.stack)
 		detail, err := m.prvd.ScalingGroupDetail(cctx, "", provider.Option{Action: "InstanceIDS"})
 		if err != nil {
 			return fmt.Errorf("scaling group: %s", err.Error())
@@ -311,7 +311,7 @@ func (m *MemberHeal) dosync() error {
 		return fmt.Errorf("member master: %s", err.Error())
 	}
 
-	cctx := provider.NewContext(&spec.Spec).WithStack(m.stack)
+	cctx := provider.NewEmptyContext(&spec.Spec).WithStack(m.stack)
 
 	// repair sequence.
 	// attention: clean up metadata first. MasterCRD & Etcd Member.
@@ -503,14 +503,14 @@ func (m *MemberHeal) ResetNode(
 	// process each ecs one by one
 	for _, e := range ecs {
 		if !h.After(e.CreatedAt, AdmitCreateThrottleTime) {
-			min := AdmitCreateThrottleTime/time.Minute
+			min := 1 * time.Minute
 			klog.Errorf("[ResetNode] ecs added, but MasterCRD "+
-				"has not been watched. wait %d minutes to repair, " +
-				"CreateAt=%s",min, e.CreatedAt)
-			klog.Infof("WAITING for %s minutes .............................", min)
+				"has not been watched. wait %d minutes to repair, "+
+				"CreateAt=%s", min, e.CreatedAt)
+			klog.Infof("WAITING for %d minutes .............................", min/time.Minute)
 			// wait for master ready for at least `AdmitCreateThrottleTime` minutes
 			// after ecs has been created.
-			time.Sleep(AdmitCreateThrottleTime)
+			time.Sleep(min)
 			continue
 		}
 		// it has been 5 minutes since ecs started.
@@ -534,7 +534,7 @@ func (m *MemberHeal) ResetNode(
 		}
 
 		// do fix
-		err = m.prvd.ReplaceSystemDisk(cctx, e.Id, provider.Option{})
+		err = m.prvd.ReplaceSystemDisk(cctx, e.Id, "", provider.Option{})
 		if err != nil {
 			// TODO: remove me
 			// 	sleep for 15 seconds in case of ddos
@@ -779,4 +779,3 @@ func missedMasterCRD(
 	}
 	return result
 }
-

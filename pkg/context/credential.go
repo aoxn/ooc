@@ -50,7 +50,7 @@ func (n *CachedContext) GetMasters() []v1.Master {
 	var masters []v1.Master
 	n.Nodes.Range(
 		func(key, value interface{}) bool {
-			val,ok := value.(v1.Master)
+			val, ok := value.(v1.Master)
 			if ok {
 				masters = append(masters, val)
 			}

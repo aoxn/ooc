@@ -1,4 +1,4 @@
-package dev
+package alibaba
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 )
 
 func SecrityGroup(stack map[string]provider.Value) string {
-	sg,ok := stack["k8s_sg"]
+	sg, ok := stack["k8s_sg"]
 	if !ok {
 		klog.Warningf("empty security group for [k8s_sg]")
 		return ""
@@ -22,7 +22,7 @@ func SecrityGroup(stack map[string]provider.Value) string {
 }
 
 func Vswitchs(stack map[string]provider.Value) string {
-	vs,ok := stack["k8s_vswitch"]
+	vs, ok := stack["k8s_vswitch"]
 	if !ok {
 		klog.Warningf("empty vswitch ids for [k8s_vswitch]")
 		return ""
@@ -37,7 +37,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 	}
 	bind := np.Spec.Infra.Bind
 	if bind != nil {
-		klog.Infof("scaling group " +
+		klog.Infof("scaling group "+
 			"might be initialized before. generated=%v", np.Spec.Infra.Bind)
 	}
 	region := boot.Bind.Region
@@ -62,7 +62,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		req.DesiredCapacity = requests.NewInteger(np.Spec.Infra.DesiredCapacity)
 		response, err := n.ESS.CreateScalingGroup(req)
 		if err != nil {
-			return bind,errors.Wrapf(err, "create scaling group, %s", np.Name)
+			return bind, errors.Wrapf(err, "create scaling group, %s", np.Name)
 		}
 		sgrpid = response.ScalingGroupId
 		klog.Infof("created scaling group: %s with id %s", gname, sgrpid)
@@ -79,7 +79,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 
 	cfg, err := n.ESS.DescribeScalingConfigurations(dsreq)
 	if err != nil {
-		return bind,errors.Wrapf(err, "find scaling configuration, %s", scfgName)
+		return bind, errors.Wrapf(err, "find scaling configuration, %s", scfgName)
 	}
 
 	var scfgid string
@@ -95,8 +95,8 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.SystemDiskSize = requests.NewInteger(40)
 		sreq.ScalingConfigurationName = scfgName
 
-		sreq.ImageId =  utils.DefaultImage(np.Spec.Infra.ImageId)
-		data,err := NewWorkerUserData(ctx)
+		sreq.ImageId = utils.DefaultImage(np.Spec.Infra.ImageId)
+		data, err := NewWorkerUserData(ctx)
 		if err != nil {
 			return bind, errors.Wrap(err, "build work userdata")
 		}
@@ -108,23 +108,22 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.KeyPairName = ""
 		res, err := n.ESS.CreateScalingConfiguration(sreq)
 		if err != nil {
-			return bind,errors.Wrapf(err, "create scaling configuration,%s", sgrpid)
+			return bind, errors.Wrapf(err, "create scaling configuration,%s", sgrpid)
 		}
 		scfgid = res.ScalingConfigurationId
-		klog.Infof("created scaling configuration " +
-			"for group %s with id %s by name %s", sgrpid,scfgid, scfgName)
-	}else {
+		klog.Infof("created scaling configuration "+
+			"for group %s with id %s by name %s", sgrpid, scfgid, scfgName)
+	} else {
 		scfgid = cfg.ScalingConfigurations.ScalingConfiguration[0].ScalingConfigurationId
 	}
-
 
 	ereq := ess.CreateEnableScalingGroupRequest()
 	ereq.ScalingGroupId = sgrpid
 	ereq.ActiveScalingConfigurationId = scfgid
 	_, err = n.ESS.EnableScalingGroup(ereq)
 	if err != nil &&
-		!strings.Contains(err.Error(),"IncorrectScalingGroupStatus"){
-		return bind,errors.Wrapf(err, "enable scaling group, %s", sgrpid)
+		!strings.Contains(err.Error(), "IncorrectScalingGroupStatus") {
+		return bind, errors.Wrapf(err, "enable scaling group, %s", sgrpid)
 	}
 	bind = &v1.BindID{
 		ScalingGroupId: sgrpid, ConfigurationId: scfgid,

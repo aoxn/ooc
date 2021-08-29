@@ -12,7 +12,7 @@ type Tar interface {
 }
 
 type Transfer struct {
-	Bucket string
+	Bucket  string
 	Regions []string
 
 	From  *Path
@@ -20,11 +20,10 @@ type Transfer struct {
 	Base  string
 	Cache string
 
-	Tar  Tar
-	Upload   func(t *Transfer, from,to string) error
-	Download func(t *Transfer, from,to string) error
+	Tar      Tar
+	Upload   func(t *Transfer, from, to string) error
+	Download func(t *Transfer, from, to string) error
 }
-
 
 func (f *Transfer) LocalTarURI() string {
 	return filepath.Join(f.Cache, f.From.Name())
@@ -37,4 +36,3 @@ func (f *Transfer) LocalURL() string {
 func (f *Transfer) RemotePath() string {
 	return filepath.Join(f.Base, f.From.URL())
 }
-

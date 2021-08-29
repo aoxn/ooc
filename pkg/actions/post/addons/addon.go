@@ -11,7 +11,7 @@ import (
 )
 
 type ConfigTpl struct {
-	Name 					  string
+	Name                      string
 	Replicas                  string
 	Namespace                 string
 	Action                    string
@@ -27,11 +27,12 @@ type ConfigTpl struct {
 }
 
 func InstallAddons(spec *v1.ClusterSpec, cfg []ConfigTpl) error {
-	addon,err := defaultAddons(spec,cfg)
+	addon, err := defaultAddons(spec, cfg)
 	if err != nil {
 		return fmt.Errorf("generate default addon: %s", err.Error())
 	}
-	for k,v := range addon {
+	for k, v := range addon {
+		klog.Infof("install addon: [%s]", k)
 		err = wait.Poll(
 			2*time.Second,
 			1*time.Minute,
@@ -55,10 +56,12 @@ func InstallAddons(spec *v1.ClusterSpec, cfg []ConfigTpl) error {
 }
 
 func AddonConfigsTpl() []ConfigTpl {
-	return []ConfigTpl{CCM, CORDDNS, FLANNEL, INGRESS, KUBEPROXY_MASTER,KUBEPROXY_WORKER, METRICS_SERVER}
+	return []ConfigTpl{CCM, CORDDNS, FLANNEL, INGRESS, KUBEPROXY_MASTER, KUBEPROXY_WORKER, METRICS_SERVER}
 }
 
-func DefaultAddons(spec *v1.ClusterSpec) (map[string]string, error) { return defaultAddons(spec,[]ConfigTpl{}) }
+func DefaultAddons(spec *v1.ClusterSpec) (map[string]string, error) {
+	return defaultAddons(spec, []ConfigTpl{})
+}
 
 func defaultAddons(spec *v1.ClusterSpec, cfgs []ConfigTpl) (map[string]string, error) {
 	daddons := make(map[string]string)

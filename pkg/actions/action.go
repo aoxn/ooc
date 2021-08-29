@@ -35,7 +35,6 @@ func NewActionContext(
 	return &ActionContext{NodeContext: ctx}
 }
 
-
 type Action interface {
 	Execute(ctx *ActionContext) error
 }

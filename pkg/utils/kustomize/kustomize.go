@@ -104,7 +104,7 @@ func Build(resources, patches []string, patchesJSON6902 []PatchJSON6902) (string
 	// now we can build the kustomization
 	var out bytes.Buffer
 	//f := resource.NewFactory(&hasher.Hasher{})
-	cmd := build.NewCmdBuild(memFS,&build.Help{}, &out)
+	cmd := build.NewCmdBuild(memFS, &build.Help{}, &out)
 	cmd.SetArgs([]string{fakeDir})
 	// we want to silence usage, error output, and any future output from cobra
 	// we will get error output as a golang error from execute

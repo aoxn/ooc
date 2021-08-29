@@ -22,7 +22,7 @@ import (
 	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ooc/pkg/context/shared"
 	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/dev"
+	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
 	"github.com/aoxn/ooc/pkg/operator/controllers/heal"
 	"github.com/aoxn/ooc/pkg/operator/controllers/help"
 	gerr "github.com/pkg/errors"
@@ -44,7 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
 )
-
 
 // Add creates a new Rolling Controller and adds it to
 // the Manager. The Manager will set fields on the Controller
@@ -84,12 +83,12 @@ func newMasterSetReconciler(
 	klog.Infof("initialize master controller")
 	return &MasterSetReconciler{
 		sharedCtx: ctx,
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		drain:  drainer,
-		heal:   ctx.MemberHeal(),
-		prvd:   ctx.ProvdIAAS(),
-		recd:   mgr.GetEventRecorderFor("task-controller"),
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		drain:     drainer,
+		heal:      ctx.MemberHeal(),
+		prvd:      ctx.ProvdIAAS(),
+		recd:      mgr.GetEventRecorderFor("task-controller"),
 	}
 }
 
@@ -119,11 +118,10 @@ func addMasterSet(mgr manager.Manager, r reconcile.Reconciler) error {
 // blank assignment to verify that ReconcileRolling implements reconcile.Reconciler
 var _ reconcile.Reconciler = &MasterSetReconciler{}
 
-
 // MasterSetReconciler reconciles a NodePool object
 type MasterSetReconciler struct {
-	mlog log.Logger
-	heal *heal.MemberHeal
+	mlog  log.Logger
+	heal  *heal.MemberHeal
 	drain *drain.Helper
 	//prvd provider for ecs
 	prvd provider.Interface
@@ -138,7 +136,6 @@ type MasterSetReconciler struct {
 	sharedCtx *shared.SharedOperatorContext
 }
 
-
 func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	if r.heal.Dirty() {
@@ -151,9 +148,9 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	//	return ctrl.Result{RequeueAfter: 1*time.Minute,Requeue: true}, nil
 	//}
 
-	masterset, err:= help.MasterSet(r.client,"masterset")
+	masterset, err := help.MasterSet(r.client, "masterset")
 	if err != nil {
-		return ctrl.Result{RequeueAfter: 1*time.Minute,Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: 1 * time.Minute, Requeue: true}, nil
 	}
 
 	// sharedCtx is initialized on controller start.
@@ -176,30 +173,30 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cctx, "", provider.Option{Action: "InstanceIDS"},
 	)
 	if err != nil {
-		return ctrl.Result{Requeue: true, RequeueAfter: 15 * time.Second }, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: 15 * time.Second}, nil
 	}
 	if len(detail.Instances) == masterset.Spec.Replicas {
 		// TODO: how about scale in???
 		//   some error might occurred. send repair signal?
-		klog.Infof("master ecs is as expected " +
+		klog.Infof("master ecs is as expected "+
 			"replica count: %d, nothing to do", len(detail.Instances))
 		return ctrl.Result{}, nil
 	}
 
 	// 3. do scale ecs scaling group
-	ud, err := dev.NewJoinMasterUserData(cctx)
+	ud, err := alibaba.NewJoinMasterUserData(cctx)
 	if err != nil {
 		return ctrl.Result{}, gerr.Wrapf(err, "join master userdata")
 	}
-	err = r.prvd.ModifyScalingConfig( cctx, "",
+	err = r.prvd.ModifyScalingConfig(cctx, "",
 		provider.Option{
 			Action: "UserData",
-			Value: provider.Value{Val: ud},
+			Value:  provider.Value{Val: ud},
 		},
 	)
 	if err != nil {
 		klog.Errorf("modify userdata: %s", err.Error())
-		return ctrl.Result{Requeue: true,RequeueAfter: 30 * time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 	}
 
 	scale := func(expect int) error {
@@ -216,7 +213,7 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			if id == "" {
 				return fmt.Errorf("ecs not found by ip: %s", ip)
 			}
-			err = r.prvd.RemoveScalingGroupECS(cctx,"", id)
+			err = r.prvd.RemoveScalingGroupECS(cctx, "", id)
 			if err != nil {
 				return fmt.Errorf("remove ecs from scaling group: %s", err.Error())
 			}
@@ -227,16 +224,16 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			if err != nil {
 				klog.Infof("[QuorumScale] sleep 30s for scale master error: %s", err.Error())
 				time.Sleep(30 * time.Second)
-				return fmt.Errorf("scale master group: %s",err.Error())
+				return fmt.Errorf("scale master group: %s", err.Error())
 			}
 		}
 
 		klog.Infof("[QuorumScale] wait on member center to finish cluster heal")
-		done := make(chan struct{},0)
+		done := make(chan struct{}, 0)
 		r.heal.NotifyScale(done)
 		// wait might not needed.
 		// as scale always returned immediately
-		result := <- done	// wait on member center to finish.
+		result := <-done // wait on member center to finish.
 		klog.Infof("[QuorumScale] member center returned with: %v", result)
 		return nil
 	}
@@ -248,7 +245,7 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func QuorumScale(
-	mfunc func(cmt int)error,
+	mfunc func(cmt int) error,
 	current, expect int,
 ) error {
 	if expect == current {
@@ -262,9 +259,9 @@ func QuorumScale(
 		return mfunc(expect)
 	}
 	// max scale in
-	max := help.Max((current - 1)/2, 1) // max scale num per operate
-	klog.Infof("do quorum scale in: target=%d", help.Max(current-max,expect))
-	err := mfunc(help.Max(current-max,expect))
+	max := help.Max((current-1)/2, 1) // max scale num per operate
+	klog.Infof("do quorum scale in: target=%d", help.Max(current-max, expect))
+	err := mfunc(help.Max(current-max, expect))
 	if err != nil {
 		return err
 	}
@@ -280,7 +277,7 @@ func findId(
 	key := func(ip string) string {
 		return fmt.Sprintf("https://%s:2379", ip)
 	}
-	for _, i := range ecs{
+	for _, i := range ecs {
 		p := key(i.Ip)
 		if ip == p {
 			return i.Id

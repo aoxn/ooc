@@ -22,13 +22,13 @@ import (
 	"github.com/aoxn/ooc/cmd/ooc/build"
 	"github.com/aoxn/ooc/cmd/ooc/cluster"
 	initpkg "github.com/aoxn/ooc/cmd/ooc/init"
+	"github.com/aoxn/ooc/cmd/ooc/monitor"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 
 	"github.com/aoxn/ooc/cmd/ooc/bootstrap"
 	"github.com/aoxn/ooc/cmd/ooc/operator"
@@ -38,7 +38,6 @@ import (
 )
 
 const defaultLevel = log.InfoLevel
-
 
 type Flags struct {
 	LogLevel string
@@ -76,13 +75,13 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(cluster.NewCommandGet())
 	cmd.AddCommand(cluster.NewCommandConfig())
 	cmd.AddCommand(cluster.NewCommandScale())
-	cmd.AddCommand(cluster.NewCommandKubeConfig())
+	cmd.AddCommand(monitor.NewCommand())
 	cmd.AddCommand(recv.NewCommand())
 	return cmd
 }
 
 func runE(flags *Flags, cmd *cobra.Command, args []string) error {
-	level := log.WarnLevel
+	level := log.ErrorLevel
 	parsed, err := log.ParseLevel(flags.LogLevel)
 	if err != nil {
 		klog.Warningf("Invalid log level '%s', defaulting to '%s'", flags.LogLevel, level)
