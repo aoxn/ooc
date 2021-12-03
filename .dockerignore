@@ -1,0 +1,14 @@
+# build / test output
+_output/*
+_artifacts/*
+
+# git metadata
+.git/*
+
+# github metadata
+.github/*
+
+# editor metadta
+.vscode/*
+
+.idea/

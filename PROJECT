@@ -1,0 +1,7 @@
+domain: alibabacloud.com
+layout: go.kubebuilder.io/v2
+projectName: ooc
+repo: alibabacloud.com/ooc
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

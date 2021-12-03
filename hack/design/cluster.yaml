@@ -1,0 +1,74 @@
+clusterid: kubernetes-cluster-id
+iaas:
+  provider:
+    name: ros
+    value:
+      region: cn-hangzhou
+      accessKey: LTAIyzIF6zRJ1L8c
+      accessSecret: EQpOgbzCehrJxKaRZ99PcRB7tffyl0
+      template: /Users/aoxn/vaoxn/ooc/pkg/iaas/provider/ros/demo.dev.json
+  secret:
+  - type: Password
+    name: pwd1
+    value: xxxxxxx
+  - type: Key
+    name: key1
+    value: ooom
+  resources:
+  - type: VPC
+    vaule:
+      vpcid: vpc-ixxxxx
+      cidr: 172.16.0.0/16
+  - type: Vswitch
+    value:
+      - name: vswitch1
+        id: vsw-xxxxx
+      - name: vswitch2
+        id: vsw-xxxx2
+  - type: SLB
+    value:
+      name: lb1
+      id: lb-xxxx
+  - type: EIP
+    vaule:
+      EIP: 192.19.2.1
+  - type: NodeGroup
+    value:
+    - image: centos_7_06_64_20G_alibase_20190218.vhd
+      type: Master
+      loadbalanerRef: lb1
+      count: 3
+      secretRef: pwd1
+      disk:
+        size: 40G
+        type: cloudssd
+      region: cn-hangzhou
+      zoneid: cn-hangzhou-g
+      instance: ecs.c5.xlarge
+
+registry: registry-vpc.cn-hangzhou.aliyuncs.com
+namespace: default
+cloudType: public
+kubernetes:
+  name: kubernetes
+  version: 1.12.6-aliyun.1
+etcd:
+  name: etcd
+  version: v3.3.8
+docker:
+  name: runtime
+  version: 18.09.2
+  para:
+    key1: value
+    key2: value2
+sans:
+  - 192.168.0.1
+network:
+  mode: ipvs
+  podcidr: 172.16.0.1/16
+  svccidr: 172.19.0.1/20
+  domain: cluster.domain
+  netMask: 25
+endpoint:
+  intranet: ${INTRANET_LB}
+  internet: ${INTERNET_LB}

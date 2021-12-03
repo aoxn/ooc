@@ -1,0 +1,12 @@
+apiVersion: alibabacloud.com/v1
+kind: NodePool
+metadata:
+  name: nodepool-01
+  namespace: kube-system
+spec:
+  id: "very-long-id-xxxxx"
+  infra:
+    desiredCapacity: 1
+    cpu: 4
+    memory: 8
+    imageId: centos_7_9_x64_20G_alibase_20210623.vhd

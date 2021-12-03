@@ -1,0 +1,7 @@
+apiVersion: alibabacloud.com/v1
+kind: MasterSet
+metadata:
+  name: masterset
+  namespace: kube-system
+spec:
+  replicas: 1

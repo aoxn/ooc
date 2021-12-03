@@ -1,0 +1,10 @@
+FROM nginx:latest
+
+RUN apt update; \
+    apt install -y vi \
+        net-tools \
+        iputils-ping \
+        iproute2 \
+        bridge-utils \
+        curl \
+        netcat
