@@ -6,8 +6,8 @@ package kubeadm
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/utils"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"os"

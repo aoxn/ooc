@@ -19,11 +19,11 @@ package master
 import (
 	"context"
 	"fmt"
-	ctx "github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/context/shared"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/operator/controllers/heal"
-	"github.com/aoxn/ooc/pkg/operator/controllers/help"
+	ctx "github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/context/shared"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
+	"github.com/aoxn/ovm/pkg/operator/controllers/help"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
@@ -41,7 +41,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
 )
 
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -113,7 +113,7 @@ var _ reconcile.Reconciler = &RepairReconciler{}
 
 // MasterSetReconciler reconciles a NodePool object
 type RepairReconciler struct {
-	heal  *heal.MemberHeal
+	heal  *heal.MasterHeal
 	drain *drain.Helper
 	//prvd provider for ecs
 	prvd provider.Interface

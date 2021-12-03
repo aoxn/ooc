@@ -20,7 +20,7 @@ package versioned
 import (
 	"fmt"
 
-	oocv1 "github.com/aoxn/ooc/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
+	ovmv1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -28,19 +28,19 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	OocV1() oocv1.OocV1Interface
+	OvmV1() ovmv1.OvmV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	oocV1 *oocv1.OocV1Client
+	ovmV1 *ovmv1.OvmV1Client
 }
 
-// OocV1 retrieves the OocV1Client
-func (c *Clientset) OocV1() oocv1.OocV1Interface {
-	return c.oocV1
+// OvmV1 retrieves the OvmV1Client
+func (c *Clientset) OvmV1() ovmv1.OvmV1Interface {
+	return c.ovmV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -64,7 +64,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.oocV1, err = oocv1.NewForConfig(&configShallowCopy)
+	cs.ovmV1, err = ovmv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.oocV1 = oocv1.NewForConfigOrDie(c)
+	cs.ovmV1 = ovmv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -89,7 +89,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.oocV1 = oocv1.New(c)
+	cs.ovmV1 = ovmv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

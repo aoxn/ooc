@@ -6,7 +6,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -47,6 +47,11 @@ var (
 func (n *Devel) ScalingGroupDetail(
 	ctx *provider.Context, gid string, opt provider.Option,
 ) (provider.ScaleGroupDetail, error) {
+	stack := ctx.Stack()
+	if stack == nil {
+		return provider.ScaleGroupDetail{}, fmt.Errorf("stack context must be exist")
+	}
+	vpcid := stack["k8s_vpc"].Val.(string)
 	action := ActionInstanceIDS
 	if opt.Action != "" {
 		action = opt.Action
@@ -54,7 +59,6 @@ func (n *Devel) ScalingGroupDetail(
 	if gid == "" {
 		// warning: it is not the best options setting default value to master group
 		klog.Infof("scaling group not provided, default to master group")
-		stack := ctx.Stack()
 		gid = stack["k8s_master_sg"].Val.(string)
 	}
 
@@ -62,6 +66,22 @@ func (n *Devel) ScalingGroupDetail(
 		GroupId:   gid,
 		Instances: make(map[string]provider.Instance),
 	}
+	ireq := ess.CreateDescribeScalingGroupsRequest()
+	ireq.ScalingGroupId = &[]string{gid}
+	ireq.RegionId = n.Cfg.Region
+	sg, err := n.ESS.DescribeScalingGroups(ireq)
+	if err != nil {
+		return result, errors.Wrapf(err, "ess api:")
+	}
+	grps := sg.ScalingGroups.ScalingGroup
+	if len(grps) <= 0 {
+		return result, fmt.Errorf("sgroupid [%s] not found", gid)
+	}
+	if grps[0].VpcId != vpcid {
+		klog.Errorf("invalid vpcid [%s] for scaling group [%s], expect[%s]", grps[0].VpcId,gid, vpcid)
+		return result, fmt.Errorf("InvalidVPC")
+	}
+
 	switch action {
 	case ActionInstanceIDS:
 		req := ess.CreateDescribeScalingInstancesRequest()
@@ -467,11 +487,9 @@ func Now() string {
 }
 
 const (
-	// 240s
 	StopECSTimeout  = 240
 	StartECSTimeout = 300
 
-	// Default timeout value for WaitForInstance method
 	InstanceDefaultTimeout = 120
 	DefaultWaitForInterval = 5
 )

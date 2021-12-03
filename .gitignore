@@ -1,5 +1,6 @@
 # build and test outputs
-build/bin/
+build/bin/ovm
+build/bin/ovm.amd64
 _output/
 _artifacts/
 ossutil_output/

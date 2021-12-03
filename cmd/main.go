@@ -17,8 +17,8 @@ limitations under the License.
 // This package is a stub main wrapping cmd/kind.Main()
 package main
 
-import "github.com/aoxn/ooc/cmd/ooc"
+import "github.com/aoxn/ovm/cmd/ovm"
 
 func main() {
-	ooc.Main()
+	ovm.Main()
 }

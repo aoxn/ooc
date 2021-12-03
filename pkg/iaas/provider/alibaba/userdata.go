@@ -4,12 +4,30 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"text/template"
 )
+
+
+
+func (n *Devel) UserData(ctx *provider.Context, category string) (string, error) {
+	switch category {
+	case provider.MasterUserdata:
+		return NewUserData(ctx), nil
+	case provider.JoinMasterUserdata:
+		return NewJoinMasterUserData(ctx)
+	case provider.WorkerUserdata:
+		return NewWorkerUserData(ctx)
+	case provider.RecoverUserdata:
+		return NewRecoverUserData(ctx)
+	}
+	// default to worker user data
+	klog.Warningf("no category specified, use work user data")
+	return NewWorkerUserData(ctx)
+}
 
 func PrefixPart() string {
 	return `#!/bin/sh
@@ -41,22 +59,22 @@ export ROLE=%s OS=centos ARCH=amd64 \
 	   TOKEN=%s \
        CLOUD_TYPE=%s \
        NAMESPACE=%s \
-	   FILE_SERVER="http://host-oc-$REGION.oss-$REGION-internal.aliyuncs.com"
+	   FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
 echo "using beta version: [${NAMESPACE}]"
-mkdir -p /etc/ooc;
+mkdir -p /etc/ovm;
 echo "
 %s
-" > /etc/ooc/ooc.cfg
+" > /etc/ovm/ovm.cfg
 wget --tries 10 --no-check-certificate -q \
      -O run.replace.sh\
-     ${FILE_SERVER}/ack/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.%s.sh
+     ${FILE_SERVER}/ovm/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.%s.sh
 time bash run.replace.sh |tee /var/log/init.log
 `
 
 type ConfigTpl struct {
 	Namespace  string
 	Token      string
-	OOCVersion string
+	OvmVersion string
 	Endpoint   string
 	Role       string
 	RunVersion string
@@ -71,7 +89,7 @@ func NewWorkerUserData(ctx *provider.Context) (string, error) {
 	cfg := &ConfigTpl{
 		Namespace:  boot.Namespace,
 		Token:      boot.Kubernetes.KubeadmToken,
-		OOCVersion: "0.1.1",
+		OvmVersion: "0.1.1",
 		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
 		Role:       "Worker",
 		RunVersion: "2.0",
@@ -99,23 +117,24 @@ REGION=$(curl --retry 5 -sSL http://100.100.100.200/latest/meta-data/region-id)
 export REGION
 export NAMESPACE={{ .Namespace }} \
        TOKEN={{ .Token }} \
-       OOC_VERSION={{ .OOCVersion }} \
-       FILE_SERVER=http://host-oc-${REGION}.oss-${REGION}-internal.aliyuncs.com \
+       OVM_VERSION={{ .OvmVersion }} \
+       FILE_SERVER=http://host-ovm-${REGION}.oss-${REGION}-internal.aliyuncs.com \
        ENDPOINT={{ .Endpoint }} \
        ROLE={{ .Role }}
 wget --tries 10 --no-check-certificate -q \
      -O run.replace.sh\
-     ${FILE_SERVER}/ack/${NAMESPACE}/{{ .CloudType }}/run/{{ .RunVersion }}/{{.Arch }}/{{ .OS }}/run.{{ .Provider }}.sh
+     ${FILE_SERVER}/ovm/${NAMESPACE}/{{ .CloudType }}/run/{{ .RunVersion }}/{{.Arch }}/{{ .OS }}/run.{{ .Provider }}.sh
 time bash run.replace.sh |tee /var/log/init.log
 
 `
 
 func NewRecoverUserData(ctx *provider.Context) (string, error) {
 	boot := ctx.BootCFG()
+	opts := ctx.OvmOptions()
 	cfg := &ConfigTpl{
 		Namespace:  boot.Namespace,
 		Token:      boot.Kubernetes.KubeadmToken,
-		OOCVersion: "0.1.1",
+		OvmVersion: "0.1.1",
 		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
 		Role:       "Worker",
 		RunVersion: "2.0",
@@ -127,12 +146,16 @@ func NewRecoverUserData(ctx *provider.Context) (string, error) {
 	ctxCfg := provider.BuildContexCFG(boot)
 	me := struct {
 		ConfigTpl
+		RecoverFrom string
 		ClusterName string
-		OocConfig   string
+		OvmConfig   string
+		Bucket 		string
 	}{
 		ConfigTpl:   *cfg,
-		OocConfig:   utils.PrettyYaml(ctxCfg),
-		ClusterName: boot.ClusterID,
+		Bucket:      opts.Bucket,
+		OvmConfig:   utils.PrettyYaml(ctxCfg),
+		ClusterName: opts.ClusterName,
+		RecoverFrom: opts.RecoverFrom,
 	}
 	tpl, err := template.New("restore userdata").Parse(RecoverUserData)
 	if err != nil {
@@ -155,42 +178,42 @@ export ROLE={{ .Role }} OS={{ .OS }} ARCH={{ .Arch }} \
        TOKEN={{ .Token }} \
        CLOUD_TYPE={{ .CloudType }} \
        NAMESPACE={{ .Namespace }} \
-       OOC_VERSION={{ .OOCVersion }} \
-       FILE_SERVER="http://host-oc-$REGION.oss-$REGION-internal.aliyuncs.com"
-# set ooc operator endpoint
+       OVM_VERSION={{ .OvmVersion }} \
+       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
+# set ovm operator endpoint
 export ENDPOINT={{ .Endpoint }}
 echo "using beta version: [${NAMESPACE}]"
 
 echo "using beta version: [${NAMESPACE}]"
 wget --tries 10 --no-check-certificate -q \
-	-O /tmp/ooc.${ARCH}\
-	"${FILE_SERVER}"/ack/${NAMESPACE}/${CLOUD_TYPE}/ooc/${OOC_VERSION}/${ARCH}/${OS}/ooc.${ARCH}
-chmod +x /tmp/ooc.${ARCH} ; mv /tmp/ooc.${ARCH} /usr/local/bin/ooc; mkdir -p ~/.ooc/
-cat > ~/.ooc/config << EOF
-{{ .OocConfig }}
+	-O /tmp/ovm.${ARCH}\
+	"${FILE_SERVER}"/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OVM_VERSION}/${ARCH}/${OS}/ovm.${ARCH}
+chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm; mkdir -p ~/.ovm/
+cat > ~/.ovm/config << EOF
+{{ .OvmConfig }}
 EOF
-/usr/local/bin/ooc recover --recover-mode node --name {{ .ClusterName }}
+/usr/local/bin/ovm recover --recover-mode node --name "{{ .ClusterName }}" --recover-from-cluster "{{ .RecoverFrom}}" --bucket "{{.Bucket}}"
 `
 
 var USER_DATA_JOIN_MASTER = `#!/bin/sh
 set -e -x
 REGION="$(curl 100.100.100.200/latest/meta-data/region-id)"
 export REGION
-# make sure ooc boot master from operator
+# make sure ovm boot master from operator
 export BOOT_TYPE=operator
 export ROLE={{ .Role }} OS={{ .OS }} ARCH={{ .Arch }} \
        TOKEN={{ .Token }} \
        CLOUD_TYPE={{ .CloudType }} \
        NAMESPACE={{ .Namespace }} \
-       FILE_SERVER="http://host-oc-$REGION.oss-$REGION-internal.aliyuncs.com"
-# set ooc operator endpoint
+       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
+# set ovm operator endpoint
 export ENDPOINT={{ .Endpoint }}
 echo "using beta version: [${NAMESPACE}]"
-mkdir -p /etc/ooc;
+mkdir -p /etc/ovm;
 wget --tries 10 --no-check-certificate -q \
      -O run.sh\
-     ${FILE_SERVER}/ack/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.{{.Provider}}.sh
-time bash run.sh |tee /var/log/init.log.ack
+     ${FILE_SERVER}/ovm/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.{{.Provider}}.sh
+time bash run.sh |tee /var/log/init.log.ovm
 `
 
 func NewJoinMasterUserData(
@@ -200,7 +223,7 @@ func NewJoinMasterUserData(
 	cfg := &ConfigTpl{
 		Namespace:  boot.Namespace,
 		Token:      boot.Kubernetes.KubeadmToken,
-		OOCVersion: "0.1.1",
+		OvmVersion: "0.1.1",
 		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
 		Role:       "Hybrid",
 		RunVersion: "2.0",

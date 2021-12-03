@@ -2,11 +2,11 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/actions/file"
-	"github.com/aoxn/ooc/pkg/actions/runtime"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions/file"
+	"github.com/aoxn/ovm/pkg/actions/runtime"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context"
 )
 
 func InitContainerRuntime(ctx *context.NodeContext) error {
@@ -32,19 +32,19 @@ func InitContainerRuntime(ctx *context.NodeContext) error {
 	case file.PKG_DOCKER:
 		// default docker
 	}
-	return initDocker(ctx, &cfg.Spec, os, arch)
+	return initDocker(ctx, &cfg.Spec, os, arch,ctx.OvmFlags().Bucket)
 }
 
 func initDocker(
 	ctx *context.NodeContext,
 	cfg *v1.ClusterSpec,
-	os, arch string,
+	os, arch,bucket string,
 ) error {
 	downs := file.NewAction(
 		[]file.File{
 			{
 				VersionedPath: file.Path{
-					Project:   "ack",
+					Project:   "ovm",
 					Pkg:       file.PKG_DOCKER,
 					CType:     cfg.CloudType,
 					Ftype:     file.FILE_BINARY,
@@ -53,6 +53,7 @@ func initDocker(
 					Namespace: cfg.Namespace,
 					Version:   cfg.Runtime.Version,
 				},
+				Bucket: bucket,
 			},
 		},
 	)

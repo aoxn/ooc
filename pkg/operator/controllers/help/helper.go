@@ -3,9 +3,9 @@ package help
 import (
 	"context"
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -21,7 +21,7 @@ import (
 func After(
 	t string, duration time.Duration,
 ) bool {
-	me, err := time.ParseInLocation("2006-01-02T15:04:05Z", t, time.UTC)
+	me, err := time.ParseInLocation("2006-01-02T15:04:05Z", t, time.Local)
 	if err != nil {
 		klog.Infof("parse time error: %s", err.Error())
 		return false
@@ -33,18 +33,18 @@ func Now() string {
 	return time.Now().Format("2006-01-02T15:04:05Z")
 }
 
-func WaitNodeReady(
+func WaitMasterReady(
 	cclient client.Client, id string,
 ) error {
 	return wait.Poll(
 		5*time.Second,
 		4*time.Minute,
 		func() (done bool, err error) {
-			klog.Infof("[WaitNodeReady] wait master ready: %s", id)
+			klog.Infof("[WaitMasterReady] wait master ready: %s", id)
 
-			nodes, err := Nodes(cclient)
+			nodes, err := MasterNodes(cclient)
 			if err != nil {
-				klog.Warningf("[WaitNodeReady] get master nodes: %s", err.Error())
+				klog.Warningf("[WaitMasterReady] get master nodes: %s", err.Error())
 				return false, nil
 			}
 			for _, n := range nodes {
@@ -64,7 +64,7 @@ func LoadStack(
 ) (map[string]provider.Value, error) {
 	if spec.Spec.Bind.ResourceId == "" {
 		resource, err := prvd.GetStackOutPuts(
-			provider.NewEmptyContext(&spec.Spec),
+			provider.NewContextWithCluster(&spec.Spec),
 			&api.ClusterId{ObjectMeta: metav1.ObjectMeta{Name: spec.Spec.ClusterID}},
 		)
 		if err != nil {
@@ -122,7 +122,7 @@ func MasterSet(
 	return cluster, err
 }
 
-func Nodes(
+func MasterNodes(
 	rclient client.Client,
 ) ([]v1.Node, error) {
 	require, _ := labels.NewRequirement(
@@ -135,6 +135,34 @@ func Nodes(
 		&client.ListOptions{
 			LabelSelector: labels.NewSelector().Add(*require),
 		},
+	)
+	return mnode.Items, err
+}
+
+func Workers(
+	rclient client.Client,
+) ([]v1.Node, error) {
+	nodes, err := NodeItems(rclient)
+	if err != nil {
+		return nodes, err
+	}
+	var mnode []v1.Node
+	for _, n := range nodes {
+		if !IsMaster(&n) {
+			mnode = append(mnode, n)
+		}
+	}
+	return mnode, nil
+}
+
+func NodeItems(
+	rclient client.Client,
+) ([]v1.Node, error) {
+	mnode := &v1.NodeList{}
+	err := rclient.List(
+		context.TODO(),
+		mnode,
+		&client.ListOptions{},
 	)
 	return mnode.Items, err
 }
@@ -160,6 +188,7 @@ func Master(
 	return master, err
 }
 
+
 func Node(
 	rclient client.Client,
 	name string,
@@ -169,31 +198,6 @@ func Node(
 		context.TODO(), client.ObjectKey{Name: name}, node,
 	)
 	return node, err
-}
-
-func NodeReady(n *v1.Node) bool {
-	return NodesReady([]v1.Node{*n})
-}
-
-func NodesReady(nodes []v1.Node) bool {
-	for _, n := range nodes {
-		condi := n.Status.Conditions
-		if condi == nil {
-			continue
-		}
-		for _, con := range condi {
-			if con.Type != "Ready" {
-				// only kubelet ready status is take cared
-				continue
-			}
-			if con.Status != "True" {
-				// short cut search
-				return false
-			}
-		}
-	}
-	// default to true.
-	return true
 }
 
 func IsMaster(node *v1.Node) bool {

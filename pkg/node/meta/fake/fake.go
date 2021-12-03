@@ -2,11 +2,11 @@ package fake
 
 import (
 	"fmt"
+	"k8s.io/klog/v2"
 	"strings"
 
-	"github.com/aoxn/ooc/pkg/node/meta"
-	alibaba "github.com/aoxn/ooc/pkg/node/meta/alibaba"
-	log "github.com/sirupsen/logrus"
+	"github.com/aoxn/ovm/pkg/node/meta"
+	alibaba "github.com/aoxn/ovm/pkg/node/meta/alibaba"
 )
 
 type Config struct {

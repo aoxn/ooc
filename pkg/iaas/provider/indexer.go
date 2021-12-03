@@ -3,8 +3,8 @@ package provider
 import (
 	"encoding/json"
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/utils"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"sort"
@@ -68,6 +68,19 @@ func (i *Indexer) ListBackups(id string) (*BackupIndex, error) {
 		}
 	}
 	return i.index, nil
+}
+
+func (i *Indexer) BootSpec(id string) (*api.ClusterSpec, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if i.index == nil {
+		err := i.LoadIndex(id)
+		if err != nil {
+			return nil, errors.Wrapf(err, "load index")
+		}
+	}
+	return i.index.Spec, nil
 }
 
 func (i *Indexer) LatestBackup(id, dir string) (*api.ClusterSpec, error) {
@@ -146,7 +159,7 @@ func (i *Indexer) BackupGC(id string) error {
 		}
 		deleted = true
 		err := i.store.DeleteObject(i.index.Path(backup))
-		klog.Infof("remove etcd backup copies: %i, %v", i.index.Path(backup), err)
+		klog.Infof("remove etcd backup copies: %s, %v", i.index.Path(backup), err)
 	}
 	if deleted {
 		i.index.Copies = bck

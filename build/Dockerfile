@@ -11,7 +11,7 @@ FROM alpine:3.8
 
 RUN apk add --no-cache --update ca-certificates
 COPY bin/etcdctl /usr/bin/
-COPY bin/ooc.amd64 /ooc
+COPY bin/ovm.amd64 /ovm
 COPY bin/etcdm.sh /usr/bin/
 
-ENTRYPOINT  ["/ooc"]
+ENTRYPOINT  ["/ovm"]

@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	v12 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
+	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"time"

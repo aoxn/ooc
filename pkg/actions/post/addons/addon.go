@@ -2,8 +2,8 @@ package addons
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"strings"
@@ -11,6 +11,7 @@ import (
 )
 
 type ConfigTpl struct {
+	UUID 					  string
 	Name                      string
 	Replicas                  string
 	Namespace                 string
@@ -56,7 +57,7 @@ func InstallAddons(spec *v1.ClusterSpec, cfg []ConfigTpl) error {
 }
 
 func AddonConfigsTpl() []ConfigTpl {
-	return []ConfigTpl{CCM, CORDDNS, FLANNEL, INGRESS, KUBEPROXY_MASTER, KUBEPROXY_WORKER, METRICS_SERVER}
+	return []ConfigTpl{CCM, CORDDNS, FLANNEL, INGRESS, KUBEPROXY_MASTER, KUBEPROXY_WORKER, METRICS_SERVER, CSI_PLUGIN, CSI_PROVISION}
 }
 
 func DefaultAddons(spec *v1.ClusterSpec) (map[string]string, error) {

@@ -18,9 +18,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/aoxn/ooc/pkg/generated/clientset/versioned"
-	oocv1 "github.com/aoxn/ooc/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
-	fakeoocv1 "github.com/aoxn/ooc/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1/fake"
+	clientset "github.com/aoxn/ovm/pkg/generated/clientset/versioned"
+	ovmv1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
+	fakeovmv1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -78,7 +78,7 @@ var (
 	_ testing.FakeClient  = &Clientset{}
 )
 
-// OocV1 retrieves the OocV1Client
-func (c *Clientset) OocV1() oocv1.OocV1Interface {
-	return &fakeoocv1.FakeOocV1{Fake: &c.Fake}
+// OvmV1 retrieves the OvmV1Client
+func (c *Clientset) OvmV1() ovmv1.OvmV1Interface {
+	return &fakeovmv1.FakeOvmV1{Fake: &c.Fake}
 }

@@ -2,9 +2,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/utils"
-	"github.com/aoxn/ooc/pkg/utils/cmd"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/cmd"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -15,14 +15,16 @@ import (
 )
 
 func NewContext(
-	options *v1.OocOptions, spec *v1.ClusterSpec,
+	options *v1.OvmOptions, spec *v1.ClusterSpec,
 ) (*Context, error) {
 	mctx := &Context{}
 	mctx.SetKV("BootCFG", spec)
 	return mctx, mctx.Initialize(options)
 }
 
-func NewEmptyContext(spec *v1.ClusterSpec) *Context {
+func NewEmptyContext() *Context { return &Context{} }
+
+func NewContextWithCluster(spec *v1.ClusterSpec) *Context {
 	mctx := &Context{}
 	mctx.SetKV("BootCFG", spec)
 	return mctx
@@ -30,8 +32,8 @@ func NewEmptyContext(spec *v1.ClusterSpec) *Context {
 
 type Context struct{ sync.Map }
 
-func (n *Context) Initialize(opts *v1.OocOptions) error {
-	n.SetKV("OocOptions", opts)
+func (n *Context) Initialize(opts *v1.OvmOptions) error {
+	n.SetKV("OvmOptions", opts)
 	if opts.Default == nil {
 		opts.Default = BuildContexCFG(n.BootCFG())
 	}
@@ -92,13 +94,13 @@ func (n *Context) BootCFG() *v1.ClusterSpec {
 	return val.(*v1.ClusterSpec)
 }
 
-func (n *Context) OocOptions() *v1.OocOptions {
-	val, ok := n.Load("OocOptions")
+func (n *Context) OvmOptions() *v1.OvmOptions {
+	val, ok := n.Load("OvmOptions")
 	if !ok {
-		klog.Infof("OocOptions not found")
-		return &v1.OocOptions{}
+		klog.Infof("OvmOptions not found")
+		return &v1.OvmOptions{}
 	}
-	return val.(*v1.OocOptions)
+	return val.(*v1.OvmOptions)
 }
 
 func (n *Context) Stack() map[string]Value {
@@ -134,6 +136,13 @@ func GetProvider(key string) Interface {
 	return pvd.(Interface)
 }
 
+const (
+	MasterUserdata     = "Master"
+	WorkerUserdata     = "Worker"
+	RecoverUserdata    = "Recover"
+	JoinMasterUserdata = "JoinMaster"
+)
+
 type Interface interface {
 	Storage
 	Resource
@@ -141,7 +150,7 @@ type Interface interface {
 	ObjectStorage
 	NodeOperation
 	NodeGroup
-	RunCommand(ctx *Context, cmd string) error
+	UserData(ctx *Context, category string) (string, error)
 	Initialize(ctx *Context) error
 	Create(ctx *Context) (*v1.ClusterId, error)
 	Recover(ctx *Context, id *v1.ClusterId) (*v1.ClusterId, error)
@@ -204,9 +213,17 @@ type NodeGroup interface {
 type NodeOperation interface {
 	TagECS(ctx *Context, id string, val ...Value) error
 
+	InstanceDetail(ctx *Context, id []string) ([]Instance, error)
+
+	StopECS(ctx *Context, id string) error
+
+	DeleteECS(ctx *Context, id string) error
+
 	RestartECS(ctx *Context, id string) error
 
 	ReplaceSystemDisk(ctx *Context, id string, userdata string, opt Option) error
+
+	RunCommand(ctx *Context, id, cmd string) error
 }
 
 type ScaleGroupDetail struct {
@@ -249,10 +266,10 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 		klog.Warningf("failed to find HOME dir by $(pwd ~)")
 	}
 	klog.Infof("use HOME dir: [%s]", home)
-	cacheDir := filepath.Join(home, ".ooc/")
+	cacheDir := filepath.Join(home, ".ovm/")
 	/*
 		sequence:
-		1. from local ooc config, ~/.ooc/config
+		1. from local ovm config, ~/.ovm/config
 		2. from cluster spec provider
 	*/
 	mctx := v1.ContextCFG{
@@ -266,7 +283,7 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 			klog.Infof("trying to load context config from: %s", mfi)
 			cfg, err := ioutil.ReadFile(mfi)
 			if err != nil {
-				klog.Warningf("read ooc default config: %s", err.Error())
+				klog.Warningf("read ovm default config: %s", err.Error())
 			}
 			err = yaml.Unmarshal(cfg, &mctx)
 			if err != nil {
@@ -277,7 +294,7 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 					"or providers section: %s", mctx.CurrentContext, len(mctx.Contexts))
 			}
 		} else {
-			klog.Infof("ooc config[%s] does not exist", mfi)
+			klog.Infof("ovm config[%s] does not exist", mfi)
 		}
 	}
 	if spec != nil {
@@ -296,6 +313,9 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 		} else {
 			klog.Errorf("cluster spec provider not defined, failed to load provider information")
 		}
+	}
+	if mctx.CurrentContext == "" {
+		klog.Warningf("empty provider config, system would not work")
 	}
 	return &mctx
 }

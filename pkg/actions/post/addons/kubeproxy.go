@@ -1,15 +1,19 @@
 package addons
 
+import "github.com/google/uuid"
+
 var KUBEPROXY_MASTER = ConfigTpl{
 	Name:         "kubeproxy-master",
 	Tpl:          kubeproxyMaster,
-	ImageVersion: "v1.16.9-aliyun.1",
+	ImageVersion: "v1.20.4-aliyun.1",
 }
 
 var KUBEPROXY_WORKER = ConfigTpl{
+	// UUID to force pod restart when apply
+	UUID:         uuid.New().String(),
 	Name:         "kubeproxy-worker",
 	Tpl:          kubeproxyWorker,
-	ImageVersion: "v1.16.9-aliyun.1",
+	ImageVersion: "v1.20.4-aliyun.1",
 }
 
 var kubeproxyMaster = `
@@ -145,6 +149,7 @@ kind: DaemonSet
 metadata:
   labels:
     k8s-app: kube-proxy-worker
+    random.uuid: "{{ .UUID }}"
   name: kube-proxy-worker
   namespace: kube-system
 spec:
@@ -155,6 +160,7 @@ spec:
     metadata:
       labels:
         k8s-app: kube-proxy-worker
+        random.uuid: "{{ .UUID }}"
     spec:
       priorityClassName: system-node-critical
       containers:

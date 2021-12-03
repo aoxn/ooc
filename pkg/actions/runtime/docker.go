@@ -5,8 +5,8 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/utils/cmd"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/utils/cmd"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"os"

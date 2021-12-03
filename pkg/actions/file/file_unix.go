@@ -5,11 +5,11 @@ package file
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions"
 	"k8s.io/klog/v2"
 	"sync"
 
-	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils"
 	"os"
 )
 

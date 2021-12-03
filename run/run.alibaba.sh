@@ -23,6 +23,11 @@ function detecos() {
 function validatedefault() {
     # detect os arch
     detecos
+    if [[ "$PKG_BUCKET" == "" ]];
+    then
+        PKG_BUCKET="host-ovm"
+        echo "using oss bucket [oss://$PKG_BUCKET-$REGION] as package file server"
+    fi
     if [[ "$BOOT_TYPE" == "" ]];
     then
         BOOT_TYPE="local"
@@ -42,9 +47,9 @@ function validatedefault() {
     then
         NAMESPACE=default
     fi
-    if [[ "$OOC_VERSION" == "" ]];
+    if [[ "$OVM_VERSION" == "" ]];
     then
-        export OOC_VERSION=0.1.1
+        export OVM_VERSION=0.1.1
     fi
 
     if [[ "$CLOUD_TYPE" == "" ]];
@@ -59,21 +64,21 @@ function validatedefault() {
 
     if [[ "$PKG_FILE_SERVER" == "" ]];
     then
-        PKG_FILE_SERVER="http://host-oc-$REGION.oss-$REGION-internal.aliyuncs.com"
+        PKG_FILE_SERVER="http://${PKG_BUCKET}-$REGION.oss-$REGION-internal.aliyuncs.com"
         echo "empty PKG_FILE_SERVER, using default ${PKG_FILE_SERVER}"
     fi
-
+    export BIN_PATH=/usr/local/bin/
     echo "using beta version: [${NAMESPACE}]"
     wget --tries 10 --no-check-certificate -q \
-        -O /tmp/ooc.${ARCH}\
-        "${PKG_FILE_SERVER}"/ack/${NAMESPACE}/${CLOUD_TYPE}/ooc/${OOC_VERSION}/${ARCH}/${OS}/ooc.${ARCH}
-    chmod +x /tmp/ooc.${ARCH} ; mv /tmp/ooc.${ARCH} /usr/local/bin/ooc
+        -O /tmp/ovm.${ARCH}\
+        "${PKG_FILE_SERVER}"/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OVM_VERSION}/${ARCH}/${OS}/ovm.${ARCH}
+    chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} $BIN_PATH/ovm
 }
 
 function bootstrap() {
     echo run bootstrap init
     # run bootsrap init
-    nohup ooc bootstrap --token "${TOKEN}" --bootcfg /etc/ooc/ooc.cfg &
+    nohup ovm bootstrap --token "${TOKEN}" --bootcfg /etc/ovm/ovm.cfg &
 }
 
 function init() {
@@ -81,11 +86,11 @@ function init() {
     case $BOOT_TYPE in
     "local")
       # run master init
-      ooc init --role "${ROLE}" --token "${TOKEN}" --config /etc/ooc/ooc.cfg
+      ovm init --role "${ROLE}" --token "${TOKEN}" --config /etc/ovm/ovm.cfg
       ;;
     "operator")
       # run master init
-      ooc init --role "${ROLE}" --token "${TOKEN}" --boot-type "${BOOT_TYPE}" --endpoint "${ENDPOINT}"
+      ovm init --role "${ROLE}" --token "${TOKEN}" --boot-type "${BOOT_TYPE}" --endpoint "${ENDPOINT}"
       ;;
     esac
 }
@@ -97,7 +102,7 @@ function join() {
     then
         echo "endpoint must be specified with env"; exit 1
     fi
-    ooc init --role Worker --token "${TOKEN}" --endpoint "${ENDPOINT}"  --boot-type operator
+    ovm init --role Worker --token "${TOKEN}" --endpoint "${ENDPOINT}"  --boot-type operator
 }
 
 function postcheck() {

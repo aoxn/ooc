@@ -1,4 +1,4 @@
-module github.com/aoxn/ooc
+module github.com/aoxn/ovm
 
 go 1.16
 

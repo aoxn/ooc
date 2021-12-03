@@ -5,10 +5,10 @@ package kubeadm
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/utils"
-	"github.com/aoxn/ooc/pkg/utils/cmd"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/cmd"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"os"
@@ -36,7 +36,7 @@ func (a *ActionKubelet) Execute(ctx *actions.ActionContext) error {
 	if node == nil {
 		return fmt.Errorf("node info nil: ActionKubelet")
 	}
-	switch ctx.OocFlags().Role {
+	switch ctx.OvmFlags().Role {
 	case v1.NODE_ROLE_WORKER:
 		klog.Infof("skip config cert for worker node")
 	case v1.NODE_ROLE_MASTER, v1.NODE_ROLE_HYBRID:
@@ -152,6 +152,7 @@ func KubeletUnitFile(node *v1.Master, ip string) string {
 	cfg := NewConfigTpl(node, WithNodeName)
 	for k, v := range map[string]string{
 		"KUBELET_CLUSTER_DNS":      fmt.Sprintf("--cluster-dns=%s", ip),
+		"KUBELET_DOMAIN":           "--cluster-domain=cluster.local",
 		"KUBELET_CGROUP_DRIVER":    "--cgroup-driver=systemd",
 		"KUBELET_BOOTSTRAP_ARGS":   "--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"KUBELET_KUBECONFIG_ARGS":  "--kubeconfig=/etc/kubernetes/kubelet.conf",

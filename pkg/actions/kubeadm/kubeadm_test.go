@@ -3,8 +3,8 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	v12 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/actions"
+	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/ghodss/yaml"
 	"html/template"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +68,7 @@ func TestCCMAuthConfig(t *testing.T) {
 	if err != nil {
 		panic(fmt.Sprintf("%s", err.Error()))
 	}
-	node := &v12.Master{
+	_ = &v12.Master{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "NodeObject",
 			APIVersion: "v1",
@@ -85,11 +85,7 @@ func TestCCMAuthConfig(t *testing.T) {
 			BootCFG: cfg,
 		},
 	}
-	actx := actions.NewActionContext(
-		node.Status.BootCFG,
-		node,
-		nil,
-	)
+	actx := actions.NewActionContext(nil)
 	err = NewActionCCMAuth().Execute(actx)
 	if err != nil {
 		panic(fmt.Sprintf("%s", err.Error()))
@@ -97,7 +93,7 @@ func TestCCMAuthConfig(t *testing.T) {
 }
 
 func TestAnonyStruct(t *testing.T) {
-	tpl, err := template.New("ooc-file").Parse(oocf)
+	tpl, err := template.New("ovm-file").Parse(ovmf)
 	if err != nil {
 		panic("failed to parse config template")
 	}
@@ -119,14 +115,14 @@ func TestAnonyStruct(t *testing.T) {
 	fmt.Printf("%s", buff.Bytes())
 }
 
-var oocf = `
+var ovmf = `
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ooc
-  name: ooc
+    app: ovm
+  name: ovm
   namespace: default
 spec:
   ports:
@@ -136,7 +132,7 @@ spec:
       protocol: TCP
       targetPort: 443
   selector:
-    run: ooc
+    run: ovm
   sessionAffinity: None
   type: NodePort
 ---
@@ -144,31 +140,31 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ooc
-  name: ooc
+    app: ovm
+  name: ovm
   namespace: kube-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ooc
+      app: ovm
   template:
     metadata:
       labels:
-        app: ooc
+        app: ovm
     spec:
       priorityClassName: system-node-critical
       containers:
-        - image: {{ .Registry }}/ooc:{{ .Version }}
+        - image: {{ .Registry }}/ovm:{{ .Version }}
           imagePullPolicy: Always
-          name: ooc-net
+          name: ovm-net
           command:
-            - ooc
+            - ovm
             - operater
-            - --bootcfg /etc/ooc/boot.cfg
+            - --bootcfg /etc/ovm/boot.cfg
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ooc/boot.cfg
+              mountPath: /etc/ovm/boot.cfg
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:

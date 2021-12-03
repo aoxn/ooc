@@ -62,7 +62,7 @@ func NewPgmbar(created string, resource []Resource) *Pgmbar {
 		started: when,
 		meesage: Resource{
 			ResourceId:     "extra_mesage_id",
-			ResourceType:   "OOC::MESSAGE::OUTPUT",
+			ResourceType:   "OVM::MESSAGE::OUTPUT",
 			ResourceName:   "extra message",
 			ResourceStatus: "Initialized",
 			UpdatedTime:    "1s",

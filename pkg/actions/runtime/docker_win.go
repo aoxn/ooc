@@ -4,7 +4,7 @@
 package runtime
 
 import (
-	"github.com/aoxn/ooc/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions"
 )
 
 type action struct{}

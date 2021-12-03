@@ -2,13 +2,13 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions/post"
-	"github.com/aoxn/ooc/pkg/actions/post/addons"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/apiserver"
-	"github.com/aoxn/ooc/pkg/apiserver/auth"
-	"github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/utils"
+	"github.com/aoxn/ovm/pkg/actions/post"
+	"github.com/aoxn/ovm/pkg/actions/post/addons"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/apiserver"
+	"github.com/aoxn/ovm/pkg/apiserver/auth"
+	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"time"
@@ -53,8 +53,8 @@ func WaitBootrap(ctx *context.CachedContext, cnt int) error {
 	if err != nil {
 		return fmt.Errorf("wait bootstrap: %s", err.Error())
 	}
-	if err := post.RunOoc(ctx.BootCFG); err != nil {
-		return fmt.Errorf("run ooc: %s", err.Error())
+	if err := post.RunOvm(ctx.BootCFG); err != nil {
+		return fmt.Errorf("run ovm: %s", err.Error())
 	}
 	return addons.InstallAddons(ctx.BootCFG, []addons.ConfigTpl{addons.KUBEPROXY_MASTER})
 }

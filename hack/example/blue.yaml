@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: demo-ball
+  name: demo-ball
+  namespace: kube-system
+spec:
+  ports:
+    - name: tcp
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: demo-ball
+  sessionAffinity: None
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: demo-ball
+  name: demo-ball
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-ball
+  template:
+    metadata:
+      labels:
+        app: demo-ball
+    spec:
+      containers:
+        - image: registry.cn-hangzhou.aliyuncs.com/acs/rollouts-demo:green
+        #- image: argoproj/rollouts-demo:blue
+          imagePullPolicy: Always
+          name: demo-ball-net

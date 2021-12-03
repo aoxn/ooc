@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package boot implements ooc  cluster initialization
+// Package boot implements ovm  cluster initialization
 package boot

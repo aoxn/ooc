@@ -2,12 +2,12 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/actions/file"
-	"github.com/aoxn/ooc/pkg/actions/kubeadm"
-	"github.com/aoxn/ooc/pkg/actions/post"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions/file"
+	"github.com/aoxn/ovm/pkg/actions/kubeadm"
+	"github.com/aoxn/ovm/pkg/actions/post"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context"
 )
 
 func InitMasterAlone(ctx *context.NodeContext) error {
@@ -26,9 +26,10 @@ func InitMasterAlone(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("init master call meta.ARCH: %s", err.Error())
 	}
+	oflag := ctx.OvmFlags()
 	return actions.RunActions(
 		[]actions.Action{
-			NewConcurrentPkgDL(&cfg.Spec, os, arch),
+			NewConcurrentPkgDL(&cfg.Spec, os, arch,oflag.Bucket),
 			kubeadm.NewActionKubelet(),
 			kubeadm.NewActionInit(),
 			kubeadm.NewActionCCMAuth(),
@@ -58,10 +59,10 @@ func InitWorker(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("init worker call meta.ARCH: %s", err.Error())
 	}
-
+	oflag := ctx.OvmFlags()
 	return actions.RunActions(
 		[]actions.Action{
-			NewConcurrentPkgDL(&cfg.Spec, os, arch),
+			NewConcurrentPkgDL(&cfg.Spec, os, arch,oflag.Bucket),
 			kubeadm.NewActionKubelet(),
 			kubeadm.NewActionJoin(),
 		},
@@ -73,7 +74,7 @@ func InitWorker(ctx *context.NodeContext) error {
 
 func NewConcurrentPkgDL(
 	cfg *v1.ClusterSpec,
-	os, arch string,
+	os, arch,bucket string,
 ) actions.Action {
 
 	return actions.NewConcurrentAction(
@@ -88,11 +89,12 @@ func NewConcurrentPkgDL(
 							Pkg:       file.PKG_KUBERNETES,
 							CType:     cfg.CloudType,
 							Ftype:     file.FILE_BINARY,
-							Project:   "ack",
+							Project:   "ovm",
 							OS:        os,
 							Arch:      arch,
 						},
 						CacheDir: fmt.Sprintf("pkg/%s/", file.PKG_KUBERNETES),
+						Bucket: bucket,
 					},
 				},
 			),
@@ -105,11 +107,12 @@ func NewConcurrentPkgDL(
 							Pkg:         file.PKG_CNI,
 							CType:       cfg.CloudType,
 							Ftype:       file.FILE_BINARY,
-							Project:     "ack",
+							Project:     "ovm",
 							OS:          os,
 							Arch:        arch,
 							Destination: "/opt/cni/bin/",
 						},
+						Bucket: bucket,
 					},
 				},
 			),

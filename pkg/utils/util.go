@@ -10,12 +10,10 @@ import (
 	"html/template"
 	corev1 "k8s.io/api/core/v1"
 	validate "k8s.io/apimachinery/pkg/api/validation"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"math/big"
 	"net"
 	"os"
-	"time"
 )
 
 var (
@@ -133,41 +131,7 @@ users:
     client-key-data: {{ .ClientKey }}
 `
 
-func KubeletNotReady(node *corev1.Node) (bool, string) {
-	cond := findCondition(node.Status.Conditions, corev1.NodeReady)
-	if cond.Type != corev1.NodeReady {
-		klog.Infof("ready condition type not found, can not process,skip. %s", node.Name)
-		return true, "ConditionNotFound"
-	}
-	if cond.Status == corev1.ConditionFalse ||
-		cond.Status == corev1.ConditionUnknown {
-		klog.Infof("kubelet in not ready state, wait heartbeat timeout: %s", cond.LastHeartbeatTime)
-	}
-	return (cond.Status == corev1.ConditionFalse ||
-		cond.Status == corev1.ConditionUnknown) && !isHeartbeatNormal(cond), cond.Reason
-}
 
-const HeartBeatTimeOut = 10 * time.Minute
-
-func isHeartbeatNormal(cond corev1.NodeCondition) bool {
-	ago := metav1.NewTime(time.Now().Add(-1 * HeartBeatTimeOut))
-	// heartbeat hasn`t been updated for at least 10 minute
-	return !cond.LastHeartbeatTime.Before(&ago)
-}
-
-func findCondition(
-	conds []corev1.NodeCondition,
-	typ corev1.NodeConditionType,
-) corev1.NodeCondition {
-	for i := range conds {
-		if conds[i].Type == typ {
-			return conds[i]
-		}
-	}
-	klog.Infof("condition type %s not found,skip", typ)
-	// condition not found, do not trigger repair
-	return corev1.NodeCondition{}
-}
 
 func GetNamePrefix(p string) string {
 	// use the dash (if the name isn't too long) to make the pod name a bit prettier

@@ -22,8 +22,8 @@ package kubeadm
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	log "github.com/sirupsen/logrus"
 	"strings"
 )

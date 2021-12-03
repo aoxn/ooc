@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
 	"math"
 	"runtime"
 	"testing"
@@ -58,18 +57,3 @@ func returnError() error {
 	return fmt.Errorf("error hahsh")
 }
 
-func TestClojour(t *testing.T) {
-	var id provider.Id
-	id = provider.Id{
-		Name: "XXXXX",
-	}
-
-	defer func(id *provider.Id) {
-		fmt.Printf("Defer: %x, %v\n", id, *id)
-	}(&id)
-
-	id = provider.Id{
-		Name: "YYYYYY",
-	}
-	fmt.Printf("normal: %v\n", id)
-}

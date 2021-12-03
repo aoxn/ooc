@@ -1,7 +1,7 @@
 package rate
 
 import (
-	log "github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 	"math/rand"
 	"strings"
 	"sync"

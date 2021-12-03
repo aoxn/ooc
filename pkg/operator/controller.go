@@ -1,13 +1,11 @@
 package operator
 
 import (
-	"github.com/aoxn/ooc/pkg/context/shared"
-	"github.com/aoxn/ooc/pkg/operator/controllers/addon"
-	"github.com/aoxn/ooc/pkg/operator/controllers/autorepair"
-	"github.com/aoxn/ooc/pkg/operator/controllers/master"
-	"github.com/aoxn/ooc/pkg/operator/controllers/nodepool"
-	"github.com/aoxn/ooc/pkg/operator/controllers/rolling"
-	"github.com/aoxn/ooc/pkg/operator/controllers/task"
+	"github.com/aoxn/ovm/pkg/context/shared"
+	"github.com/aoxn/ovm/pkg/operator/controllers/addon"
+	"github.com/aoxn/ovm/pkg/operator/controllers/master"
+	"github.com/aoxn/ovm/pkg/operator/controllers/nodepool"
+	"github.com/aoxn/ovm/pkg/operator/controllers/noderepair"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -20,11 +18,9 @@ func init() {
 	AddToManagerFuncs = append(AddToManagerFuncs, master.AddMasterSet)
 	AddToManagerFuncs = append(AddToManagerFuncs, addon.Add)
 	AddToManagerFuncs = append(AddToManagerFuncs, master.AddNode)
-	AddToManagerFuncs = append(AddToManagerFuncs, task.AddTaskController)
-	AddToManagerFuncs = append(AddToManagerFuncs, rolling.AddRollingController)
 
 	AddToManagerFuncs = append(AddToManagerFuncs, nodepool.AddNodePoolController)
-	AddToManagerFuncs = append(AddToManagerFuncs, autorepair.AddAutoRepairController)
+	AddToManagerFuncs = append(AddToManagerFuncs, noderepair.AddNodeRepair)
 }
 
 // AddControllers adds all Controllers to the Manager

@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	//"context"
-	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -18,8 +18,9 @@ import (
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
-// RegisterFromInClusterCfg register crds from in cluster config file
+// InitializeCRD register crds from in cluster config file
 func InitializeCRD(cfg *rest.Config) error { return doRegisterCRD(cfg) }
+
 
 // RegisterFromKubeconfig register crds from kubeconfig file
 func RegisterFromKubeconfig(name string) error {
@@ -62,16 +63,16 @@ type CRD interface {
 // ClusterCRD is the cluster crd .
 type ClusterCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewClusterCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *ClusterCRD {
 	return &ClusterCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -92,10 +93,10 @@ func (p *ClusterCRD) Initialize() error {
 func (p *ClusterCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil
@@ -107,16 +108,16 @@ func (p *ClusterCRD) GetObject() runtime.Object { return &v1.Cluster{} }
 // MasterCRD is the cluster crd .
 type MasterCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewMasterCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *MasterCRD {
 	return &MasterCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -137,10 +138,10 @@ func (p *MasterCRD) Initialize() error {
 func (p *MasterCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil
@@ -152,16 +153,16 @@ func (p *MasterCRD) GetObject() runtime.Object { return &v1.Master{} }
 // MasterCRD is the cluster crd .
 type MasterSetCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewMasterSetCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *MasterSetCRD {
 	return &MasterSetCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -182,10 +183,10 @@ func (p *MasterSetCRD) Initialize() error {
 func (p *MasterSetCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil
@@ -196,16 +197,16 @@ func (p *MasterSetCRD) GetObject() runtime.Object { return &v1.MasterSet{} }
 
 type NodePoolCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewNodePoolCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *NodePoolCRD {
 	return &NodePoolCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -226,10 +227,10 @@ func (p *NodePoolCRD) Initialize() error {
 func (p *NodePoolCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil
@@ -241,16 +242,16 @@ func (p *NodePoolCRD) GetObject() runtime.Object { return &v1.NodePool{} }
 // RollingCRD is the cluster crd .
 type RollingCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewRollingCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *RollingCRD {
 	return &RollingCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -272,10 +273,10 @@ func (p *RollingCRD) Initialize() error {
 func (p *RollingCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil
@@ -287,16 +288,16 @@ func (p *RollingCRD) GetObject() runtime.Object { return &v1.Rolling{} }
 // TaskCRD is the cluster crd .
 type TaskCRD struct {
 	crdc Interface
-	//ooc vcset.Interface
+	//ovm vcset.Interface
 }
 
 func NewTaskCRD(
-	//oocClient vcset.Interface,
+	//ovmClient vcset.Interface,
 	crdClient Interface,
 ) *TaskCRD {
 	return &TaskCRD{
 		crdc: crdClient,
-		//ooc: oocClient,
+		//ovm: ovmClient,
 	}
 }
 
@@ -318,10 +319,10 @@ func (p *TaskCRD) Initialize() error {
 func (p *TaskCRD) GetListerWatcher() cache.ListerWatcher {
 	//return &cache.ListWatch{
 	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.ooc.OocV1().Clusters("").List(context.TODO(), options)
+	//		return p.ovm.OvmV1().Clusters("").List(context.TODO(), options)
 	//	},
 	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.ooc.OocV1().Clusters("").Watch(context.TODO(),options)
+	//		return p.ovm.OvmV1().Clusters("").Watch(context.TODO(),options)
 	//	},
 	//}
 	return nil

@@ -25,7 +25,7 @@ SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 # Alert: `go mod vendor` before running this script in go.mod
-echo "Alert: run 'go mod vendor' before running this script in go.mod. And delete vendor dir before 'make oocmac'"
+echo "Alert: run 'go mod vendor' before running this script in go.mod. And delete vendor dir before 'make ovmmac'"
 
 CACHE="~/.ovm"
 mkdir -p "$CACHE"
@@ -37,7 +37,7 @@ then
 fi
 
 bash "${CODEGEN_PKG}"/generate-groups.sh all \
-  github.com/aoxn/ooc/pkg/generated github.com/aoxn/ooc/pkg/apis \
+  github.com/aoxn/ovm/pkg/generated github.com/aoxn/ovm/pkg/apis \
   alibabacloud.com:v1 \
   --output-base "${SCRIPT_ROOT}/../.." \
   --go-header-file "${SCRIPT_ROOT}"/boilerplate.go.txt
@@ -47,8 +47,8 @@ bash "${CODEGEN_PKG}"/generate-groups.sh all \
 
 # hack
 PROJECT=${SCRIPT_ROOT}/../..
-DEEPCOPY_LOC="$PROJECT"/github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1/zz_generated.deepcopy.go
+DEEPCOPY_LOC="$PROJECT"/github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1/zz_generated.deepcopy.go
 mv "$DEEPCOPY_LOC" "${PROJECT}"/pkg/apis/alibabacloud.com/v1
 rm -rf "${PROJECT}"/pkg/generated
-mv "$PROJECT"/github.com/aoxn/ooc/pkg/generated "${PROJECT}"/pkg/
-rm -rf gitlab.alibaba-inc.com
+mv "$PROJECT"/github.com/aoxn/ovm/pkg/generated "${PROJECT}"/pkg/
+rm -rf github.com

@@ -20,7 +20,7 @@ package fake
 import (
 	"context"
 
-	alibabacloudcomv1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
+	alibabacloudcomv1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +31,7 @@ import (
 
 // FakeClusters implements ClusterInterface
 type FakeClusters struct {
-	Fake *FakeOocV1
+	Fake *FakeOvmV1
 	ns   string
 }
 

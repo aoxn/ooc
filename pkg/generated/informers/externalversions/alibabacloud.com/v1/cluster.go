@@ -21,10 +21,10 @@ import (
 	"context"
 	time "time"
 
-	alibabacloudcomv1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	versioned "github.com/aoxn/ooc/pkg/generated/clientset/versioned"
-	internalinterfaces "github.com/aoxn/ooc/pkg/generated/informers/externalversions/internalinterfaces"
-	v1 "github.com/aoxn/ooc/pkg/generated/listers/alibabacloud.com/v1"
+	alibabacloudcomv1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	versioned "github.com/aoxn/ovm/pkg/generated/clientset/versioned"
+	internalinterfaces "github.com/aoxn/ovm/pkg/generated/informers/externalversions/internalinterfaces"
+	v1 "github.com/aoxn/ovm/pkg/generated/listers/alibabacloud.com/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -61,13 +61,13 @@ func NewFilteredClusterInformer(client versioned.Interface, namespace string, re
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OocV1().Clusters(namespace).List(context.TODO(), options)
+				return client.OvmV1().Clusters(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OocV1().Clusters(namespace).Watch(context.TODO(), options)
+				return client.OvmV1().Clusters(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&alibabacloudcomv1.Cluster{},

@@ -2,17 +2,17 @@ package context
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/client/ooc"
-	"github.com/aoxn/ooc/pkg/context/base"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/node"
-	"github.com/aoxn/ooc/pkg/node/meta/alibaba"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/client/ovm"
+	"github.com/aoxn/ovm/pkg/context/base"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/node"
+	"github.com/aoxn/ovm/pkg/node/meta/alibaba"
 )
 
 const (
-	OocFlags             = "OocFlags"
-	NodeMetaData         = "NodeMetaData"
+	OvmFlags     = "OvmFlags"
+	NodeMetaData = "NodeMetaData"
 	ProviderCtx          = "ProviderCtx"
 	ClusterClient        = "ClusterClient"
 	BootNodeClient       = "BootNodeClient"
@@ -21,24 +21,24 @@ const (
 )
 
 func NewNodeContext(
-	flags v1.OocOptions,
+	flags v1.OvmOptions,
 ) (*NodeContext, error) {
 	ctxs := NodeContext{}
 	if flags.Endpoint != "" {
-		restc, err := ooc.RestClientForOOC(flags.Endpoint)
+		restc, err := ovm.RestClientForOVM(flags.Endpoint)
 		if err != nil {
 			return nil, fmt.Errorf("construct rest client: %s", err.Error())
 		}
 		if restc != nil {
-			ctxs.SetKV(BootNodeClient, ooc.NewNodeClient(restc))
-			ctxs.SetKV(ClusterClient, ooc.NewClusterClient(restc))
-			ctxs.SetKV(BootCredentialClient, ooc.NewCredential(restc))
+			ctxs.SetKV(BootNodeClient, ovm.NewNodeClient(restc))
+			ctxs.SetKV(ClusterClient, ovm.NewClusterClient(restc))
+			ctxs.SetKV(BootCredentialClient, ovm.NewCredential(restc))
 		}
 	}
 	// meta provider factory
 	meta := alibaba.NewMetaDataAlibaba(nil)
 
-	ctxs.SetKV(OocFlags, flags)
+	ctxs.SetKV(OvmFlags, flags)
 	ctxs.SetKV(NodeMetaData, node.NewNodeInfo(meta))
 	return &ctxs, nil
 }
@@ -53,19 +53,19 @@ func (c *NodeContext) ProviderCtx() *provider.Context {
 	return c.Value(ProviderCtx).(*provider.Context)
 }
 
-// BootNodeClient ooc bootstrap client
-func (c *NodeContext) BootNodeClient() ooc.Interface {
-	return c.Value(BootNodeClient).(ooc.Interface)
+// BootNodeClient ovm bootstrap client
+func (c *NodeContext) BootNodeClient() ovm.Interface {
+	return c.Value(BootNodeClient).(ovm.Interface)
 }
 
-// BootClusterClient ooc bootstrap client
-func (c *NodeContext) BootClusterClient() ooc.InterfaceCluster {
-	return c.Value(ClusterClient).(ooc.InterfaceCluster)
+// BootClusterClient ovm bootstrap client
+func (c *NodeContext) BootClusterClient() ovm.InterfaceCluster {
+	return c.Value(ClusterClient).(ovm.InterfaceCluster)
 }
 
-// BootCredentialClient ooc bootstrp client for credentialcfg
-func (c *NodeContext) BootCredentialClient() ooc.InterfaceCredential {
-	return c.Value(BootCredentialClient).(ooc.InterfaceCredential)
+// BootCredentialClient ovm bootstrp client for credentialcfg
+func (c *NodeContext) BootCredentialClient() ovm.InterfaceCredential {
+	return c.Value(BootCredentialClient).(ovm.InterfaceCredential)
 }
 
 // NodeObject for NodeInfo object
@@ -74,11 +74,11 @@ func (c *NodeContext) NodeObject() *v1.Master {
 }
 
 // ActionContext
-func (c *NodeContext) OocFlags() v1.OocOptions {
-	return c.Value(OocFlags).(v1.OocOptions)
+func (c *NodeContext) OvmFlags() v1.OvmOptions {
+	return c.Value(OvmFlags).(v1.OvmOptions)
 }
 
 // ActionContext
 func (c *NodeContext) ExpectedMasterCnt() int {
-	return c.Value(OocFlags).(v1.OocOptions).ExpectedMasterCnt
+	return c.Value(OvmFlags).(v1.OvmOptions).ExpectedMasterCnt
 }

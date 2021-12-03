@@ -4,7 +4,7 @@
 package kubeadm
 
 import (
-	"github.com/aoxn/ooc/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions"
 )
 
 const (

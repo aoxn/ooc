@@ -21,8 +21,8 @@ import (
 	"context"
 	"time"
 
-	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	scheme "github.com/aoxn/ooc/pkg/generated/clientset/versioned/scheme"
+	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	scheme "github.com/aoxn/ovm/pkg/generated/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -56,7 +56,7 @@ type masterSets struct {
 }
 
 // newMasterSets returns a MasterSets
-func newMasterSets(c *OocV1Client, namespace string) *masterSets {
+func newMasterSets(c *OvmV1Client, namespace string) *masterSets {
 	return &masterSets{
 		client: c.RESTClient(),
 		ns:     namespace,

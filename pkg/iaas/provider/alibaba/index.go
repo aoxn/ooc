@@ -3,8 +3,8 @@ package alibaba
 import (
 	"encoding/json"
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/utils"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/denverdino/aliyungo/oss"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
@@ -18,7 +18,7 @@ func path(bucket, name string) string {
 func (n *Devel) Save(id api.ClusterId) error {
 	bName := n.Cfg.BucketName
 	if bName == "" {
-		return fmt.Errorf("oss bucket name should be provided in ooc config")
+		return fmt.Errorf("oss bucket name should be provided in ovm config")
 	}
 	bucket := n.OSS.Bucket(bName)
 	data := utils.PrettyJson(id)
@@ -41,7 +41,7 @@ func (n *Devel) Get(id string) (api.ClusterId, error) {
 	cid := api.ClusterId{}
 	bName := n.Cfg.BucketName
 	if bName == "" {
-		return cid, fmt.Errorf("oss bucket name should be provided in ooc config")
+		return cid, fmt.Errorf("oss bucket name should be provided in ovm config")
 	}
 	data, err := n.GetObject(path(bName, id))
 	if err != nil {
@@ -57,7 +57,7 @@ func (n *Devel) Get(id string) (api.ClusterId, error) {
 func (n *Devel) Remove(id string) error {
 	bName := n.Cfg.BucketName
 	if bName == "" {
-		return fmt.Errorf("oss bucket name should be provided in ooc config")
+		return fmt.Errorf("oss bucket name should be provided in ovm config")
 	}
 	return n.DeleteObject(path(bName, id))
 }
@@ -66,7 +66,7 @@ func (n *Devel) List(selector string) ([]api.ClusterId, error) {
 	var cids []api.ClusterId
 	bName := n.Cfg.BucketName
 	if bName == "" {
-		return cids, fmt.Errorf("oss bucket name should be provided in ooc config")
+		return cids, fmt.Errorf("oss bucket name should be provided in ovm config")
 	}
 	mlist, err := n.OSS.Bucket(bName).List("ovm/clusters", "", "", 1000)
 	if err != nil {

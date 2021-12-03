@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	"github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/utils"
-	logb "github.com/aoxn/ooc/pkg/utils/log"
-	"github.com/aoxn/ooc/pkg/utils/unstructed"
+	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/utils"
+	logb "github.com/aoxn/ovm/pkg/utils/log"
+	"github.com/aoxn/ovm/pkg/utils/unstructed"
 	"github.com/denverdino/aliyungo/common"
 	"github.com/denverdino/aliyungo/oss"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,7 +66,7 @@ type Devel struct {
 }
 
 func (n *Devel) Initialize(ctx *provider.Context) error {
-	options := ctx.OocOptions()
+	options := ctx.OvmOptions()
 	n.Cfg = &AlibabaDev{}
 	err := options.Default.CurrentPrvdCFG().Decode(n.Cfg)
 	if err != nil {
@@ -127,7 +127,7 @@ func (n *Devel) Recover(
 		return id, fmt.Errorf("master ess not equal 1, actually %d", len(instances))
 	}
 	eid := instances[0].Id
-	data, err := NewRecoverUserData(ctx)
+	data, err := n.UserData(ctx, provider.RecoverUserdata)
 	if err != nil {
 		return id, errors.Wrapf(err, "build recover userdata: %s", eid)
 	}
@@ -135,8 +135,8 @@ func (n *Devel) Recover(
 	if err != nil {
 		return id, errors.Wrapf(err, "replace system disk: %s", eid)
 	}
-	klog.Infof("Waiting for 40 seconds for node ready")
-	time.Sleep(40 * time.Second)
+	klog.Infof("Waiting for 90 seconds for node ready")
+	time.Sleep(90 * time.Second)
 	return id, nil
 }
 
@@ -220,7 +220,7 @@ func (n *Devel) Create(ctx *provider.Context) (*v1.ClusterId, error) {
 		"ProxyMode":           bootcfg.Network.Mode,
 		"PublicSLB":           "true",
 	}
-	rtpl, err := RenderUserData(ctx, tpl, true)
+	rtpl, err := RenderUserData(ctx, n, tpl, true)
 	if err != nil {
 		return nil, fmt.Errorf("render userdata: %s", err.Error())
 	}
@@ -245,7 +245,7 @@ func (n *Devel) Create(ctx *provider.Context) (*v1.ClusterId, error) {
 		Spec: v1.ClusterIdSpec{
 			Cluster:    *bootcfg,
 			ResourceId: response.StackId,
-			Options:    ctx.OocOptions(),
+			Options:    ctx.OvmOptions(),
 			CreatedAt:  time.Now().Format("2006-01-02T15:04:05"),
 			UpdatedAt:  time.Now().Format("2006-01-02T15:04:05"),
 		},
@@ -270,13 +270,16 @@ func Transform(para map[string]string) []rosc.Parameter {
 }
 
 func RenderUserData(
-	ctx *provider.Context, tpl string, withNotify bool,
+	ctx *provider.Context, n *Devel, tpl string, withNotify bool,
 ) (string, error) {
 	uns, err := unstructed.ToUnstructured(tpl)
 	if err != nil {
 		return "", fmt.Errorf("unstruct template: %s", err)
 	}
-	data := NewUserData(ctx)
+	data, err := n.UserData(ctx, provider.MasterUserdata)
+	if err != nil {
+		return "", errors.Wrapf(err, "render master userdata")
+	}
 	base := "Resources.k8s_master_sconfig.Properties.UserData"
 	if withNotify {
 		var mdata, join []interface{}

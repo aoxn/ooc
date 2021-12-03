@@ -124,14 +124,17 @@ data:
   Corefile: |
     .:53 {
         errors
-        health
+        health {
+            lameduck 5s
+        }
+        ready
         kubernetes cluster.local in-addr.arpa ip6.arpa {
            pods insecure
-           upstream
            fallthrough in-addr.arpa ip6.arpa
+           ttl 30
         }
         prometheus :9153
-        proxy . /etc/resolv.conf
+        forward . /etc/resolv.conf
         cache 30
         loop
         reload

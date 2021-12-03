@@ -35,7 +35,7 @@ import (
 	"strings"
 )
 
-var KUBERNETES_NODE_LIFE_CYCLE = "ack.ooc"
+var KUBERNETES_NODE_LIFE_CYCLE = "ack.ovm"
 
 // TOKEN_RESYNC_PERIOD default Token sync period
 var TOKEN_RESYNC_PERIOD = 10 * time.Minute

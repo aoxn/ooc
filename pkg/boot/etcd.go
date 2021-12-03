@@ -2,10 +2,10 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/actions/etcd"
-	"github.com/aoxn/ooc/pkg/actions/file"
-	"github.com/aoxn/ooc/pkg/context"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions/etcd"
+	"github.com/aoxn/ovm/pkg/actions/file"
+	"github.com/aoxn/ovm/pkg/context"
 )
 
 func InitEtcd(ctx *context.NodeContext) error {
@@ -25,6 +25,8 @@ func InitEtcd(ctx *context.NodeContext) error {
 		return fmt.Errorf("init etcd call meta.ARCH: %s", err.Error())
 	}
 
+	oflag := ctx.OvmFlags()
+
 	files := []file.File{
 		{
 			VersionedPath: file.Path{
@@ -32,11 +34,12 @@ func InitEtcd(ctx *context.NodeContext) error {
 				Pkg:       file.PKG_ETCD,
 				CType:     cfg.Spec.CloudType,
 				Ftype:     file.FILE_BINARY,
-				Project:   "ack",
+				Project:   "ovm",
 				OS:        os,
 				Arch:      arch,
 				Version:   cfg.Spec.Etcd.Version,
 			},
+			Bucket: oflag.Bucket,
 		},
 	}
 	downs := file.NewAction(files)

@@ -1,10 +1,10 @@
 apiVersion: alibabacloud.com/v1
 kind: NodePool
 metadata:
-  name: nodepool-01
+  name: default-nodepool
   namespace: kube-system
 spec:
-  id: "very-long-id-xxxxx"
+  id: default-nodepool
   infra:
     desiredCapacity: 1
     cpu: 4

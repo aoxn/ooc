@@ -6,19 +6,22 @@ package post
 import (
 	"bytes"
 	"fmt"
-	"github.com/aoxn/ooc"
-	"github.com/aoxn/ooc/pkg/actions"
-	"github.com/aoxn/ooc/pkg/actions/post/addons"
-	v12 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/utils"
-	"github.com/aoxn/ooc/pkg/utils/crd"
+	"github.com/aoxn/ovm"
+	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/ovm/pkg/actions/post/addons"
+	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/crd"
 	"github.com/ghodss/yaml"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"html/template"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	"path/filepath"
 	"strings"
@@ -41,8 +44,8 @@ func NewActionPost() actions.Action {
 // Execute runs the ActionPost
 func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	// Addon was installed by operator
-	adds := ctx.OocFlags().Addons
-	cfgadds := []addons.ConfigTpl{addons.KUBEPROXY_MASTER}
+	adds := ctx.OvmFlags().Addons
+	cfgadds := []addons.ConfigTpl{addons.KUBEPROXY_MASTER, addons.KUBEPROXY_WORKER}
 	if adds == "*" {
 		cfgadds = addons.AddonConfigsTpl()
 	}
@@ -55,15 +58,50 @@ func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	if err != nil {
 		return fmt.Errorf("register crds: %s", err.Error())
 	}
-	err = WriteClusterInfo(ctx.NodeContext)
+	err = WriteClusterCR(ctx.NodeContext)
 	if err != nil {
 		return fmt.Errorf("write cluster cfg: %s", err.Error())
 	}
-	// Run ooc operator default
-	return RunOoc(ctx.Config())
+	err = WritePublicInfo(ctx.NodeContext)
+	if err != nil {
+		return fmt.Errorf("write public cluster info")
+	}
+	// Run ovm operator default
+	return RunOvm(ctx.Config())
 }
 
-func WriteClusterInfo(ctx *context.NodeContext) error {
+func WritePublicInfo(ctx *context.NodeContext) error {
+	cfg := ctx.NodeObject().Status.BootCFG
+	bcfg := clientcmdapi.Config{
+		APIVersion: "v1",
+		Clusters: map[string]*clientcmdapi.Cluster{
+			"": {
+				Server: fmt.Sprintf("https://%s:6443",cfg.Spec.Endpoint.Intranet),
+				CertificateAuthorityData: cfg.Spec.Kubernetes.RootCA.Cert,
+			},
+		},
+	}
+	data,err := clientcmd.Write(bcfg)
+	if err != nil {
+		return errors.Wrapf(err, "write config")
+	}
+	cm := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-info",
+			Namespace: metav1.NamespacePublic,
+		},
+		Data: map[string]string{
+			"kubeconfig": string(data),
+		},
+	}
+	return utils.ApplyYaml(utils.PrettyYaml(cm),"cluster-info")
+}
+
+func WriteClusterCR(ctx *context.NodeContext) error {
 
 	cfg := ctx.NodeObject().Status.BootCFG
 	m := ctx.NodeObject()
@@ -77,6 +115,7 @@ func WriteClusterInfo(ctx *context.NodeContext) error {
 		},
 		Spec: m.Spec,
 	}
+	klog.Infof("bind to infra: [%s]", cfg.Spec.Bind.ResourceId)
 	return utils.ApplyYaml(
 		strings.Join(
 			[]string{
@@ -87,10 +126,10 @@ func WriteClusterInfo(ctx *context.NodeContext) error {
 	)
 }
 
-func RunOoc(ctx *v12.ClusterSpec) error {
-	cfg, err := RenderOocYaml(ctx)
+func doRunOvm(ctx *v12.ClusterSpec) error {
+	cfg, err := RenderOvmYaml(ctx)
 	if err != nil {
-		return fmt.Errorf("write ooc yaml: %s", err.Error())
+		return fmt.Errorf("write ovm yaml: %s", err.Error())
 	}
 	return wait.Poll(
 		2*time.Second,
@@ -100,13 +139,21 @@ func RunOoc(ctx *v12.ClusterSpec) error {
 				klog.Errorf("retry upload bootcfg fail: %s", err.Error())
 				return false, nil
 			}
-			if err := utils.ApplyYaml(cfg, "ooc"); err != nil {
-				klog.Errorf("retry wait for ooc addon: %s", err.Error())
+			if err := utils.ApplyYaml(cfg, "ovm"); err != nil {
+				klog.Errorf("retry wait for ovm addon: %s", err.Error())
 				return false, nil
 			}
 			return true, nil
 		},
 	)
+}
+
+func RunOvm(ctx *v12.ClusterSpec) error {
+	err := doRunOvm(ctx)
+	if err != nil {
+		return err
+	}
+	return RunMonitor(ctx)
 }
 
 func BootCFG(spec *v12.ClusterSpec) error {
@@ -135,8 +182,8 @@ func BootCFG(spec *v12.ClusterSpec) error {
 	return utils.ApplyYaml(string(cmdata), "bootcfg")
 }
 
-func RenderOocYaml(spec *v12.ClusterSpec) (string, error) {
-	t, err := template.New("ooc-file").Parse(oocf)
+func RenderOvmYaml(spec *v12.ClusterSpec) (string, error) {
+	t, err := template.New("ovm-file").Parse(ovmf)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to parse config template")
 	}
@@ -148,17 +195,19 @@ func RenderOocYaml(spec *v12.ClusterSpec) (string, error) {
 		struct {
 			Version  string
 			Registry string
+			UUID     string
 		}{
-			Version:  ooc.Version,
+			Version:  ovm.Version,
 			Registry: fmt.Sprintf("%s/aoxn", filepath.Dir(spec.Registry)),
 			//Registry: "registry.cn-hangzhou.aliyuncs.com/aoxn",
+			UUID:     uuid.New().String(),
 		},
 	)
 	return buff.String(), err
 }
 
 var (
-	oocf = `
+	ovmf = `
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -166,7 +215,7 @@ metadata:
   name: admin
   namespace: kube-system
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: admin
@@ -183,8 +232,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ooc
-  name: ooc
+    app: ovm
+  name: ovm
   namespace: kube-system
 spec:
   ports:
@@ -194,47 +243,58 @@ spec:
       protocol: TCP
       targetPort: 443
   selector:
-    app: ooc
+    app: ovm
   sessionAffinity: None
   type: NodePort
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   labels:
-    app: ooc
-  name: ooc
+    app: ovm
+    random.uuid: "{{ .UUID }}"
+  name: ovm
   namespace: kube-system
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: ooc
+      app: ovm
   template:
     metadata:
       labels:
-        app: ooc
+        app: ovm
+        random.uuid: "{{ .UUID }}"
     spec:
       hostNetwork: true
       priorityClassName: system-node-critical
       serviceAccount: admin
-      priorityClassName: system-node-critical
       containers:
-        - image: {{ .Registry }}/ooc:{{ .Version }}
+        - image: {{ .Registry }}/ovm:{{ .Version }}
           imagePullPolicy: Always
-          name: ooc-net
+          name: ovm-net
           command:
-            - /ooc
+            - /ovm
             - operator
-            # - --bootcfg=/etc/ooc/boot.cfg
+            # - --bootcfg=/etc/ovm/boot.cfg
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ooc/
+              mountPath: /etc/ovm/
               readOnly: true
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:
-        - operator: Exists
+      - effect: NoSchedule
+        operator: Exists
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        operator: Exists
+        key: node.cloudprovider.kubernetes.io/uninitialized
+      - effect: NoSchedule
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/unreachable
+        operator: Exists
       volumes:
         - name: bootcfg
           secret:

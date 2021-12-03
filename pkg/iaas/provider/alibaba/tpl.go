@@ -276,8 +276,8 @@ var Template = `
     "CloudMonitorFlags": {
       "Type": "Boolean",
       "Default": false,
-      "Label": "Install cloud monitor agent",
-      "Description": "If install cloud monitor agent on all nodes"
+      "Label": "Install cloud monit agent",
+      "Description": "If install cloud monit agent on all nodes"
     },
     "MasterKeyPair": {
       "Type": "String",

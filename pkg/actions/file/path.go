@@ -23,7 +23,7 @@ type Path struct {
 
 // BinarySource return binary source path
 // source: ${PROJECT}/${NAMESPACE}/${CLOUD_TYPE}/${PKG}/${VERSION}/${ARCH}/${OS}/files/
-// source: ack/aoxn/public/kubernetes/1.12.6-aliyun.1/amd64/linux/files/{kubelet,kubectl,kubeadm}
+// source: ovmaoxn/public/kubernetes/1.12.6-aliyun.1/amd64/linux/files/{kubelet,kubectl,kubeadm}
 func (p *Path) URL() string {
 	return filepath.Join(
 		p.Project, p.Namespace, p.CType, p.Pkg, p.Version, p.Arch, p.OS,

@@ -18,37 +18,37 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/generated/clientset/versioned/scheme"
+	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
-type OocV1Interface interface {
+type OvmV1Interface interface {
 	RESTClient() rest.Interface
 	ClustersGetter
 	MastersGetter
 	MasterSetsGetter
 }
 
-// OocV1Client is used to interact with features provided by the alibabacloud.com group.
-type OocV1Client struct {
+// OvmV1Client is used to interact with features provided by the alibabacloud.com group.
+type OvmV1Client struct {
 	restClient rest.Interface
 }
 
-func (c *OocV1Client) Clusters(namespace string) ClusterInterface {
+func (c *OvmV1Client) Clusters(namespace string) ClusterInterface {
 	return newClusters(c, namespace)
 }
 
-func (c *OocV1Client) Masters(namespace string) MasterInterface {
+func (c *OvmV1Client) Masters(namespace string) MasterInterface {
 	return newMasters(c, namespace)
 }
 
-func (c *OocV1Client) MasterSets(namespace string) MasterSetInterface {
+func (c *OvmV1Client) MasterSets(namespace string) MasterSetInterface {
 	return newMasterSets(c, namespace)
 }
 
-// NewForConfig creates a new OocV1Client for the given config.
-func NewForConfig(c *rest.Config) (*OocV1Client, error) {
+// NewForConfig creates a new OvmV1Client for the given config.
+func NewForConfig(c *rest.Config) (*OvmV1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -57,12 +57,12 @@ func NewForConfig(c *rest.Config) (*OocV1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &OocV1Client{client}, nil
+	return &OvmV1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new OocV1Client for the given config and
+// NewForConfigOrDie creates a new OvmV1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *OocV1Client {
+func NewForConfigOrDie(c *rest.Config) *OvmV1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -70,9 +70,9 @@ func NewForConfigOrDie(c *rest.Config) *OocV1Client {
 	return client
 }
 
-// New creates a new OocV1Client for the given RESTClient.
-func New(c rest.Interface) *OocV1Client {
-	return &OocV1Client{c}
+// New creates a new OvmV1Client for the given RESTClient.
+func New(c rest.Interface) *OvmV1Client {
+	return &OvmV1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -90,7 +90,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *OocV1Client) RESTClient() rest.Interface {
+func (c *OvmV1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

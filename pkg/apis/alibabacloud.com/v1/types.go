@@ -39,6 +39,14 @@ type MasterList struct {
 	Items []Master `json:"items"`
 }
 
+func ToMasterStringList(m []Master) []string {
+	var result []string
+	for _, i := range m {
+		result = append(result, i.String())
+	}
+	return result
+}
+
 type MasterStatus struct {
 	Peer       []Host   `json:"peer,omitempty" protobuf:"bytes,1,opt,name=peer"`
 	BootCFG    *Cluster `json:"bootcfg,omitempty" protobuf:"bytes,2,opt,name=bootcfg"`
@@ -128,8 +136,14 @@ type ClusterIdSpec struct {
 	ExtraRIDs  []string    `json:"extraRIDs,omitempty" protobuf:"bytes,2,opt,name=extraRIDs"`
 	CreatedAt  string      `json:"createdAt,omitempty" protobuf:"bytes,3,opt,name=createdAt"`
 	UpdatedAt  string      `json:"updatedAt,omitempty" protobuf:"bytes,4,opt,name=updatedAt"`
-	Options    *OocOptions `json:"options,omitempty" protobuf:"bytes,5,opt,name=options"`
+	Options    *OvmOptions `json:"options,omitempty" protobuf:"bytes,5,opt,name=options"`
 	Cluster    ClusterSpec `json:"cluster,omitempty" protobuf:"bytes,6,opt,name=cluster"`
+}
+
+type Preempt struct {
+	Detached   bool   `json:"detached,omitempty" protobuf:"bytes,1,opt,name=detached"`
+	AttachName string `json:"attachName,omitempty" protobuf:"bytes,2,opt,name=attachName"`
+	AttachedId string `json:"attachedId,omitempty" protobuf:"bytes,3,opt,name=attachedId"`
 }
 
 type ContextCFG struct {
@@ -176,11 +190,12 @@ func (in *ContextCFG) CurrentPrvdCFG() *Provider {
 }
 
 type CommandLineArgs struct {
+	ForceDelete  bool
 	WriteTo      string
 	OutPutFormat string
 }
 
-type OocOptions struct {
+type OvmOptions struct {
 	// Endpoint coordinator bootstrap server endpoint
 	Endpoint string
 	// Role role of nodes.
@@ -188,12 +203,16 @@ type OocOptions struct {
 	Token  string
 	Config string
 
+	Bucket string
+
 	// BootType 'local' 'coordinator' ''
 	BootType string
 	// Resource type
 	Resource string
 	// TargetCount scale target nodes count
 	TargetCount int
+
+	RecoverFrom string
 	ClusterName string
 
 	// Default is an important data structure which contains Context config
@@ -310,7 +329,7 @@ type BindInfra struct {
 	Instance    string    `json:"instance,omitempty" protobuf:"bytes,7,opt,name=instance"`
 	WorkerCount int       `json:"workerCount,omitempty" protobuf:"bytes,8,opt,name=workerCount"`
 	Provider    *Provider `json:"provider,omitempty" protobuf:"bytes,9,opt,name=provider"`
-	ResourceId  string    `json:"resourceId,omitempty" protobuf:"bytes,10,opt,name=resourceId"`
+	ResourceId  string    `json:"resourceId" protobuf:"bytes,10,opt,name=resourceId"`
 }
 
 type Provider struct {
@@ -423,7 +442,7 @@ type NodePoolSpec struct {
 
 type Infra struct {
 	// DesiredCapacity
-	DesiredCapacity int `json:"desiredCapacity,omitempty" protobuf:"bytes,1,opt,name=desiredCapacity"`
+	DesiredCapacity int `json:"desiredCapacity" protobuf:"bytes,1,opt,name=desiredCapacity"`
 
 	ImageId string            `json:"imageId,omitempty" protobuf:"bytes,2,opt,name=imageId"`
 	CPU     int               `json:"cpu,omitempty" protobuf:"bytes,3,opt,name=cpu"`
@@ -589,10 +608,9 @@ const (
 )
 
 const (
-	TaskTypeUpgrade    = "Upgrade"
-	TaskTypeAutoRepair = "AutoHeal"
-	TaskTypeCommand    = "Command"
-	TaskTypePod        = "Pod"
+	TaskReset       = "reset"
+	TaskTypeCommand = "Command"
+	TaskTypePod     = "Pod"
 )
 
 // TaskSpec defines the desired state of Task

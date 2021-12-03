@@ -4,17 +4,18 @@ import (
 	mctx "context"
 	"encoding/json"
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/apiserver"
-	"github.com/aoxn/ooc/pkg/apiserver/auth"
-	sctx "github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/context/base"
-	"github.com/aoxn/ooc/pkg/context/shared"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ooc/pkg/operator/controllers/backup"
-	"github.com/aoxn/ooc/pkg/operator/controllers/heal"
-	"github.com/aoxn/ooc/pkg/utils/crd"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/apiserver"
+	"github.com/aoxn/ovm/pkg/apiserver/auth"
+	sctx "github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/context/base"
+	"github.com/aoxn/ovm/pkg/context/shared"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
+	"github.com/aoxn/ovm/pkg/operator/controllers/backup"
+	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
+	//"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/crd"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +30,7 @@ import (
 )
 
 func NewOperatorServer(
-	options *api.OocOptions,
+	options *api.OvmOptions,
 ) *Operator {
 
 	cfg := apiserver.Configuration{
@@ -54,7 +55,7 @@ type Operator struct {
 
 	RestCfg  *rest.Config
 	Shared   *shared.SharedOperatorContext
-	Options  *api.OocOptions
+	Options  *api.OvmOptions
 	Mgr      ctrl.Manager
 	Client   client.Client
 	Provider provider.Interface
@@ -87,10 +88,15 @@ func (v *Operator) CompleteSetting() error {
 	if err != nil {
 		return fmt.Errorf("run controller: %s", err.Error())
 	}
-
+	klog.Infof("operator manager started, try to complete setting")
 	v.Client = v.Mgr.GetClient()
 	// Client & server.CachedCtx must be Initialized
 	v.Initialized = true
+
+	spec, err = v.cluster(v.RestCfg)
+        if err != nil {
+                return fmt.Errorf("cluster: %s", err.Error())
+        }
 	return v.initializeClusterResource(spec)
 }
 
@@ -117,14 +123,17 @@ func (v *Operator) cluster(cfg *rest.Config) (*api.Cluster, error) {
 	if err != nil {
 		return cluster, fmt.Errorf("rest client get: %s", err.Error())
 	}
+	//klog.Infof("Debug: %s", utils.PrettyYaml(cluster))
 	return cluster, nil
 }
 
 func (v *Operator) initializeClusterResource(spec *api.Cluster) error {
+	klog.Infof("start to initialize cluster resource[%s][%s]", spec.Spec.Endpoint.Intranet, spec.Spec.Bind.ResourceId)
 	if spec.Spec.Endpoint.Intranet == "" ||
 		spec.Spec.Bind.ResourceId == "" {
+		klog.Infof("start to fix stack id and slb endpoint ")
 		resource, err := v.Provider.GetStackOutPuts(
-			provider.NewEmptyContext(&spec.Spec),
+			provider.NewContextWithCluster(&spec.Spec),
 			&api.ClusterId{
 				ObjectMeta: metav1.ObjectMeta{Name: spec.Spec.ClusterID},
 			},
@@ -149,6 +158,7 @@ func (v *Operator) initializeClusterResource(spec *api.Cluster) error {
 		if err != nil {
 			return fmt.Errorf("patch endpoint: %s", err.Error())
 		}
+		klog.Infof("stack id and endpoint fixed: [%s] [%s]", spec.Spec.Endpoint.Intranet,spec.Spec.Bind.ResourceId)
 	}
 	return v.RefreshNodeCache()
 }
@@ -214,7 +224,7 @@ func (v *Operator) Start() error {
 }
 
 func (v *Operator) startManager(spec *api.Cluster) error {
-	speriod := 120 * time.Second
+	speriod := 90 * time.Second
 	mgr, err := ctrl.NewManager(
 		v.RestCfg,
 		ctrl.Options{
@@ -223,7 +233,7 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 			MetricsBindAddress:      ":8888",
 			Port:                    9443,
 			LeaderElection:          true,
-			LeaderElectionID:        "ooc.alibabacloud.com",
+			LeaderElectionID:        "ovm.alibabacloud.com",
 			LeaderElectionNamespace: "kube-system",
 		},
 	)
@@ -242,11 +252,11 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 	}
 
 	// start member heal
-	mh := heal.NewMemberHeal(v.Mgr.GetClient(), v.Provider)
+	mh := heal.NewMasterHeal(v.Mgr.GetClient(), v.Provider)
 
 	err = mgr.Add(mh)
 	if err != nil {
-		klog.Errorf("add MemberHeal runner: %s", err.Error())
+		klog.Errorf("add MasterHeal runner: %s", err.Error())
 	}
 	err = mgr.Add(backup.NewSnapshot())
 	if err != nil {
@@ -270,9 +280,10 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 		if err != nil {
 			panic(fmt.Sprintf("run controller manager: %s", err.Error()))
 		}
-		klog.Infof("controller manager stopped")
+		panic("controller manager stopped")
 	}
 	go start()
+	klog.Infof("wait for lease, and wait for cache sync")
 	// wait for manager cache sync
 	if !mgr.GetCache().WaitForCacheSync(context.TODO()) {
 		return fmt.Errorf("wait for manager sync")
@@ -299,7 +310,7 @@ func LoadContextIAAS(
 	prvd provider.Interface,
 	spec *api.Cluster,
 ) (*provider.Context, error) {
-	ctx := provider.NewEmptyContext(&spec.Spec)
+	ctx := provider.NewContextWithCluster(&spec.Spec)
 	if spec.Spec.Bind.ResourceId == "" {
 		resource, err := prvd.GetStackOutPuts(
 			ctx,

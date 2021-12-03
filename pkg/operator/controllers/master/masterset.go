@@ -19,12 +19,11 @@ package master
 import (
 	"context"
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context/shared"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ooc/pkg/operator/controllers/heal"
-	"github.com/aoxn/ooc/pkg/operator/controllers/help"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context/shared"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
+	"github.com/aoxn/ovm/pkg/operator/controllers/help"
 	gerr "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -42,7 +41,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ooc/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
 )
 
 // Add creates a new Rolling Controller and adds it to
@@ -121,7 +120,7 @@ var _ reconcile.Reconciler = &MasterSetReconciler{}
 // MasterSetReconciler reconciles a NodePool object
 type MasterSetReconciler struct {
 	mlog  log.Logger
-	heal  *heal.MemberHeal
+	heal  *heal.MasterHeal
 	drain *drain.Helper
 	//prvd provider for ecs
 	prvd provider.Interface
@@ -158,7 +157,7 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// 1. [FastCheck] check replicas equal count(Node[master]).
 	//    return immediately on equal
-	mnode, err := help.Nodes(r.client)
+	mnode, err := help.MasterNodes(r.client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("get nodes: %s", err.Error())
 	}
@@ -184,7 +183,7 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// 3. do scale ecs scaling group
-	ud, err := alibaba.NewJoinMasterUserData(cctx)
+	ud, err := r.prvd.UserData(cctx, provider.JoinMasterUserdata)
 	if err != nil {
 		return ctrl.Result{}, gerr.Wrapf(err, "join master userdata")
 	}

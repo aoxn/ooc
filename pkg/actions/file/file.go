@@ -2,8 +2,8 @@ package file
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/utils"
-	"github.com/aoxn/ooc/pkg/utils/cmd"
+	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/cmd"
 	tar "github.com/verybluebot/tarinator-go"
 	"io/ioutil"
 	"os"
@@ -25,7 +25,7 @@ const (
 
 func wget(f *File) string {
 	if f.BaseServer == "" {
-		f.BaseServer = fmt.Sprintf("http://host-oc-%s.oss-%s-internal.aliyuncs.com/", f.Region, f.Region)
+		f.BaseServer = fmt.Sprintf("http://%s-%s.oss-%s-internal.aliyuncs.com/", f.Bucket, f.Region, f.Region)
 	}
 	return fmt.Sprintf("%s/%s", f.BaseServer, f.VersionedPath.URI())
 }
@@ -43,6 +43,7 @@ func withName(path, name string) string {
 }
 
 type File struct {
+	Bucket        string
 	Region        string
 	BaseServer    string
 	CacheDir      string

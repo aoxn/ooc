@@ -16,7 +16,7 @@ namespace: default
 cloudType: public
 kubernetes:
   name: kubernetes
-  version: 1.16.9-aliyun.1
+  version: 1.20.4-aliyun.1
   kubeadmToken: 8rkjd9.8e5ruau8rsc3utex
 etcd:
   name: etcd

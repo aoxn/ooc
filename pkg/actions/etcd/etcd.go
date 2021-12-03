@@ -5,13 +5,13 @@ package etcd
 
 import (
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/actions"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
 
-	"github.com/aoxn/ooc/pkg/utils"
-	"github.com/aoxn/ooc/pkg/utils/cmd"
-	"github.com/aoxn/ooc/pkg/utils/sign"
+	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/ovm/pkg/utils/sign"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -57,12 +57,12 @@ func (a *action) Execute(ctx *actions.ActionContext) error {
 		return fmt.Errorf("flush etcd content file %s: %s", ETCD_UNIT_FILE, err.Error())
 	}
 
-	switch ctx.OocFlags().BootType {
+	switch ctx.OvmFlags().BootType {
 	case utils.BootTypeOperator:
 		state = "existing"
 		err := BackOffJoinMember(etcd)
 		if err != nil {
-			return fmt.Errorf("join etcd peer on bootType=%s: %s", ctx.OocFlags().BootType, err.Error())
+			return fmt.Errorf("join etcd peer on bootType=%s: %s", ctx.OvmFlags().BootType, err.Error())
 		}
 	case utils.BootTypeRecover:
 		err = etcd.Restore(node, provider.SnapshotTMP)
@@ -245,7 +245,7 @@ func (m *Etcd) Restore(node *api.Master, dir string) error {
 		return fmt.Errorf("empty snapshot path")
 	}
 	dataDir := filepath.Join(m.Home(), DataDir)
-	bakDir := filepath.Join(dataDir, ".bak")
+	bakDir := filepath.Join("/root", "db.bak")
 	exist, err := utils.FileExist(bakDir)
 	if err != nil {
 		return errors.Wrap(err, "etcd backup file check")
@@ -263,6 +263,7 @@ func (m *Etcd) Restore(node *api.Master, dir string) error {
 	cm := cmd.NewCmd(
 		"etcdctl", "snapshot", "restore", dir,
 		"--data-dir", dataDir,
+		"--skip-hash-check=true",
 		"--name", memberName(node.Spec.IP),
 		"--initial-cluster", InitialEtcdCluster(node, NewEmptyMembers()),
 		"--initial-cluster-token", node.Status.BootCFG.Spec.Etcd.InitToken,
@@ -461,6 +462,7 @@ func TryEachPeer(
 	interval time.Duration,
 	mfunc func(ip string) error,
 ) error {
+	var lastError error
 	klog.Infof("try each peer list: %s", peer)
 	for _, p := range peer {
 		for i := 0; i < 2; i++ {
@@ -468,12 +470,13 @@ func TryEachPeer(
 			if err == nil {
 				return nil
 			}
+			lastError = err
 			if interval != 0 {
 				time.Sleep(interval)
 			}
 		}
 	}
-	return fmt.Errorf("NoMoreEndpointsToTry")
+	return errors.Wrapf(lastError, "NoMoreEndpointsToTry")
 }
 
 // FlushEtcdContent flush etcd content into system unit file
@@ -552,6 +555,24 @@ func (m *Etcd) WaitEndpoints(endpints string) error {
 			}
 		}
 	}
+}
+
+func (m *Etcd) EndpointHealth(ip string) error {
+	endpoint := advertise(ip, "2379")	
+	cm := cmd.NewCmd(
+                "etcdctl",
+                "--endpoints", endpoint,
+                "--cacert",
+                certHome(m.Home(), "server-ca.crt"),
+                "--cert",
+                certHome(m.Home(), "client.crt"),
+                "--key",
+                certHome(m.Home(), "client.key"),
+                "endpoint", "health",
+        )
+        cm.Env = []string{"ETCDCTL_API=3"}
+        result := <-cm.Start()
+        return cmd.CmdError(result)
 }
 
 func certHome(home, name string) string {

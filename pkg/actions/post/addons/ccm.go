@@ -3,7 +3,7 @@ package addons
 var CCM = ConfigTpl{
 	Name:         "ccm",
 	Tpl:          ccmtpl,
-	ImageVersion: "v1.9.3.144-g2a99860-aliyun",
+	ImageVersion: "v1.9.3.380-gd6d0962-aliyun",
 }
 
 var ccmtpl = `
@@ -15,7 +15,7 @@ metadata:
   namespace: kube-system
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:cloud-controller-manager
 rules:
@@ -51,6 +51,7 @@ rules:
       - services/status
     verbs:
       - update
+      - patch
   - apiGroups:
       - ""
     resources:
@@ -67,9 +68,18 @@ rules:
       - create
       - patch
       - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - update
+      - create
+      - delete
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:cloud-controller-manager
 roleRef:
@@ -82,7 +92,7 @@ subjects:
   namespace: kube-system
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:shared-informers
 roleRef:
@@ -95,7 +105,7 @@ subjects:
   namespace: kube-system
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:cloud-node-controller
 roleRef:
@@ -108,7 +118,7 @@ subjects:
   namespace: kube-system
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:pvl-controller
 roleRef:
@@ -121,7 +131,7 @@ subjects:
   namespace: kube-system
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: system:route-controller
 roleRef:
@@ -184,7 +194,7 @@ spec:
           httpGet:
             host: 127.0.0.1
             path: /healthz
-            port: 10252
+            port: 10258
             scheme: HTTP
           initialDelaySeconds: 15
           timeoutSeconds: 15

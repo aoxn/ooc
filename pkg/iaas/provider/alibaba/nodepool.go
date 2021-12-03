@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	v1 "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/utils"
+	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"strings"
@@ -30,6 +30,21 @@ func Vswitchs(stack map[string]provider.Value) string {
 	return vs.Val.(string)
 }
 
+func ScalingGroupName(np *v1.NodePool, vpcid string) string {
+	name := fmt.Sprintf("%s.%s.%s",
+		"nodepool",vpcid,
+		strings.Replace(string(np.UID),"-", "",-1),
+	)
+	if len(name) > 64 {
+		return name[0:63]
+	}
+	return name
+}
+
+func ScalingGroupCfgName(np *v1.NodePool) string {
+	return fmt.Sprintf("%s-%s","scaling-configuration", strings.Replace(string(np.UID),"-", "",-1))
+}
+
 func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.BindID, error) {
 	boot := ctx.BootCFG()
 	if boot == nil {
@@ -40,8 +55,14 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		klog.Infof("scaling group "+
 			"might be initialized before. generated=%v", np.Spec.Infra.Bind)
 	}
+	stack := ctx.Stack()
+	if stack == nil {
+		return nil, fmt.Errorf("stack context must be exist")
+	}
+	vpcid := stack["k8s_vpc"].Val.(string)
+
 	region := boot.Bind.Region
-	gname := fmt.Sprintf("scalinggroup-%s", np.Name)
+	gname := ScalingGroupName(np, vpcid)
 	dreq := ess.CreateDescribeScalingGroupsRequest()
 	dreq.RegionId = region
 	dreq.ScalingGroupName = gname
@@ -71,7 +92,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		klog.Infof("found existing scaling group with id: %s=%s", gname, sgrpid)
 	}
 
-	scfgName := fmt.Sprintf("scalingconfig-%s", np.Name)
+	scfgName := ScalingGroupCfgName(np)
 	dsreq := ess.CreateDescribeScalingConfigurationsRequest()
 	dsreq.ScalingGroupId = sgrpid
 	dsreq.RegionId = region
@@ -89,6 +110,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.RegionId = region
 		sreq.ScalingGroupId = sgrpid
 		sreq.SecurityGroupId = SecrityGroup(ctx.Stack())
+		sreq.RamRoleName = fmt.Sprintf("KubernetesWorkerRole-%s",boot.Bind.ResourceId)
 		//sreq.InstanceType = ""
 		// cloud_essd|cloud_ssd|cloud_efficiency|cloud 20-500
 		sreq.SystemDiskCategory = "cloud_essd"
@@ -96,14 +118,14 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.ScalingConfigurationName = scfgName
 
 		sreq.ImageId = utils.DefaultImage(np.Spec.Infra.ImageId)
-		data, err := NewWorkerUserData(ctx)
+		data, err := n.UserData(ctx, provider.WorkerUserdata)
 		if err != nil {
 			return bind, errors.Wrap(err, "build work userdata")
 		}
 		sreq.UserData = data
 		sreq.Cpu = requests.NewInteger(np.Spec.Infra.CPU)
 		sreq.Memory = requests.NewInteger(np.Spec.Infra.Mem)
-		sreq.Tags = utils.PrettyJson(map[string]string{"ooc.com": np.Name})
+		sreq.Tags = utils.PrettyJson(map[string]string{"ovm.com": np.Name})
 		//sreq.RamRoleName = ""
 		sreq.KeyPairName = ""
 		res, err := n.ESS.CreateScalingConfiguration(sreq)

@@ -2,10 +2,10 @@ package boot
 
 import (
 	"fmt"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ooc/pkg/context"
-	"github.com/aoxn/ooc/pkg/iaas/provider"
-	"github.com/aoxn/ooc/pkg/utils"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -33,7 +33,7 @@ type Step func(ctx *context.NodeContext) error
 */
 
 func InitFunc(ctx *context.NodeContext) Step {
-	flag := ctx.OocFlags()
+	flag := ctx.OvmFlags()
 	switch flag.BootType {
 	case utils.BootTypeLocal:
 		return InitFromCfg
@@ -88,7 +88,7 @@ func InitFromOperator(ctx *context.NodeContext) error {
 		Spec: api.MasterSpec{
 			ID:   id,
 			IP:   ip,
-			Role: ctx.OocFlags().Role,
+			Role: ctx.OvmFlags().Role,
 		},
 		Status: api.MasterStatus{
 			Peer:    cluster.Status.Peers,
@@ -124,7 +124,7 @@ func AddExtraSans(spec *api.Cluster) {
 
 func InitFromCfg(ctx *context.NodeContext) error {
 
-	cfg := ctx.OocFlags().Config
+	cfg := ctx.OvmFlags().Config
 	if cfg == "" {
 		return fmt.Errorf("empty cluster config, --config")
 	}
@@ -137,7 +137,7 @@ func InitFromCfg(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("error decode cluster: %s", err.Error())
 	}
-	klog.Infof("read ooc config from %s: %+v", cfg, utils.PrettyYaml(cluster))
+	klog.Infof("read ovm config from %s: %+v", cfg, utils.PrettyYaml(cluster))
 	genf := fmt.Sprintf("%s.gen", cfg)
 	exist, err := utils.FileExist(genf)
 	if err != nil {
@@ -204,7 +204,7 @@ func InitFromCfg(ctx *context.NodeContext) error {
 		Spec: api.MasterSpec{
 			ID:   id,
 			IP:   ip,
-			Role: ctx.OocFlags().Role,
+			Role: ctx.OvmFlags().Role,
 		},
 		Status: api.MasterStatus{
 			BootCFG: spec,
@@ -238,7 +238,7 @@ func InitFromRecover(ctx *context.NodeContext) error {
 		return fmt.Errorf("meta data error region: %s", err.Error())
 	}
 
-	opts := ctx.OocFlags()
+	opts := ctx.OvmFlags()
 	spec := api.NewRecoverCluster(opts.ClusterName, region, nil)
 	node := api.Master{
 		ObjectMeta: metav1.ObjectMeta{
@@ -247,25 +247,51 @@ func InitFromRecover(ctx *context.NodeContext) error {
 		Spec: api.MasterSpec{
 			ID:   id,
 			IP:   ip,
-			Role: ctx.OocFlags().Role,
+			Role: ctx.OvmFlags().Role,
 		},
 		Status: api.MasterStatus{
 			BootCFG: spec,
 		},
 	}
-	// we use ~/.ooc/config to initializing provider
+	// we use ~/.ovm/config to initializing provider
 	pctx, err := provider.NewContext(&opts, &spec.Spec)
 	if err != nil {
 		return errors.Wrap(err, "initialize provider")
 	}
 	ctx.SetKV(context.ProviderCtx, pctx)
-	mindex := pctx.Indexer()
-	mspec, err := mindex.LatestBackup(spec.Spec.ClusterID, provider.SnapshotTMP)
+
+	index := provider.NewIndexer(pctx.Provider())
+	mid, err := index.Get(opts.ClusterName)
+	if err != nil {
+		return errors.Wrapf(err, "no cluster found by name %s", opts.ClusterName)
+	}
+
+	mindex := provider.NewIndexer(pctx.Provider())
+	from, err := mindex.LatestBackup(opts.RecoverFrom, provider.SnapshotTMP)
 	if err != nil {
 		return errors.Wrap(err, "download backup db file")
 	}
-	node.Status.BootCFG = api.NewDefaultCluster("kubernetes-cluster", *mspec)
+	if opts.RecoverFrom != opts.ClusterName {
+		// override iaas settings
+		from.Endpoint = mid.Spec.Cluster.Endpoint
+		from.ClusterID = mid.Spec.Cluster.ClusterID
+
+		from.Bind.Provider 	 = mid.Spec.Cluster.Bind.Provider
+		from.Bind.Region 	 = mid.Spec.Cluster.Bind.Region
+		from.Bind.ResourceId = mid.Spec.Cluster.Bind.ResourceId
+		mid.Spec.Cluster = *from
+		klog.Infof("recover cluster [%s] from [%s], " +
+			"with Endpoint[%s] ", mid.Spec.Cluster.ClusterID, opts.RecoverFrom, mid.Spec.Cluster.Endpoint)
+		err = index.Save(mid)
+		if err != nil {
+			return errors.Wrapf(err, "save clusterid")
+		}
+	}
+
+	node.Status.BootCFG = api.NewDefaultCluster("kubernetes-cluster", mid.Spec.Cluster)
+	AddExtraSans(node.Status.BootCFG)
 	ctx.SetKV(context.NodeInfoObject, &node)
+
 	klog.Infof("read cluster config from oss backup %s: %+v", mindex.Index().IndexLocation(), utils.PrettyYaml(node))
 	return nil
 }
@@ -300,7 +326,7 @@ func SetBootCredential(ctx *context.NodeContext) error {
 				klog.Infof("retry waiting for credential error: %s", err.Error())
 				return false, nil
 			}
-			if ctx.OocFlags().Role != api.NODE_ROLE_MASTER {
+			if ctx.OvmFlags().Role != api.NODE_ROLE_MASTER {
 				klog.Infof("init worker node, %s", node.Spec.ID)
 				return true, nil
 			}
@@ -351,7 +377,7 @@ func RegisterMyself(ctx *context.NodeContext) error {
 					Spec: api.MasterSpec{
 						ID:   id,
 						IP:   ip,
-						Role: ctx.OocFlags().Role,
+						Role: ctx.OvmFlags().Role,
 					},
 				},
 			)

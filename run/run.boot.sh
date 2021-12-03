@@ -23,7 +23,11 @@ function detecos() {
 function validatedefault() {
     # detect os arch
     detecos
-
+    if [[ "$PKG_BUCKET" == "" ]];
+    then
+        PKG_BUCKET="host-ovm"
+        echo "using oss bucket [oss://$PKG_BUCKET-$REGION] as package file server"
+    fi
     if [[ "$REGION" == "" ]];
     then
         # https://github.com/koalaman/shellcheck/wiki/SC2155
@@ -66,9 +70,9 @@ function validatedefault() {
     then
         NAMESPACE=default
     fi
-    if [[ "$OOC_VERSION" == "" ]];
+    if [[ "$OVM_VERSION" == "" ]];
     then
-        export OOC_VERSION=0.1.1
+        export OVM_VERSION=0.1.1
     fi
 
     if [[ "$CLOUD_TYPE" == "" ]];
@@ -83,26 +87,26 @@ function validatedefault() {
 
     if [[ "$PKG_FILE_SERVER" == "" ]];
     then
-        PKG_FILE_SERVER="http://host-oc-$REGION.oss-$REGION-internal.aliyuncs.com"
+        PKG_FILE_SERVER="http://${PKG_BUCKET}-$REGION.oss-$REGION-internal.aliyuncs.com"
         echo "empty PKG_FILE_SERVER, using default ${PKG_FILE_SERVER}"
     fi
 
     echo "using beta version: [${NAMESPACE}]"
     wget --tries 10 --no-check-certificate -q \
-        -O /tmp/ooc.${ARCH}\
-        ${PKG_FILE_SERVER}/ack/${NAMESPACE}/${CLOUD_TYPE}/ooc/${OS}/${ARCH}/ooc-${OOC_VERSION}.${ARCH}
-    chmod +x /tmp/ooc.${ARCH} ; mv /tmp/ooc.${ARCH} /usr/local/bin/ooc
+        -O /tmp/ovm.${ARCH}\
+        ${PKG_FILE_SERVER}/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OS}/${ARCH}/ovm-${OVM_VERSION}.${ARCH}
+    chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm
 }
 
 
 function config() {
-    mkdir -p /etc/ooc
-    if [[ -f /etc/ooc/ooc.cfg.gen ]];
+    mkdir -p /etc/ovm
+    if [[ -f /etc/ovm/ovm.cfg.gen ]];
     then
-        cp -rf /etc/ooc/ooc.cfg.gen /etc/ooc/ooc.cfg
-        echo "Found /etc/ooc/ooc.cfg.gen, use previous one"; return
+        cp -rf /etc/ovm/ovm.cfg.gen /etc/ovm/ovm.cfg
+        echo "Found /etc/ovm/ovm.cfg.gen, use previous one"; return
     fi
-    cat > /etc/ooc/ooc.cfg << EOF
+    cat > /etc/ovm/ovm.cfg << EOF
 clusterid: ${CLUSTER_ID}
 iaas:
   image: abclid.vxd
@@ -144,19 +148,19 @@ EOF
 function bootstrap() {
     echo run bootstrap init
     # run bootsrap init
-    nohup ooc bootstrap --token "${TOKEN}" --bootcfg /etc/ooc/ooc.cfg &
+    nohup ovm bootstrap --token "${TOKEN}" --bootcfg /etc/ovm/ovm.cfg &
 }
 
 function init() {
     echo run master init
     # run master init
-    ooc init --role "${ROLE}" --token "${TOKEN}" --config /etc/ooc/ooc.cfg
+    ovm init --role "${ROLE}" --token "${TOKEN}" --config /etc/ovm/ovm.cfg
 }
 
 function join() {
     echo run worker init
     # run master init
-    ooc init --role Worker --token "${TOKEN}" --config /etc/ooc/ooc.cfg
+    ovm init --role Worker --token "${TOKEN}" --config /etc/ovm/ovm.cfg
 }
 
 function postcheck() {

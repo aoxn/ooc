@@ -13,5 +13,5 @@ limitations under the License.
 
 // +k8s:deepcopy-gen=package
 // +groupName=alibabacloud.com
-// +groupGoName=Ooc
+// +groupGoName=Ovm
 package v1

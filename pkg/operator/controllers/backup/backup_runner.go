@@ -3,10 +3,10 @@ package backup
 import (
 	"context"
 	"fmt"
-	"github.com/aoxn/ooc/pkg/actions/etcd"
-	api "github.com/aoxn/ooc/pkg/apis/alibabacloud.com/v1"
-	prvd "github.com/aoxn/ooc/pkg/iaas/provider"
-	h "github.com/aoxn/ooc/pkg/operator/controllers/help"
+	"github.com/aoxn/ovm/pkg/actions/etcd"
+	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	prvd "github.com/aoxn/ovm/pkg/iaas/provider"
+	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
@@ -23,6 +23,13 @@ import (
 func NewSnapshot() *Snapshot {
 	recon := &Snapshot{lock: &sync.RWMutex{}}
 	return recon
+}
+
+func NewBareSnapshot(index *prvd.Indexer) *Snapshot {
+	return &Snapshot{
+		index: index,
+		lock: &sync.RWMutex{},
+	}
 }
 
 var _ manager.Runnable = &Snapshot{}
@@ -74,7 +81,7 @@ func (s *Snapshot) initialize() error {
 	if err != nil {
 		return fmt.Errorf("member: spec not found,%s", err.Error())
 	}
-	ctx, err := prvd.NewContext(&api.OocOptions{}, &spec.Spec)
+	ctx, err := prvd.NewContext(&api.OvmOptions{}, &spec.Spec)
 	if err != nil {
 		return errors.Wrapf(err, "new provider context")
 	}
@@ -105,6 +112,13 @@ func (s *Snapshot) doBackup() error {
 		return fmt.Errorf("member: spec not found,%s", err.Error())
 	}
 
+	return s.Backup(spec, masters)
+}
+
+func (s *Snapshot) Backup(
+	spec    *api.Cluster,
+	masters []api.Master,
+) error {
 	metcd, err := etcd.NewEtcdFromMasters(masters, spec, etcd.ETCD_TMP)
 	if err != nil {
 		return fmt.Errorf("new etcd: %s", err.Error())

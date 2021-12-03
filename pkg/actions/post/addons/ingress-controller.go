@@ -79,7 +79,7 @@ metadata:
   name: nginx-ingress-controller
   namespace: {{.Namespace}}
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: nginx-ingress-controller
@@ -135,7 +135,7 @@ rules:
       - get
       - update
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: nginx-ingress-controller

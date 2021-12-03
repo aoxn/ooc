@@ -20,7 +20,7 @@ package internalinterfaces
 import (
 	time "time"
 
-	versioned "github.com/aoxn/ooc/pkg/generated/clientset/versioned"
+	versioned "github.com/aoxn/ovm/pkg/generated/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	cache "k8s.io/client-go/tools/cache"
