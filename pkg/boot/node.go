@@ -8,6 +8,8 @@ import (
 	"github.com/aoxn/ovm/pkg/actions/post"
 	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/pkg/errors"
 )
 
 func InitMasterAlone(ctx *context.NodeContext) error {
@@ -27,6 +29,13 @@ func InitMasterAlone(ctx *context.NodeContext) error {
 		return fmt.Errorf("init master call meta.ARCH: %s", err.Error())
 	}
 	oflag := ctx.OvmFlags()
+	// we use ~/.ovm/config to initializing provider
+	pctx, err := provider.NewContext(&oflag, &cfg.Spec)
+	if err != nil {
+		return errors.Wrap(err, "initialize provider")
+	}
+	ctx.SetKV(context.ProviderCtx, pctx)
+
 	return actions.RunActions(
 		[]actions.Action{
 			NewConcurrentPkgDL(&cfg.Spec, os, arch,oflag.Bucket),

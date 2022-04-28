@@ -69,6 +69,11 @@ clean-output:
 	@echo + Removing build output directory
 	rm -rf $(OUT_DIR)/
 
+.PHONY: codesign
+codesign:
+	@echo "codesign begin"
+	codesign --entitlements ovm.entitlements -s - ./build/bin/ovm || true
+
 # builds ovm in a container, outputs to $(OUT_DIR)
 ovm: make-cache out-dir
 	@echo + Building ovm binary
@@ -90,7 +95,7 @@ ovm: make-cache out-dir
 		--user $(UID):$(GID) \
 		$(GO_IMAGE) \
 		go build -v -o /out/$(KIND_BINARY_NAME).unzip \
-		    -ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" .
+		    -ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
 	@echo + Built ovm binary to $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
 	rm -f build/bin/ovm
 	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
@@ -119,7 +124,7 @@ install: build
 ovmmac:
 	GOARCH=amd64 \
 	GOOS=darwin \
-	CGO_ENABLED=0 \
+	CGO_ENABLED=1 \
 	GO111MODULE=on \
 	go build -v -o build/bin/ovm.unzip \
 	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
@@ -127,6 +132,28 @@ ovmmac:
 	rm -f build/bin/ovm
 	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm build/bin/ovm.unzip
 	rm -f build/bin/ovm.unzip
+
+omac:
+	@echo + Built ovm binary to /usr/local/bin/ovm
+	GOARCH=amd64 \
+	GOOS=darwin \
+	CGO_ENABLED=1 \
+	GO111MODULE=on \
+	go build -v -o build/bin/ovm.unzip \
+	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
+	mv build/bin/ovm.unzip /usr/local/bin/ovm
+	codesign --entitlements ovm.entitlements -s - /usr/local/bin/ovm || true
+
+olinux:
+	@echo + Built ovm binary to /usr/local/bin/ovm
+	GOARCH=amd64 \
+	GOOS=linux \
+	CGO_ENABLED=0 \
+	GO111MODULE=on \
+	go build -v -o build/bin/ovm.unzip \
+	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
+	mv build/bin/ovm.unzip /usr/local/bin/ovm.amd64
+	codesign --entitlements ovm.entitlements -s - /usr/local/bin/ovm.amd64 || true
 
 ovmlinux:
 	GOARCH=amd64 \

@@ -3,10 +3,16 @@ package monitor
 import (
 	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/ovm/pkg/operator/heal"
 	"github.com/aoxn/ovm/pkg/operator/monit"
 	"github.com/aoxn/ovm/pkg/operator/monit/check"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/drain"
+	"os"
+	"time"
 )
 
 const mhelp = `
@@ -43,13 +49,39 @@ func runE(
 	if err != nil {
 		return errors.Wrapf(err, "new etcd checker:")
 	}
+
+	spec := etcd.Cluster.Spec
+	ctx, err := provider.NewContext(flags, &spec)
+	if err != nil {
+		return errors.Wrapf(err, "initialize ovm context")
+	}
+	kclient, err := monit.GetKubernetesClient(cctl)
+	if err != nil {
+		return errors.Wrapf(err,"convert to kubernetes client")
+	}
 	mon.WithCheck(etcd)
-	action := func() error {
-		spec := etcd.Cluster.Spec
-		ctx, err := provider.NewContext(flags, &spec)
+	drainer := &drain.Helper{
+		Timeout:                         15 * time.Minute,
+		SkipWaitForDeleteTimeoutSeconds: 60,
+		Client:                          kclient,
+		GracePeriodSeconds:              -1,
+		DisableEviction:                 false,
+		IgnoreAllDaemonSets:             true,
+		Force:                           true,
+		Out:                             os.Stdout,
+		ErrOut:                          os.Stderr,
+	}
+	healet,err := heal.NewHealet(etcd.Cluster,cctl.GetClient(),ctx.Provider(),drainer)
+	if err != nil {
+		return errors.Wrapf(err, "construct healet")
+	}
+	go wait.Forever(func() {
+		err := healet.FixOVM()
 		if err != nil {
-			return errors.Wrapf(err, "initialize ovm context")
+			klog.Errorf("fix ovm: %s", err.Error())
 		}
+	},60 * time.Second)
+	action := func() error {
 		index := ctx.Indexer()
 		id, err := index.Get(spec.ClusterID)
 		if err != nil {

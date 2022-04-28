@@ -37,7 +37,9 @@ controllerManager:
     profiling: "false"
     cloud-provider: external
     horizontal-pod-autoscaler-use-rest-clients: "true"
+{{ if .Network.NetMask }}
     node-cidr-mask-size: "{{ .Network.NetMask }}"
+{{ end }}
   extraVolumes:
   - hostPath: /etc/localtime
     mountPath: /etc/localtime

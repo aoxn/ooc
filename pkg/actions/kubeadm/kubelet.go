@@ -24,7 +24,6 @@ const (
 type ActionKubelet struct {
 }
 
-// NewAction returns a new ActionInit for kubeadm init
 func NewActionKubelet() actions.Action {
 	return &ActionKubelet{}
 }

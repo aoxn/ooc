@@ -4,16 +4,11 @@ import (
 	"context"
 	"github.com/aoxn/ovm/pkg/context/shared"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
 	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
-	gerr "github.com/pkg/errors"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/klog/v2"
-	"strings"
-	"time"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/tools/record"
+	"k8s.io/klog/v2"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,34 +100,7 @@ func (r *ReconcileAutoRepair) Reconcile(
 		return reconcile.Result{}, nil
 	}
 
-	return r.fixKubeletNotReady(node)
+	return reconcile.Result{},nil
 }
 
-
-func (r *ReconcileAutoRepair) fixKubeletNotReady(node *v1.Node) (reconcile.Result, error) {
-	id := strings.Split(node.Spec.ProviderID, ".")
-	if len(id) != 2 {
-		klog.Warningf("unrecognized providerid: [%s]", node.Spec.ProviderID)
-		return reconcile.Result{}, nil
-	}
-	instances, err := r.prvd.InstanceDetail(provider.NewEmptyContext(), []string{id[1]})
-	if err != nil || len(instances) != 1{
-		klog.Warningf("node corresponded ecs not found: [%s], %v", node.Spec.ProviderID, err)
-		return reconcile.Result{}, nil
-	}
-	spec, err := h.MyCluster(r.client)
-	if err != nil {
-		return reconcile.Result{}, gerr.Wrapf(err, "fix kubelet node")
-	}
-	klog.Warningf("kubelet not ready: %s, trying to fix", node.Spec.ProviderID)
-	reset := heal.NewResteNode(instances[0],spec,node, r.prvd,r.record, r.client)
-	err = reset.Execute()
-	if err != nil {
-		retry,ok := err.(*heal.Retry)
-		if ok {
-			return h.NewDelay(int64(retry.Duration/time.Second)), err
-		}
-	}
-	return reconcile.Result{}, nil
-}
 

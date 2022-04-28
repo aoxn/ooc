@@ -179,13 +179,18 @@ spec:
         -  /cloud-controller-manager
         - --kubeconfig=/etc/kubernetes/cloud-controller-manager.conf
         - --address=127.0.0.1
+{{ if eq .CIDR "" }}
+        - --configure-cloud-routes=false
+{{ else }}
+        - --cluster-cidr={{.CIDR}}
+        - --configure-cloud-routes=true
+        - --route-reconciliation-period=3m
+{{ end }}
         - --allow-untagged-cloud=true
         - --leader-elect=true
         - --cloud-provider=alicloud
         - --allocate-node-cidrs=true
-        - --cluster-cidr={{.CIDR}}
         - --use-service-account-credentials=true
-        - --route-reconciliation-period=3m
         - --v=5
         - --feature-gates=ServiceNodeExclusion=true
         image: registry-vpc.{{.Region}}.aliyuncs.com/acs/cloud-controller-manager-amd64:{{.ImageVersion}}

@@ -6,12 +6,10 @@ import (
 	acv1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ovm/pkg/context/shared"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
 	"github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/ovm/pkg/operator/heal"
 	"github.com/aoxn/ovm/pkg/utils/hash"
 	gerr "github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -25,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"strings"
-	"time"
 )
 
 func AddNodePoolController(
@@ -49,6 +46,7 @@ func newReconciler(
 		client:    mgr.GetClient(),
 		scheme:    mgr.GetScheme(),
 		sharedCtx: ctx,
+		heal:      ctx.MemberHeal(),
 		prvd:      ctx.ProvdIAAS(),
 		recd:      mgr.GetEventRecorderFor("task-controller"),
 	}
@@ -88,7 +86,7 @@ type ReconcileNodePool struct {
 	client client.Client
 	scheme *runtime.Scheme
 	recd   record.EventRecorder
-
+	heal   *heal.Healet
 	sharedCtx *shared.SharedOperatorContext
 }
 
@@ -118,8 +116,16 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 		}
 		return reconcile.Result{}, help.Patch(r.client, np, diff, help.PatchSpec)
 	}
-	// trying to fix nodepool first
-	_ = r.repairNodePool(np)
+	// todo: trying to fix nodepool first
+	if err := r.heal.FixNodePool(np);err != nil {
+		if strings.Contains(err.Error(),"ScalingGroupNotFound") {
+			//clean up nodepool bind infra information to let
+			//nodepool controller create a new scaling group.
+			np.Spec.Infra.Bind = nil
+		}
+		klog.Warningf("warning trying to fix nodepool: %s", err.Error())
+		klog.Warningf("warning will create a new scaling group for nodepool: %s", np.Name)
+	}
 
 	hasho, err := hash.HashObject(np.Spec)
 	if err != nil {
@@ -174,89 +180,6 @@ func (r *ReconcileNodePool) Reconcile(ctx context.Context, request reconcile.Req
 	klog.Infof("wait for nodepool[%s] replicas finished: %d", np.Name, np.Spec.Infra.DesiredCapacity)
 	defer klog.Infof("wait for nodepool[%s] replicas finished", np.Name)
 	return reconcile.Result{}, WaitReplicas(np.Spec.Infra.DesiredCapacity)
-}
-
-func (r *ReconcileNodePool) repairNodePool(pool *acv1.NodePool) error {
-	bind := pool.Spec.Infra.Bind
-	if bind == nil {
-		return nil
-	}
-
-	detail, err := r.prvd.ScalingGroupDetail(
-		r.sharedCtx.ProviderCtx(), bind.ScalingGroupId,
-		provider.Option{Action: alibaba.ActionInstanceIDS},
-	)
-	if err != nil {
-		if strings.Contains(err.Error(), "InvalidVPC") {
-			diff := func(copy runtime.Object) (client.Object, error) {
-				np := copy.(*acv1.NodePool)
-				np.Spec.Infra.Bind = nil
-				pool.Spec.Infra.Bind = nil
-				return np, nil
-			}
-			klog.Warningf("clear nodepool bind infra for invalid vpc: [%s], [%s]", pool.Name, pool.Spec.Infra.Bind)
-			err = help.Patch(r.client, pool, diff, help.PatchSpec)
-			if err != nil {
-				klog.Warningf("clear nodepool bind infra for invalid vpc, %s, %s", pool.Name, err.Error())
-			}
-		}
-		return gerr.Wrapf(err, "group %s detail", bind.ScalingGroupId)
-	}
-	nodes, err := help.Workers(r.client)
-	if err != nil {
-		return gerr.Wrapf(err, "list nodes")
-	}
-	var miss []provider.Instance
-	for _, v := range detail.Instances {
-		found := false
-		for _, n := range nodes {
-			if strings.Contains(n.Spec.ProviderID, v.Id) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			miss = append(miss, v)
-		}
-	}
-	spec, err := help.MyCluster(r.client)
-	if err != nil {
-		return gerr.Wrapf(err, "find cluster spec")
-	}
-	for _, m := range miss {
-		klog.Infof("instance %s.%s miss node object, try to reset node", m.Id, m.Ip)
-		err = heal.NewResteNode(
-			m, spec, nil, r.prvd, r.recd, r.client,
-		).Execute()
-		if err != nil {
-			klog.Errorf("reset node: %s", err.Error())
-		}
-		time.Sleep(10 * time.Second)
-	}
-
-	//
-	var extra []v1.Node
-	for _, n := range nodes {
-		found := false
-		for _, in := range detail.Instances {
-			if strings.Contains(n.Spec.ProviderID, in.Id) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			extra = append(extra, n)
-		}
-	}
-	for _, n := range extra {
-		klog.Warningf("try to delete extra node[%s]", n.Name)
-		// remove
-		err := r.client.Delete(context.TODO(),&n)
-		if err != nil {
-			klog.Errorf("delete extra node[%s] fail", n.Name)
-		}
-	}
-	return nil
 }
 
 func WaitReplicas(i int) error {

@@ -19,6 +19,7 @@ func NewContext(
 ) (*Context, error) {
 	mctx := &Context{}
 	mctx.SetKV("BootCFG", spec)
+	mctx.SetKV("OvmOptions", options)
 	return mctx, mctx.Initialize(options)
 }
 
@@ -190,6 +191,8 @@ type Resource interface {
 }
 
 type Scaling interface {
+	VSwitchs(ctx *Context) (string,error)
+
 	// ModifyScalingConfig etc. UserData
 	ModifyScalingConfig(ctx *Context, gid string, opt ...Option) error
 
@@ -232,8 +235,9 @@ type ScaleGroupDetail struct {
 }
 
 type Instance struct {
-	Id string
-	Ip string
+	Region string
+	Id     string
+	Ip     string
 
 	Tags []Value
 
@@ -243,6 +247,8 @@ type Instance struct {
 
 	// Status Stop|Running
 	Status string
+
+	GetNodeName func() string
 }
 
 func LoadBootCFG(name string) (*v1.ClusterSpec, error) {

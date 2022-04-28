@@ -22,8 +22,9 @@ import (
 	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ovm/pkg/context/shared"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
 	"github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/ovm/pkg/operator/heal"
+	"github.com/pkg/errors"
 	gerr "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -44,9 +45,6 @@ import (
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
 )
 
-// Add creates a new Rolling Controller and adds it to
-// the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
 func AddMasterSet(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
@@ -85,7 +83,7 @@ func newMasterSetReconciler(
 		client:    mgr.GetClient(),
 		scheme:    mgr.GetScheme(),
 		drain:     drainer,
-		heal:      ctx.MemberHeal(),
+		healet:    ctx.MemberHeal(),
 		prvd:      ctx.ProvdIAAS(),
 		recd:      mgr.GetEventRecorderFor("task-controller"),
 	}
@@ -119,62 +117,57 @@ var _ reconcile.Reconciler = &MasterSetReconciler{}
 
 // MasterSetReconciler reconciles a NodePool object
 type MasterSetReconciler struct {
-	mlog  log.Logger
-	heal  *heal.MasterHeal
-	drain *drain.Helper
-	//prvd provider for ecs
-	prvd provider.Interface
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
+	recd   record.EventRecorder
+	mlog   log.Logger
+	healet *heal.Healet
+	drain  *drain.Helper
+	prvd   provider.Interface
 	client client.Client
 	scheme *runtime.Scheme
 	stack  map[string]provider.Value
-	// recd is event record
-	recd record.EventRecorder
 
 	sharedCtx *shared.SharedOperatorContext
 }
 
-func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (m *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
-	if r.heal.Dirty() {
-		klog.Infof("master state still in Dirty state, wait for next retry")
+	if ! m.healet.Healthy() {
+		klog.Infof("master state still in UnHealthy state, trigger repair")
+		err := m.healet.FixMasterNode()
+		if err != nil {
+			klog.Errorf("masterset controller: fix control plane with [%s]", err.Error())
+		}
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
 	}
-	//spec,err := help.Cluster(r.client, api.KUBERNETES_CLUSTER)
-	//if err != nil {
-	//	log.Errorf("cluster not found: %s, err=%s",req, err.Error())
-	//	return ctrl.Result{RequeueAfter: 1*time.Minute,Requeue: true}, nil
-	//}
 
-	masterset, err := help.MasterSet(r.client, "masterset")
+	ms, err := help.MasterSet(m.client, "masterset")
 	if err != nil {
 		return ctrl.Result{RequeueAfter: 1 * time.Minute, Requeue: true}, nil
 	}
 
 	// sharedCtx is initialized on controller start.
-	cctx := r.sharedCtx.ProviderCtx()
+	cctx := m.sharedCtx.ProviderCtx()
 
 	// 1. [FastCheck] check replicas equal count(Node[master]).
 	//    return immediately on equal
-	mnode, err := help.MasterNodes(r.client)
+	mnode, err := help.MasterNodes(m.client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("get nodes: %s", err.Error())
 	}
-	if len(mnode) == masterset.Spec.Replicas {
+	if len(mnode) == ms.Spec.Replicas {
 		klog.Infof("master node is as expected replica count: %d, nothing to do", len(mnode))
 		return ctrl.Result{}, nil
 	}
 
 	// 2. [DoubleCheck] check replicas equal count(ECS[master])
 	// 		return immediately on equal
-	detail, err := r.prvd.ScalingGroupDetail(
+	detail, err := m.prvd.ScalingGroupDetail(
 		cctx, "", provider.Option{Action: "InstanceIDS"},
 	)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 15 * time.Second}, nil
 	}
-	if len(detail.Instances) == masterset.Spec.Replicas {
+	if len(detail.Instances) == ms.Spec.Replicas {
 		// TODO: how about scale in???
 		//   some error might occurred. send repair signal?
 		klog.Infof("master ecs is as expected "+
@@ -183,11 +176,11 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// 3. do scale ecs scaling group
-	ud, err := r.prvd.UserData(cctx, provider.JoinMasterUserdata)
+	ud, err := m.prvd.UserData(cctx, provider.JoinMasterUserdata)
 	if err != nil {
 		return ctrl.Result{}, gerr.Wrapf(err, "join master userdata")
 	}
-	err = r.prvd.ModifyScalingConfig(cctx, "",
+	err = m.prvd.ModifyScalingConfig(cctx, "",
 		provider.Option{
 			Action: "UserData",
 			Value:  provider.Value{Val: ud},
@@ -199,12 +192,18 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	scale := func(expect int) error {
+
+		klog.Infof("[QuorumScale] wait on member center to finish cluster heal")
+		if ! m.healet.Healthy(){
+			return errors.Wrapf(err, "[QuorumScale] controlplane not healthy, wait retry")
+		}
+
 		klog.Infof("[QuorumScale] do scale[expect=%d]...........................", expect)
 		// check for etcd member, make sure len(etcd)==len(ecs)
 		if expect == 1 {
 			klog.Infof("[QuorumScale] do remove ecs to 1")
 			// replica changes from 2 to 1.
-			ip, err := r.heal.RemoveFollower()
+			ip, err := m.healet.RemoveFollower()
 			if err != nil {
 				return fmt.Errorf("quorum remove etcd member: %s", err.Error())
 			}
@@ -212,14 +211,14 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			if id == "" {
 				return fmt.Errorf("ecs not found by ip: %s", ip)
 			}
-			err = r.prvd.RemoveScalingGroupECS(cctx, "", id)
+			err = m.prvd.RemoveScalingGroupECS(cctx, "", id)
 			if err != nil {
 				return fmt.Errorf("remove ecs from scaling group: %s", err.Error())
 			}
 		} else {
 			klog.Infof("[QuorumScale] do scale ecs to %d", expect)
 			// replicas changes from n to min(replica,2)
-			err = r.prvd.ScaleMasterGroup(cctx, "", expect)
+			err = m.prvd.ScaleMasterGroup(cctx, "", expect)
 			if err != nil {
 				klog.Infof("[QuorumScale] sleep 30s for scale master error: %s", err.Error())
 				time.Sleep(30 * time.Second)
@@ -227,20 +226,11 @@ func (r *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			}
 		}
 
-		klog.Infof("[QuorumScale] wait on member center to finish cluster heal")
-		done := make(chan struct{}, 0)
-		r.heal.NotifyScale(done)
-		// wait might not needed.
-		// as scale always returned immediately
-		result := <-done // wait on member center to finish.
-		klog.Infof("[QuorumScale] member center returned with: %v", result)
+		klog.Infof("[QuorumScale] member center finished")
 		return nil
 	}
 	// 4. do scale and wait
-	err = QuorumScale(
-		scale, len(detail.Instances), masterset.Spec.Replicas,
-	)
-	return ctrl.Result{}, err
+	return ctrl.Result{}, QuorumScale(scale, len(detail.Instances), ms.Spec.Replicas)
 }
 
 func QuorumScale(

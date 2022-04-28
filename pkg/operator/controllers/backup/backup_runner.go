@@ -103,9 +103,12 @@ func (s *Snapshot) CleanUp() {
 func (s *Snapshot) doBackup() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	masters, err := h.Masters(s.client)
+	masters, err := h.MasterCRDS(s.client)
 	if err != nil {
 		return fmt.Errorf("member master: %s", err.Error())
+	}
+	if len(masters) <= 0 {
+		return fmt.Errorf("master crd not found %d, abort backup",len(masters))
 	}
 	spec, err := h.Cluster(s.client, api.KUBERNETES_CLUSTER)
 	if err != nil {
@@ -119,7 +122,7 @@ func (s *Snapshot) Backup(
 	spec    *api.Cluster,
 	masters []api.Master,
 ) error {
-	metcd, err := etcd.NewEtcdFromMasters(masters, spec, etcd.ETCD_TMP)
+	metcd, err := etcd.NewEtcdFromCRD(masters, spec, etcd.ETCD_TMP)
 	if err != nil {
 		return fmt.Errorf("new etcd: %s", err.Error())
 	}

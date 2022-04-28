@@ -56,5 +56,5 @@ func WaitBootrap(ctx *context.CachedContext, cnt int) error {
 	if err := post.RunOvm(ctx.BootCFG); err != nil {
 		return fmt.Errorf("run ovm: %s", err.Error())
 	}
-	return addons.InstallAddons(ctx.BootCFG, []addons.ConfigTpl{addons.KUBEPROXY_MASTER})
+	return addons.InstallAddons(nil, ctx.BootCFG, []addons.ConfigTpl{addons.KUBEPROXY_MASTER})
 }

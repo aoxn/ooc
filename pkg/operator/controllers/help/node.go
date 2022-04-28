@@ -9,27 +9,27 @@ import (
 	"time"
 )
 
-func WaitNodeHeartbeatReady(
+func WaitHeartbeat(
 	client client.Client,
-	nodeName string,
+	nodeName string, timeout time.Duration,
 ) error {
-	klog.Infof("wait for node ready")
+	klog.Infof("[%s]wait for node ready",nodeName)
 	waitReady := func() (done bool, err error) {
 		node, err := Node(client,nodeName)
 		if err != nil {
-			klog.Infof("wait node ready: %s", err.Error())
+			klog.Infof("[%s]wait node ready: %s",nodeName, err.Error())
 			return false, nil
 		}
 		ready, reason := nodeHeartbeatReady(node, 0)
 		if !ready {
-			klog.Warningf("kubelet not ready yet: %s %s", nodeName, reason)
+			klog.Warningf("[%s]kubelet not ready yet: %s", nodeName, reason)
 			return false, nil
 		}
-		klog.Infof("kubelet ready: %s", nodeName)
+		klog.Infof("[%s]kubelet ready", nodeName)
 		return true, nil
 	}
 	return wait.PollImmediate(
-		10*time.Second, 3*time.Minute,
+		10*time.Second, timeout,
 		func() (done bool, err error) {
 			// wait for node status steady in 6s
 			for i := 0; i < 3; i++ {
@@ -37,7 +37,7 @@ func WaitNodeHeartbeatReady(
 				if err != nil || !ready {
 					return ready, err
 				}
-				klog.Infof("node[%s] status ready, wait for status steady[%d]", nodeName, i)
+				klog.Infof("[%s]node status ready, wait for status steady[%d]", nodeName, i)
 				time.Sleep(2 * time.Second)
 			}
 			return true, nil
@@ -51,12 +51,12 @@ func NodeHeartbeatReady(node *v1.Node,timeout time.Duration) (bool , string) {re
 func nodeHeartbeatReady(node *v1.Node, timeout time.Duration) (bool, string) {
 	cond := findCondition(node.Status.Conditions, v1.NodeReady)
 	if cond.Type != v1.NodeReady {
-		klog.Infof("ready condition type not found,%s", node.Name)
+		klog.Infof("[%s]ready check type not found,type=%s", node.Name, cond.Type)
 		return true, "ConditionNotFound"
 	}
 	if cond.Status == v1.ConditionFalse ||
 		cond.Status == v1.ConditionUnknown {
-		klog.Infof("node %s in not ready " +
+		klog.Infof("[%s]node in not ready " +
 			"state[%s], wait heartbeat timeout: %s",node.Name, cond.Status, cond.LastHeartbeatTime)
 	}
 	return cond.Status == v1.ConditionTrue && isHeartbeatNormal(cond,timeout), cond.Reason
@@ -86,7 +86,7 @@ func findCondition(
 			return conds[i]
 		}
 	}
-	klog.Infof("condition type %s not found,skip", typ)
+	klog.Infof("check type %s not found,skip", typ)
 	return v1.NodeCondition{}
 }
 

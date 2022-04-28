@@ -49,7 +49,7 @@ func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	if adds == "*" {
 		cfgadds = addons.AddonConfigsTpl()
 	}
-	err := addons.InstallAddons(ctx.Config(), cfgadds)
+	err := addons.InstallAddons(ctx.ProviderCtx(),ctx.Config(), cfgadds)
 	if err != nil {
 		return fmt.Errorf("install addons: %s", err.Error())
 	}
@@ -248,7 +248,7 @@ spec:
   type: NodePort
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   labels:
     app: ovm
@@ -256,6 +256,7 @@ metadata:
   name: ovm
   namespace: kube-system
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: ovm

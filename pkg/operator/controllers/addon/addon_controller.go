@@ -49,11 +49,11 @@ import (
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, ctx *shared.SharedOperatorContext) error {
-	return add(mgr, newReconciler(mgr))
+	return add(mgr, newReconciler(mgr,ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, ctx *shared.SharedOperatorContext) reconcile.Reconciler {
 	mclient, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		panic(fmt.Sprintf("create client: %s", mclient))
@@ -78,6 +78,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		drain:  drainer,
+		ctx:    ctx,
 		//prvd:   ecs.NewProvider(cauth.ECS),
 		recd: mgr.GetEventRecorderFor("addon-controller"),
 	}
@@ -120,6 +121,8 @@ type AddonReconciler struct {
 	scheme *runtime.Scheme
 	// recd is event record
 	recd record.EventRecorder
+
+	ctx *shared.SharedOperatorContext
 }
 
 // +kubebuilder:rbac:groups=nodepool.alibaba.com,resources=nodepools,verbs=get;list;watch;create;update;patch;delete
@@ -149,7 +152,7 @@ func (r *AddonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 		return ctrl.Result{}, fmt.Errorf("cluster intranet slb endpoint is not initialized, wait next retry")
 	}
-	adds, err := addons.DefaultAddons(&cluster.Spec)
+	adds, err := addons.DefaultAddons(r.ctx.ProviderCtx(),&cluster.Spec)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

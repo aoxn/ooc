@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	"runtime"
 )
 
 // NewCommand returns a new cobra.Command for cluster creation
@@ -19,6 +20,9 @@ func NewCommand() *cobra.Command {
 		Short: "Kubernetes cluster init",
 		Long:  "kubernetes cluster init. configuration management, lifecycle management",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if runtime.GOOS != "linux" {
+				return fmt.Errorf("only linux system was supported")
+			}
 			err := os.MkdirAll("/etc/ovm", 0755)
 			if err != nil {
 				return fmt.Errorf("make ovm dir: %s", err.Error())

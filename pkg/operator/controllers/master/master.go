@@ -126,7 +126,7 @@ type NodeReconciler struct {
 
 func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	//klog.Infof("update master cache: %s", req.NamespacedName)
-	m, err := help.Masters(r.client)
+	m, err := help.MasterCRDS(r.client)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.

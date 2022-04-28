@@ -13,7 +13,11 @@ import (
 	"github.com/aoxn/ovm/pkg/iaas/provider"
 	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
 	"github.com/aoxn/ovm/pkg/operator/controllers/backup"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
+	"github.com/aoxn/ovm/pkg/operator/heal"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubectl/pkg/drain"
+	"os"
+
 	//"github.com/aoxn/ovm/pkg/utils"
 	"github.com/aoxn/ovm/pkg/utils/crd"
 	"github.com/pkg/errors"
@@ -94,9 +98,9 @@ func (v *Operator) CompleteSetting() error {
 	v.Initialized = true
 
 	spec, err = v.cluster(v.RestCfg)
-        if err != nil {
-                return fmt.Errorf("cluster: %s", err.Error())
-        }
+	if err != nil {
+		return fmt.Errorf("cluster: %s", err.Error())
+	}
 	return v.initializeClusterResource(spec)
 }
 
@@ -158,7 +162,7 @@ func (v *Operator) initializeClusterResource(spec *api.Cluster) error {
 		if err != nil {
 			return fmt.Errorf("patch endpoint: %s", err.Error())
 		}
-		klog.Infof("stack id and endpoint fixed: [%s] [%s]", spec.Spec.Endpoint.Intranet,spec.Spec.Bind.ResourceId)
+		klog.Infof("stack id and endpoint fixed: [%s] [%s]", spec.Spec.Endpoint.Intranet, spec.Spec.Bind.ResourceId)
 	}
 	return v.RefreshNodeCache()
 }
@@ -251,12 +255,27 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 		return fmt.Errorf("add core api to schema: %s", err.Error())
 	}
 
-	// start member heal
-	mh := heal.NewMasterHeal(v.Mgr.GetClient(), v.Provider)
+	mclient, err := kubernetes.NewForConfig(mgr.GetConfig())
+	drainer := &drain.Helper{
+		Timeout:             15 * time.Minute,
+		Client:              mclient,
+		GracePeriodSeconds:  -1,
+		DisableEviction:     false,
+		IgnoreAllDaemonSets: true,
+		Force:               true,
+		Out:                 os.Stdout,
+		ErrOut:              os.Stderr,
 
+		SkipWaitForDeleteTimeoutSeconds: 60,
+	}
+	// start member heal
+	mh, err := heal.NewHealet(spec,v.Mgr.GetClient(), v.Provider, drainer)
+	if err != nil {
+		return errors.Wrap(err, "master heal")
+	}
 	err = mgr.Add(mh)
 	if err != nil {
-		klog.Errorf("add MasterHeal runner: %s", err.Error())
+		klog.Errorf("add Healet runner: %s", err.Error())
 	}
 	err = mgr.Add(backup.NewSnapshot())
 	if err != nil {
@@ -267,6 +286,7 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 	if err != nil {
 		return fmt.Errorf("provider context: %s", err.Error())
 	}
+	pctx.SetKV("Provider", v.Provider)
 	v.Shared = shared.NewOperatorContext(v.CachedCtx, v.Provider, mh, pctx)
 
 	// add controllers

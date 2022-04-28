@@ -47,11 +47,13 @@ func RenderMonitorYaml(spec *v12.ClusterSpec) (string, error) {
 	err = t.Execute(
 		&buff,
 		struct {
-			Version  string
-			Registry string
+			Version     string
+			Registry    string
+			ClusterName string
 		}{
-			Version:  ovm.Version,
-			Registry: fmt.Sprintf("%s/aoxn", filepath.Dir(spec.Registry)),
+			Version:     ovm.Version,
+			ClusterName: spec.ClusterID,
+			Registry:    fmt.Sprintf("%s/aoxn", filepath.Dir(spec.Registry)),
 			//Registry: "registry.cn-hangzhou.aliyuncs.com/aoxn",
 		},
 	)
@@ -95,6 +97,7 @@ spec:
           command:
             - /ovm
             - monit
+            - -n="{{.ClusterName}}"
           volumeMounts:
             - name: bootcfg
               mountPath: /etc/ovm/

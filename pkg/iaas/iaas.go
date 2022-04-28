@@ -1,6 +1,7 @@
 package iaas
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
@@ -9,10 +10,14 @@ import (
 	_ "github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
 	"github.com/aoxn/ovm/pkg/utils"
 	"github.com/aoxn/ovm/pkg/utils/sign"
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/cmd/util/editor"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -44,6 +49,7 @@ func Recover(cfg *v1.OvmOptions) error {
 		id.Spec.Cluster = from.Spec.Cluster
 	}
 	ctx.SetKV("BootCFG", &id.Spec.Cluster)
+	ctx.SetKV("OvmOptions", cfg)
 	pvd := ctx.Provider()
 	_, err = pvd.Recover(ctx, &id)
 	return err
@@ -179,10 +185,39 @@ func Get(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 	return doGetCluster(options, cmdLine)
 }
 
+func Edit(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+
+	if options.ClusterName == "" {
+		return fmt.Errorf("unexpected empty cluster name, specify with --name")
+	}
+	ctx, err := provider.NewContext(options, nil)
+	if err != nil {
+		return errors.Wrapf(err, "edit: initialize ovm context")
+	}
+	index := ctx.Indexer()
+	id, err := index.Get(options.ClusterName)
+	if err != nil {
+		return errors.Wrapf(err, "find cluster by name %s", options.ClusterName)
+	}
+	buf := bytes.NewBufferString(utils.PrettyYaml(id.Spec.Cluster))
+	edit := editor.NewDefaultEditor([]string{"EDITOR"})
+	edited, _, err := edit.LaunchTempFile(fmt.Sprintf("%s-edit-", filepath.Base(os.Args[0])),"cspec",buf)
+	if err != nil {
+		return errors.Wrapf(err, "edit with local editor")
+	}
+	cspec := &v1.ClusterSpec{}
+	err = yaml.Unmarshal(edited,cspec)
+	if err != nil {
+		return errors.Wrapf(err, "unrecognized field or value")
+	}
+	id.Spec.Cluster = *cspec
+	return index.Save(id)
+}
+
 func doGetCluster(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 	ctx, err := provider.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "get: initialize ovm context")
 	}
 	index := ctx.Indexer()
 	if options.ClusterName == "" {

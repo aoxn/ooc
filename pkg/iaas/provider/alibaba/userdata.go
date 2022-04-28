@@ -11,8 +11,6 @@ import (
 	"text/template"
 )
 
-
-
 func (n *Devel) UserData(ctx *provider.Context, category string) (string, error) {
 	switch category {
 	case provider.MasterUserdata:
@@ -56,10 +54,10 @@ var USER_DATA = `
 REGION="$(curl 100.100.100.200/latest/meta-data/region-id)"
 export REGION
 export ROLE=%s OS=centos ARCH=amd64 \
-	   TOKEN=%s \
+       TOKEN=%s \
        CLOUD_TYPE=%s \
        NAMESPACE=%s \
-	   FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
+       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
 echo "using beta version: [${NAMESPACE}]"
 mkdir -p /etc/ovm;
 echo "
@@ -149,7 +147,7 @@ func NewRecoverUserData(ctx *provider.Context) (string, error) {
 		RecoverFrom string
 		ClusterName string
 		OvmConfig   string
-		Bucket 		string
+		Bucket      string
 	}{
 		ConfigTpl:   *cfg,
 		Bucket:      opts.Bucket,
@@ -157,6 +155,7 @@ func NewRecoverUserData(ctx *provider.Context) (string, error) {
 		ClusterName: opts.ClusterName,
 		RecoverFrom: opts.RecoverFrom,
 	}
+	klog.Infof("recover [%s] from [%s], bucket [%s]", me.ClusterName, me.RecoverFrom, me.Bucket)
 	tpl, err := template.New("restore userdata").Parse(RecoverUserData)
 	if err != nil {
 		return "", errors.Wrap(err, "build recover userdata")
@@ -192,7 +191,7 @@ chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm; mkdir -p ~/.
 cat > ~/.ovm/config << EOF
 {{ .OvmConfig }}
 EOF
-/usr/local/bin/ovm recover --recover-mode node --name "{{ .ClusterName }}" --recover-from-cluster "{{ .RecoverFrom}}" --bucket "{{.Bucket}}"
+/usr/local/bin/ovm recover --recover-mode node --name "{{ .ClusterName }}" --recover-from-cluster "{{ .RecoverFrom}}" {{ if .Bucket }} --bucket "{{.Bucket}}" {{ end }}
 `
 
 var USER_DATA_JOIN_MASTER = `#!/bin/sh

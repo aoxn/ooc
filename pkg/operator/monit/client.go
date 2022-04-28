@@ -6,9 +6,11 @@ import (
 	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
+	app "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +32,7 @@ func NewClusterCtl() (b.Cluster, error) {
 	klog.Infof("new cluster controller: add schema v1/api")
 	_ = v1.AddToScheme(cluster.GetScheme())
 	_ = api.AddToScheme(cluster.GetScheme())
+	_ = app.AddToScheme(cluster.GetScheme())
 	start := func() {
 		err = cluster.Start(mctx.TODO())
 		if err != nil {
@@ -45,6 +48,10 @@ func NewClusterCtl() (b.Cluster, error) {
 	return cluster, nil
 }
 
+func GetKubernetesClient(c b.Cluster) (kubernetes.Interface, error) {
+	return kubernetes.NewForConfig(c.GetConfig())
+}
+
 func GetSpec(
 	client client.Client,
 ) (*api.Cluster, []api.Master, error) {
@@ -52,7 +59,7 @@ func GetSpec(
 	if err != nil {
 		return nil, nil, err
 	}
-	masters, err := h.Masters(client)
+	masters, err := h.MasterCRDS(client)
 	if err != nil {
 		return nil, nil, err
 	}

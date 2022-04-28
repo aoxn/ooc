@@ -125,7 +125,24 @@ func NewCommandGet() *cobra.Command {
 	return cmd
 }
 
+func NewCommandEdit() *cobra.Command {
+	flags := &v1.OvmOptions{}
+	cmd := &cobra.Command{
+		Use:   "edit",
+		Short: "Kubernetes edit -r cluster -n clusterid ",
+		Long:  "kubernetes edit cluster information. ",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			//return test(flags,cmd,args)
+			return edit(flags)
+		},
+	}
+	cmd.Flags().StringVarP(&flags.Resource, "resource", "r", "cluster", "resource eg. [cluster|kubeconfig|backup]")
+	cmd.Flags().StringVarP(&flags.ClusterName, "name", "n", "", "cluster name")
+	return cmd
+}
+
 func get(flags *v1.OvmOptions) error                             { return iaas.Get(flags, &cmdLine) }
+func edit(flags *v1.OvmOptions) error                             { return iaas.Edit(flags, &cmdLine) }
 func create(flags *v1.OvmOptions) error                          { return iaas.Create(flags) }
 func delete(flags *v1.OvmOptions, cmd *v1.CommandLineArgs) error { return iaas.Delete(flags, cmd) }
 func scale(flags *v1.OvmOptions) error {

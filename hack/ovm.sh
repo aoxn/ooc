@@ -3,7 +3,7 @@
 export CUR_DIR=$(cd "$(dirname "$0")";pwd)
 export SRC_DIR=$(dirname "$CUR_DIR")
 
-export CLUSTER_NAME=kubernetes-ovm-120
+export CLUSTER_NAME=kubernetes-ovm-121
 
 export INSTANCE_TYPE=ecs.c6.xlarge
 export REGION=cn-hangzhou

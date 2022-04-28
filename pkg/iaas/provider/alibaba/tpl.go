@@ -362,6 +362,7 @@ var Template = `
               "ecs:CreateNetworkInterface",
               "ecs:DescribeNetworkInterfaces",
               "ecs:AttachNetworkInterface",
+              "ecs:AssignPrivateIpAddresses",
               "ecs:DetachNetworkInterface",
               "ecs:DeleteNetworkInterface",
               "ecs:DescribeInstanceAttribute"
@@ -438,6 +439,7 @@ var Template = `
               "ecs:CreateNetworkInterface",
               "ecs:DescribeNetworkInterfaces",
               "ecs:AttachNetworkInterface",
+              "ecs:AssignPrivateIpAddresses",
               "ecs:DetachNetworkInterface",
               "ecs:DeleteNetworkInterface",
               "ecs:DescribeInstanceAttribute"
@@ -1019,7 +1021,7 @@ var Template = `
       "DependsOn": ["k8s_master_listener_boot","k8s_master_slb_listener","k8s_sg"],
       "Properties": {
         "MinSize": "1",
-        "MaxSize": "5",
+        "MaxSize": "20",
         "DefaultCooldown": 0,
         "ScalingGroupName": {
           "Fn::Join": [

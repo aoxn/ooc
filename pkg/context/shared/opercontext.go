@@ -4,20 +4,20 @@ import (
 	"github.com/aoxn/ovm/pkg/context"
 	"github.com/aoxn/ovm/pkg/context/base"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
+	"github.com/aoxn/ovm/pkg/operator/heal"
 )
 
 const (
 	NodeCacheCtx = "NodeCacheCtx"
 	ProviderIAAS = "ProviderIAAS"
-	MemberHeal   = "MasterHeal"
+	MemberHeal   = "Healet"
 	ProviderCtx  = "ProviderCtx"
 )
 
 func NewOperatorContext(
 	cache *context.CachedContext,
 	prvd provider.Interface,
-	mem *heal.MasterHeal,
+	mem *heal.Healet,
 	pctx *provider.Context,
 ) *SharedOperatorContext {
 	ctxs := SharedOperatorContext{}
@@ -39,8 +39,8 @@ func (c *SharedOperatorContext) ProvdIAAS() provider.Interface {
 	return c.Value(ProviderIAAS).(provider.Interface)
 }
 
-func (c *SharedOperatorContext) MemberHeal() *heal.MasterHeal {
-	return c.Value(MemberHeal).(*heal.MasterHeal)
+func (c *SharedOperatorContext) MemberHeal() *heal.Healet {
+	return c.Value(MemberHeal).(*heal.Healet)
 }
 
 func (c *SharedOperatorContext) ProviderCtx() *provider.Context {

@@ -75,7 +75,7 @@ func (n *Devel) ScalingGroupDetail(
 	}
 	grps := sg.ScalingGroups.ScalingGroup
 	if len(grps) <= 0 {
-		return result, fmt.Errorf("sgroupid [%s] not found", gid)
+		return result, fmt.Errorf("sgroupid [%s] not found[ScalingGroupNotFound]", gid)
 	}
 	if grps[0].VpcId != vpcid {
 		klog.Errorf("invalid vpcid [%s] for scaling group [%s], expect[%s]", grps[0].VpcId,gid, vpcid)
@@ -91,6 +91,9 @@ func (n *Devel) ScalingGroupDetail(
 		if err != nil {
 			return result, err
 		}
+		if len(ins.ScalingInstances.ScalingInstance) == 0 {
+			return result, nil
+		}
 		var mins []string
 		for _, i := range ins.ScalingInstances.ScalingInstance {
 			mins = append(mins, i.InstanceId)
@@ -105,6 +108,7 @@ func (n *Devel) ScalingGroupDetail(
 		}
 		for _, i := range attri.Instances.Instance {
 			is := provider.Instance{
+				Region: n.Cfg.Region,
 				Id:        i.InstanceId,
 				Ip:        strings.Join(i.VpcAttributes.PrivateIpAddress.IpAddress, ","),
 				CreatedAt: normalize(i.CreationTime),

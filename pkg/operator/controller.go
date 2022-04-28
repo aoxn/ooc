@@ -9,26 +9,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-// AddToManagerFuncs is a list of functions to add all Controllers to the Manager
-var AddToManagerFuncs []func(manager.Manager, *shared.SharedOperatorContext) error
+var Funcs []func(manager.Manager, *shared.SharedOperatorContext) error
 
 func init() {
-	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
-	AddToManagerFuncs = append(AddToManagerFuncs, master.AddMaster)
-	AddToManagerFuncs = append(AddToManagerFuncs, master.AddMasterSet)
-	AddToManagerFuncs = append(AddToManagerFuncs, addon.Add)
-	AddToManagerFuncs = append(AddToManagerFuncs, master.AddNode)
 
-	AddToManagerFuncs = append(AddToManagerFuncs, nodepool.AddNodePoolController)
-	AddToManagerFuncs = append(AddToManagerFuncs, noderepair.AddNodeRepair)
+	Funcs = append(Funcs, master.AddMaster)
+	Funcs = append(Funcs, master.AddMasterSet)
+	Funcs = append(Funcs, addon.Add)
+	Funcs = append(Funcs, master.AddNode)
+
+	Funcs = append(Funcs, nodepool.AddNodePoolController)
+	Funcs = append(Funcs, noderepair.AddNodeRepair)
 }
 
-// AddControllers adds all Controllers to the Manager
 func AddControllers(
 	mgr manager.Manager,
 	oper *shared.SharedOperatorContext,
 ) error {
-	for _, f := range AddToManagerFuncs {
+	for _, f := range Funcs {
 		err := f(mgr, oper)
 		if err != nil {
 			return err

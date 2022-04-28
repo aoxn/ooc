@@ -113,7 +113,7 @@ func (m *Etcd) Home() string {
 	return m.home
 }
 
-func NewEtcdFromMasters(
+func NewEtcdFromCRD(
 	nodes []api.Master, spec *api.Cluster, home string,
 ) (*Etcd, error) {
 	exist, err := utils.FileExist(certHome(home, "client.key"))

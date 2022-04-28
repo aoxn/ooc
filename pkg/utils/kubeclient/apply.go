@@ -202,7 +202,7 @@ func GetModifiedConfiguration(obj runtime.Object, annotate bool, codec runtime.E
 		}
 	}
 
-	// Restore the object to its original condition.
+	// Restore the object to its original check.
 	annots[v1.LastAppliedConfigAnnotation] = original
 	if err := metadataAccessor.SetAnnotations(obj, annots); err != nil {
 		return nil, err

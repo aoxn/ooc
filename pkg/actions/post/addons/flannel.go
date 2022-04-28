@@ -3,7 +3,7 @@ package addons
 var FLANNEL = ConfigTpl{
 	Name:         "flannel",
 	Tpl:          flannel,
-	ImageVersion: "v0.11.0.1-g6e46593e-aliyun",
+	ImageVersion: "v0.15.1.5-11d1c700-aliyun",
 }
 
 var flannel = `

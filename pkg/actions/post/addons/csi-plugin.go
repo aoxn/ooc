@@ -151,6 +151,7 @@ spec:
     metadata:
       labels:
         app: csi-plugin
+        random.uuid: "{{ .UUID }}"
     spec:
       tolerations:
         - operator: Exists

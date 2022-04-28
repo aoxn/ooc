@@ -54,6 +54,8 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 			req := ecs.CreateDescribeInvocationsRequest()
 			req.InstanceId = id
 			req.RegionId = n.Cfg.Region
+			// 阿里云垃圾API。擦
+			// 该API的InvokeStatus 过滤有问题，需要手动过滤
 			req.InvokeStatus = "Running"
 			req.CommandType = commandType
 			inv, err := n.ECS.DescribeInvocations(req)
@@ -64,7 +66,18 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 			if inv.TotalCount == 0 {
 				return true, nil
 			}
-			klog.Infof("invocation still in progress: total %s", inv.TotalCount)
+			cnt := 0
+			//兼容
+			for _, i := range inv.Invocations.Invocation {
+				if i.InvocationStatus == "Running" {
+					cnt ++
+					klog.Infof("command [%s.%s.%s] is still in running", id, i.InvokeId, i.CommandId)
+				}
+			}
+			if cnt == 0 {
+				return true, nil
+			}
+			klog.Infof("invocation still in progress: total %d, %s", cnt, id)
 			return false, nil
 		}
 		return wait.PollImmediate(3*time.Second, timeout, mfunc)
@@ -82,7 +95,7 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 	req.Type = commandType
 	req.InstanceId = &[]string{id}
 	req.KeepCommand = requests.NewBoolean(false)
-
+	klog.Infof("run command: [%s]", cmd)
 	rcmd, err := n.ECS.RunCommand(req)
 	if err != nil {
 		return errors.Wrapf(err, "run command")

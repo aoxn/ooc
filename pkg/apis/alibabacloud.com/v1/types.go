@@ -198,12 +198,10 @@ type CommandLineArgs struct {
 type OvmOptions struct {
 	// Endpoint coordinator bootstrap server endpoint
 	Endpoint string
-	// Role role of nodes.
-	Role   string
-	Token  string
-	Config string
-
-	Bucket string
+	Role     string
+	Token    string
+	Config   string
+	Bucket   string
 
 	// BootType 'local' 'coordinator' ''
 	BootType string
@@ -211,7 +209,6 @@ type OvmOptions struct {
 	Resource string
 	// TargetCount scale target nodes count
 	TargetCount int
-
 	RecoverFrom string
 	ClusterName string
 
@@ -220,15 +217,10 @@ type OvmOptions struct {
 
 	// Addons install addons
 	// `*` means all.  comma separated
-	Addons string
-
-	//Provider          string
+	Addons            string
 	ExpectedMasterCnt int
-	// RecoverMode
-	RecoverMode string
-
-	//OperatorCFG Config
-	OperatorCFG OperatorFlag
+	RecoverMode       string
+	OperatorCFG       OperatorFlag
 }
 
 type OperatorFlag struct {
@@ -251,7 +243,7 @@ type Cluster struct {
 
 	// Config expected cluster specification
 	// +optional
-	Spec ClusterSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec   ClusterSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 
 	// Status cluster current status.
 	// +optional
@@ -278,6 +270,7 @@ type ClusterSpec struct {
 	Token            string   `json:"token,omitempty" protobuf:"bytes,10,opt,name=token"`
 	Registry         string   `json:"registry,omitempty" protobuf:"bytes,11,opt,name=registry"`
 	Endpoint         Endpoint `json:"endpoint,omitempty" protobuf:"bytes,12,opt,name=endpoint"`
+	SilentTime		 int      `json:"silentTime,omitempty" protobuf:"bytes,12,opt,name=silentTime"`
 }
 
 type Kubernetes struct {

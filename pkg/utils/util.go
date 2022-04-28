@@ -7,13 +7,13 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"html/template"
 	corev1 "k8s.io/api/core/v1"
 	validate "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/klog/v2"
 	"math/big"
 	"net"
 	"os"
+	"text/template"
 )
 
 var (

@@ -24,6 +24,7 @@ import (
 	initpkg "github.com/aoxn/ovm/cmd/ovm/init"
 	"github.com/aoxn/ovm/cmd/ovm/monitor"
 	"github.com/aoxn/ovm/cmd/ovm/monkey"
+	"github.com/aoxn/ovm/cmd/ovm/vm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
@@ -74,11 +75,13 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(cluster.NewCommandDelete())
 	cmd.AddCommand(cluster.NewCommandWatch())
 	cmd.AddCommand(cluster.NewCommandGet())
+	cmd.AddCommand(cluster.NewCommandEdit())
 	cmd.AddCommand(cluster.NewCommandConfig())
 	cmd.AddCommand(cluster.NewCommandScale())
 	cmd.AddCommand(monitor.NewCommand())
 	cmd.AddCommand(recv.NewCommand())
 	cmd.AddCommand(monkey.NewCommand())
+	cmd.AddCommand(vm.NewCommand())
 	return cmd
 }
 

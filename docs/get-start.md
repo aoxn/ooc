@@ -129,7 +129,6 @@ network:
   netMask: 25
 EOF
 
-(base) ➜ /usr/local/bin/ovm create --config config.yaml 
 (base) ➜ ovm create --config config.yaml 
 
 ovm: kubernetes cluster lifecycle management.
@@ -187,7 +186,7 @@ kubernetes-ovm-77   116.62.24.127/192.168.0.53
 
 ### 连接集群
 
-当集群创建完成后,可以通过ovm get命令下载kubeconfig文件来访问我们的集群。
+当集群创建完成后,可以通过ovm get命令下载kubeconfig文件来访问我们的集群。 当前ovm创建的集群通过EIP在公网暴露了apiserver，因此可以通过公网本地访问。
 
 ```bash
 (base) ➜ ovm get -r kubeconfig -n kubernetes-id-001 -w ~/.kube/config.txt
@@ -237,6 +236,9 @@ nodepool.alibabacloud.com/nodepool-01 created
 观测节点池的加入的过程参考上面方法。可以调大，也可以调小节点池的大小。
 自动扩容节点池的功能Coming Soon。
 
+```bash
+(base) ➜  ovm git:(main) ✗ kubectl --kubeconfig ~/.kube/config.txt
+```
 
 ## 管理集群
 一切都是面向终态的
@@ -270,11 +272,11 @@ ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待
 
 
 ### 缩减集群规模
-一切都是面向终态的，当您的集群规模降低后，不在需要这么多的Master后，同样可以通过调整MasterSet的`replicas`来调整Master的数量。可以调整到3个副本，也可以调整到1个Master副本。
+一切都是面向终态的，当您的集群规模降低后，不在需要这么多的Master后，同样可以通过调整MasterSet的`replicas`来调整Master的数量。可以调整到3个副本，也可以调整到1个Master副本。Master缩减的过程中需要保持多数quorum，因此缩减是逐步发生的。
 
 ```bash
 (base) ➜ kubectl --kubeconfig ~/.kube/config.txt -n kube-system edit masterset
-# set replicas to 3
+# set replicas to 3 or 1
 ```
 然后通过上面的命令观测Master节点数量的变化。
 
@@ -282,24 +284,27 @@ ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待
 ## 基础设施复原力（自治）
 
 随着云原生的不断发展，k8s已经成为了容器时代的基础设施，基础设施的稳定及面临重大灾难时的复原力变成了系统管理的终极问题。
-我们是否真的为基础设施的故障做好了准备？如何从基础设施中复原，如何从基础设施故障中自动无干预的复原并且成本最小？ovm致力于实现真正的k8s免运维，尤其是在灾难的场景下让k8s集群能够无干预的自动复原，强调的是基础设施的复原力。
+我们是否真的为基础设施的故障做好了准备？如何从基础设施中复原，进一步如何从基础设施故障中自动无干预的复原并且代价最小？ovm致力于实现真正的k8s免运维，尤其是在灾难的场景下让k8s集群能够无干预的自动复原，强调的是基础设施的复原力，而且可以是零干预的复原力。
 
 以下为3个Master副本的k8s集群的故障模拟与自动复原，其他数量Master副本数量的集群同理。
 
 ### 模拟Worker节点故障
-以下列举了三种方案来破坏一个节点，等待系统自动恢复该节点。
+以下列举了几种方案来破坏一个节点，等待系统自动恢复该节点。
 1. 方法一：通过`kubectl --kubeconfig ~/.kube/config.txt delete no ${your-node}` 删除对应的Node Object。等待节点自动恢复并注册回来，恢复全程无需人工干预，时长约2分钟。
 2. 方法二：登录ECS节点，systemctl stop kubelet/docker等。等待节点NotReady后，系统会自行恢复节点状态。恢复全程无需人工干预。
-3. 方法三：到ECS控制台上删除节点对应的ECS。系统会自行恢复节点状态。恢复全程无需人工干预。
+3. 方法三：到ECS控制台上【关闭】节点对应的ECS。系统会自行恢复节点状态。恢复全程无需人工干预。
+4. 方法四：到ECS控制台上【删除】节点对应的ECS。系统会自行恢复节点状态。恢复全程无需人工干预。
+5. 方法五：登录Master节点，删除ETCD数据、或者停止ETCD服务，或者删除Master节点。
 
-当然，你也可以自行组合这些操作，最坏的情况下是搞垮整个集群，然后坐等ovm自行恢复。一个温柔的提醒在于，ovm还是一个原型验证项目，还不具备生产可用。
+
+当然，你也可以自行组合这些操作，最坏的情况下是Crash掉整个集群，然后坐等ovm自行恢复。一个温柔的提醒在于，ovm还是一个原型验证项目，还不具备生产可用。
 
 ### 模拟单个Master节点故障
 通过模拟Worker节点故障的3个方法，可以同样的模拟Master节点故障。删除Master对应的ECS，不会立即造成quorum Fail，集群不会出现不可用的情况，此时集群能自行恢复，全程无需人工干预。
 
 ### 模拟多数Master节点故障
 通过模拟Worker节点故障的三个方法可以模拟Master故障。
-但本次我们同时模拟2个Master节点故障（比如直接删除2个Master节点对应的ECS），这样就仅剩下一个Master节点在运行，但由于3个节点中2个都已经故障，quorum会丢失，造成整个集群不可用。
+但本次我们同时模拟总共3个master节点的情况下其中2个Master节点故障（比如直接删除2个Master节点对应的ECS）的情况，这样就仅剩下一个Master节点在运行，但由于3个节点中2个都已经故障，quorum会丢失，造成整个集群不可用。
 集群的管控面无法访问。可以通过`kubectl  --kubeconfig ~/.kube/config.txt get no`来验证管控面是否故障。
 ovm面向失败的设计能自行处理集群级别的故障，因此在等待几分钟后，您会发现集群管控面已自行恢复。全程无需人工干预，即使整个管控面已经故障。
 对于worker节点，只要不涉及到管控面访问相关的业务，恢复的过程中用户的业务将不受任何影响，实现业务的连续性。
@@ -311,6 +316,12 @@ ovm面向失败的设计能自行处理集群级别的故障，因此在等待�
 Region级别的故障无法在本Region直接恢复，ovm还无法自行从Region故障中恢复。目前ovm提供了手动一键将集群恢复到其他Region。
 
 ### 模拟集群被意外删除
+
+
+### 灾难恢复（手动）
+```bash
+(base) ➜  ovm git:(main) ✗ ovm recover -n kubernetes-ovm-121 -f kubernetes-ovm-120
+```
 
 
 ## 备份机制

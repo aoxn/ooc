@@ -22,8 +22,8 @@ import (
 	ctx "github.com/aoxn/ovm/pkg/context"
 	"github.com/aoxn/ovm/pkg/context/shared"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/heal"
 	"github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/ovm/pkg/operator/heal"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
@@ -44,8 +44,6 @@ import (
 	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
 )
 
-// Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
 func AddNode(
 	mgr manager.Manager,
 	ctx *shared.SharedOperatorContext,
@@ -111,9 +109,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 // blank assignment to verify that ReconcileRolling implements reconcile.Reconciler
 var _ reconcile.Reconciler = &RepairReconciler{}
 
-// MasterSetReconciler reconciles a NodePool object
 type RepairReconciler struct {
-	heal  *heal.MasterHeal
+	heal  *heal.Healet
 	drain *drain.Helper
 	//prvd provider for ecs
 	prvd provider.Interface
@@ -142,7 +139,7 @@ func (r *RepairReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, err
 	}
 	if !help.NodeReady(n) {
-		klog.Infof("master node not ready, try meber heal: %s", req.Name)
+		klog.Infof("master node not ready, try meber healet: %s", req.Name)
 		done := make(chan struct{})
 		r.heal.NotifyNodeEvent(done)
 		res := <-done

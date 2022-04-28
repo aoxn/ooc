@@ -38,19 +38,25 @@ func (m *CheckEtcd) Check() (bool, error) {
 	klog.Infof("begin to check etcd, [%s]", m.Name())
 	spec, err := h.Cluster(m.client, "kubernetes-cluster")
 	if err != nil {
-		klog.Warning("find my cluster failed: %s", err.Error())
+		klog.Warningf("find my cluster failed: %s", err.Error())
 	}else {
 		// in case of apiserver down, use cached spec & apiserver
 		m.Cluster = spec
-		master, err := h.Masters(m.client)
-		if err != nil {
-			klog.Warning("find master failed: %s", err.Error())
+		master, err := h.MasterCRDS(m.client)
+		if err != nil || len(master) == 0 {
+			klog.Warningf("find master failed: %v", err)
 		} else {
 			m.master = master
 		}
+		if len(m.master) == 0 {
+			return true, errors.Wrapf(err, "no master crd found")
+		}
 		klog.Infof("etcd check try masters: %v", api.ToMasterStringList(m.master))
 	}
-	metcd, err := etcd.NewEtcdFromMasters(m.master, m.Cluster, "/tmp")
+	if m.Cluster == nil {
+		return true, errors.Wrapf(err, "empty cluster spec")
+	}
+	metcd, err := etcd.NewEtcdFromCRD(m.master, m.Cluster, "/tmp")
 	if err != nil {
 		return true, errors.Wrap(err, "new etcd")
 	}

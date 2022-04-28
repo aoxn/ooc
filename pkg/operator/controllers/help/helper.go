@@ -122,6 +122,35 @@ func MasterSet(
 	return cluster, err
 }
 
+func HasNodePoolID(node v1.Node, npid string) bool {
+	if node.Labels == nil {
+		return false
+	}
+	id,ok := node.Labels["np.ovm.io/id"]
+	if !ok {
+		return false
+	}
+	return id == npid
+}
+
+func NodePoolItems(
+	rclient client.Client, np *api.NodePool,
+) ([]v1.Node, error) {
+	require, _ := labels.NewRequirement(
+		"np.ovm.io/id", "=", []string{np.Spec.NodePoolID},
+	)
+	mnode := &v1.NodeList{}
+	err := rclient.List(
+		context.TODO(),
+		mnode,
+		&client.ListOptions{
+			LabelSelector: labels.NewSelector().Add(*require),
+		},
+	)
+	return mnode.Items, err
+}
+
+
 func MasterNodes(
 	rclient client.Client,
 ) ([]v1.Node, error) {
@@ -167,7 +196,7 @@ func NodeItems(
 	return mnode.Items, err
 }
 
-func Masters(
+func MasterCRDS(
 	rclient client.Client,
 ) ([]api.Master, error) {
 	masters := &api.MasterList{}

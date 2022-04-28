@@ -32,6 +32,7 @@ spec:
     metadata:
       labels:
         k8s-app: kube-proxy-master
+        random.uuid: "{{ .UUID }}"
     spec:
       priorityClassName: system-node-critical
       containers:

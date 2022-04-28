@@ -3,6 +3,7 @@ package alibaba
 import (
 	"fmt"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
 	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
 	"github.com/aoxn/ovm/pkg/iaas/provider"
@@ -43,6 +44,27 @@ func ScalingGroupName(np *v1.NodePool, vpcid string) string {
 
 func ScalingGroupCfgName(np *v1.NodePool) string {
 	return fmt.Sprintf("%s-%s","scaling-configuration", strings.Replace(string(np.UID),"-", "",-1))
+}
+
+func (n *Devel) VSwitchs(ctx *provider.Context) (string,error) {
+	boot := ctx.BootCFG()
+	if boot == nil {
+		return "", fmt.Errorf("create nodegroup: miss cluster spec")
+	}
+	vsw := Vswitchs(ctx.Stack())
+	req := ecs.CreateDescribeVSwitchesRequest()
+	req.RegionId = boot.Bind.Region
+	req.VSwitchId = vsw
+	r, err := n.ECS.DescribeVSwitches(req)
+	if err != nil {
+		return vsw, errors.Wrapf(err, "describe vswitch")
+	}
+	v := r.VSwitches.VSwitch
+	if len(v)!= 1 {
+		return vsw, fmt.Errorf("not exact one vswitch matched: %d by name %s", len(v), vsw)
+	}
+	zone := v[0].ZoneId
+	return fmt.Sprintf("{ \"%s\": [\"%s\"]}", zone, vsw), nil
 }
 
 func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.BindID, error) {

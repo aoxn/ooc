@@ -169,15 +169,15 @@ function postcheck() {
     set +e
     for ((i=1; i<=5; i ++));
     do
-        cnt=$(curl -s http://100.100.100.110/health-check | grep ok | wc -l)
+        cnt=$(curl -s http://100.100.100.110/health-condition | grep ok | wc -l)
         echo "wait for ros notify server to be healthy cnt=$cnt, this is round $i"
-        if curl -s http://100.100.100.110/health-check | grep ok ;
+        if curl -s http://100.100.100.110/health-condition | grep ok ;
         then
             echo "the ros notify server is healthy"; break
         fi
         sleep 2
     done
-    if ! curl -s http://100.100.100.110/health-check | grep ok ;
+    if ! curl -s http://100.100.100.110/health-condition | grep ok ;
     then
         echo "wait for ros notify server to be healthy failed."; exit 2
     fi
