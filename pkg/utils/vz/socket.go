@@ -215,7 +215,7 @@ func newVirtioSocketConnection(ptr unsafe.Pointer) *VirtioSocketConnection {
 		fmt.Printf("set nonblock: %s\n", err.Error())
 	}
 	// 1 for nodelay
-	err = syscall.SetsockoptInt(int(vzVirtioSocketConnection.fileDescriptor),syscall.IPPROTO_TCP, syscall.TCP_NODELAY, 1)
+	err = syscall.SetsockoptInt(int(vzVirtioSocketConnection.fileDescriptor), syscall.IPPROTO_TCP, syscall.TCP_NODELAY, 1)
 	if err != nil {
 		fmt.Printf("set nodelay: %s", err.Error())
 	}

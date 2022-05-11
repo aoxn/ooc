@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"github.com/gorilla/mux"
 	"io"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"net/http"
 
-	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context"
 )
 
 type HandlerFunc func(contex *context.CachedContext, w http.ResponseWriter, r *http.Request)

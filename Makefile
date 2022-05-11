@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Simple makefile to build ovm quickly and reproducibly in a container
+# Simple makefile to build wdrip quickly and reproducibly in a container
 # Only requires docker on the host
 
 OS_TYPE :=$(shell echo `uname`|tr '[A-Z]' '[a-z]')
@@ -22,7 +22,7 @@ REPO_ROOT:=${CURDIR}
 # autodetect host GOOS and GOARCH by default, even if go is not installed
 GOOS?=$(shell hack/util/goos.sh)
 GOARCH?=$(shell hack/util/goarch.sh)
-REGISTRY=registry.cn-hangzhou.aliyuncs.com/aoxn/ovm
+REGISTRY=registry.cn-hangzhou.aliyuncs.com/aoxn/wdrip
 TAG?=$(shell hack/util/tag.sh)
 
 # make install will place binaries here
@@ -30,17 +30,17 @@ TAG?=$(shell hack/util/tag.sh)
 INSTALL_DIR?=$(shell hack/util/goinstalldir.sh)
 
 # the output binary name, overridden when cross compiling
-KIND_BINARY_NAME?=ovm
+KIND_BINARY_NAME?=wdrip
 # use the official module proxy by default
 GOPROXY?=https://mirrors.aliyun.com/goproxy
 # default build image
 GO_VERSION?=1.14.3
 GO_IMAGE?=golang:$(GO_VERSION)
 # docker volume name, used as a go module / build cache
-CACHE_VOLUME?=ovm-build-cache
+CACHE_VOLUME?=wdrip-build-cache
 
 # variables for consistent logic, don't override these
-CONTAINER_REPO_DIR=/src/ovm
+CONTAINER_REPO_DIR=/src/wdrip
 CONTAINER_OUT_DIR=$(CONTAINER_REPO_DIR)/bin
 OUT_DIR=$(REPO_ROOT)/build/bin
 UID:=$(shell id -u)
@@ -72,11 +72,11 @@ clean-output:
 .PHONY: codesign
 codesign:
 	@echo "codesign begin"
-	codesign --entitlements ovm.entitlements -s - ./build/bin/ovm || true
+	codesign --entitlements wdrip.entitlements -s - ./build/bin/wdrip || true
 
-# builds ovm in a container, outputs to $(OUT_DIR)
-ovm: make-cache out-dir
-	@echo + Building ovm binary
+# builds wdrip in a container, outputs to $(OUT_DIR)
+wdrip: make-cache out-dir
+	@echo + Building wdrip binary
 	docker run \
 		--rm \
 		-v $(CACHE_VOLUME):/go \
@@ -95,14 +95,14 @@ ovm: make-cache out-dir
 		--user $(UID):$(GID) \
 		$(GO_IMAGE) \
 		go build -v -o /out/$(KIND_BINARY_NAME).unzip \
-		    -ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	@echo + Built ovm binary to $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
-	rm -f build/bin/ovm
-	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
+		    -ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	@echo + Built wdrip binary to $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
+	rm -f build/bin/wdrip
+	build/tool/upx.$(OS_TYPE) -9 -o build/bin/wdrip $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
 	rm -f $(OUT_DIR)/$(KIND_BINARY_NAME).unzip
 
-# alias for building ovm
-buildovm: ovm
+# alias for building wdrip
+buildwdrip: wdrip
 
 
 image:
@@ -116,106 +116,106 @@ push: bimage
 
 # use: make install INSTALL_DIR=/usr/local/bin
 install: build
-	@echo + Copying ovm binary to INSTALL_DIR
+	@echo + Copying wdrip binary to INSTALL_DIR
 	install $(OUT_DIR)/$(KIND_BINARY_NAME) $(INSTALL_DIR)/$(KIND_BINARY_NAME)
 
 
 #-X gitlab.alibaba-inc.com/cos/ros.Template=$(ROS_TPL)
-ovmmac:
+wdripmac:
 	GOARCH=amd64 \
 	GOOS=darwin \
 	CGO_ENABLED=1 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.unzip \
-	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	@echo + Built ovm binary to build/bin/ovm
-	rm -f build/bin/ovm
-	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm build/bin/ovm.unzip
-	rm -f build/bin/ovm.unzip
+	go build -v -o build/bin/wdrip.unzip \
+	-ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	@echo + Built wdrip binary to build/bin/wdrip
+	rm -f build/bin/wdrip
+	build/tool/upx.$(OS_TYPE) -9 -o build/bin/wdrip build/bin/wdrip.unzip
+	rm -f build/bin/wdrip.unzip
 
 omac:
-	@echo + Built ovm binary to /usr/local/bin/ovm
+	@echo + Built wdrip binary to /usr/local/bin/wdrip
 	GOARCH=amd64 \
 	GOOS=darwin \
 	CGO_ENABLED=1 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.unzip \
-	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	mv build/bin/ovm.unzip /usr/local/bin/ovm
-	codesign --entitlements ovm.entitlements -s - /usr/local/bin/ovm || true
+	go build -v -o build/bin/wdrip.unzip \
+	-ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	mv build/bin/wdrip.unzip /usr/local/bin/wdrip
+	codesign --entitlements wdrip.entitlements -s - /usr/local/bin/wdrip || true
 
 olinux:
-	@echo + Built ovm binary to /usr/local/bin/ovm
+	@echo + Built wdrip binary to /usr/local/bin/wdrip
 	GOARCH=amd64 \
 	GOOS=linux \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.unzip \
-	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	mv build/bin/ovm.unzip /usr/local/bin/ovm.amd64
-	codesign --entitlements ovm.entitlements -s - /usr/local/bin/ovm.amd64 || true
+	go build -v -o build/bin/wdrip.unzip \
+	-ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	mv build/bin/wdrip.unzip /usr/local/bin/wdrip.amd64
+	codesign --entitlements wdrip.entitlements -s - /usr/local/bin/wdrip.amd64 || true
 
-ovmlinux:
+wdriplinux:
 	GOARCH=amd64 \
 	GOOS=linux \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.amd64.unzip \
-	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	@echo + Built ovm binary to build/bin/ovm.amd64
-	rm -f build/bin/ovm.amd64
-	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm.amd64 build/bin/ovm.amd64.unzip
-	rm -f build/bin/ovm.amd64.unzip
+	go build -v -o build/bin/wdrip.amd64.unzip \
+	-ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	@echo + Built wdrip binary to build/bin/wdrip.amd64
+	rm -f build/bin/wdrip.amd64
+	build/tool/upx.$(OS_TYPE) -9 -o build/bin/wdrip.amd64 build/bin/wdrip.amd64.unzip
+	rm -f build/bin/wdrip.amd64.unzip
 
-ovmwin:
+wdripwin:
 	GOARCH=amd64 \
 	GOOS=windows \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.exe \
-       -ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-ovmarm64:
+	go build -v -o build/bin/wdrip.exe \
+       -ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+wdriparm64:
 	GOARCH=arm64 \
 	GOOS=linux \
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
-	go build -v -o build/bin/ovm.arm64.unzip \
-	-ldflags "-X github.com/aoxn/ovm.Version=$(TAG) -s -w" cmd/main.go
-	@echo + Built ovm binary to build/bin/ovm.arm64
-	rm -f build/bin/ovm.arm64
-	build/tool/upx.$(OS_TYPE) -9 -o build/bin/ovm.arm64 build/bin/ovm.arm64.unzip
-	rm -f build/bin/ovm.arm64.unzip
+	go build -v -o build/bin/wdrip.arm64.unzip \
+	-ldflags "-X github.com/aoxn/wdrip.Version=$(TAG) -s -w" cmd/main.go
+	@echo + Built wdrip binary to build/bin/wdrip.arm64
+	rm -f build/bin/wdrip.arm64
+	build/tool/upx.$(OS_TYPE) -9 -o build/bin/wdrip.arm64 build/bin/wdrip.arm64.unzip
+	rm -f build/bin/wdrip.arm64.unzip
 
 log:
-	kubectl --kubeconfig ~/.kube/config.ovm -n kube-system scale deploy ovm --replicas 0
-	kubectl --kubeconfig ~/.kube/config.ovm -n kube-system scale deploy ovm --replicas 1
+	kubectl --kubeconfig ~/.kube/config.wdrip -n kube-system scale deploy wdrip --replicas 0
+	kubectl --kubeconfig ~/.kube/config.wdrip -n kube-system scale deploy wdrip --replicas 1
 	@echo "wait 8 seconds..." ; sleep 8
-	kubectl --kubeconfig ~/.kube/config.ovm -n kube-system logs -l app=ovm -f
+	kubectl --kubeconfig ~/.kube/config.wdrip -n kube-system logs -l app=wdrip -f
 
 # standard cleanup target
 clean: clean-cache clean-output
 
-deploy: ovmlinux image push
+deploy: wdriplinux image push
 
-build: ovmmac
-	build/bin/ovm build --arch amd64 --os centos --ovm-version 0.1.1 --run-version 2.0
-	cp -rf build/bin/ovm /usr/local/bin/ovm
+build: wdripmac
+	build/bin/wdrip build --arch amd64 --os centos --wdrip-version 0.1.1 --run-version 2.0
+	cp -rf build/bin/wdrip /usr/local/bin/wdrip
 
 release-mac:
-	build/bin/ovm build --arch darwin --os macos --ovm-version 0.1.1
+	build/bin/wdrip build --arch darwin --os macos --wdrip-version 0.1.1
 
-build-all: ovmmac
-	build/bin/ovm build \
+build-all: wdripmac
+	build/bin/wdrip build \
 			--arch amd64 \
 			--os centos \
-			--ovm-version 0.1.1 \
+			--wdrip-version 0.1.1 \
 			--run-version 2.0 \
 			--kubernetes-version 1.20.4-aliyun.1 \
 			--kubernetes-cni-version 0.8.6 \
 			--etcd-version v3.4.3 \
 			--runtime-version 19.03.5
-	cp -rf build/bin/ovm /usr/local/bin/ovm
+	cp -rf build/bin/wdrip /usr/local/bin/wdrip
 
 release: build deploy
 
-.PHONY: all make-cache clean-cache out-dir clean-output ovm build install clean
+.PHONY: all make-cache clean-cache out-dir clean-output wdrip build install clean

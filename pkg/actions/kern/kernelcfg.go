@@ -5,7 +5,7 @@ package docker
 import (
 	"fmt"
 	"github.com/go-cmd/cmd"
-	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions"
 	"io/ioutil"
 	"os"
 	"strings"

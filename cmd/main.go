@@ -17,8 +17,8 @@ limitations under the License.
 // This package is a stub main wrapping cmd/kind.Main()
 package main
 
-import "github.com/aoxn/ovm/cmd/ovm"
+import "github.com/aoxn/wdrip/cmd/wdrip"
 
 func main() {
-	ovm.Main()
+	wdrip.Main()
 }

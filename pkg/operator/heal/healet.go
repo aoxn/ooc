@@ -3,10 +3,10 @@ package heal
 import (
 	mctx "context"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	pd "github.com/aoxn/ovm/pkg/iaas/provider"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	app "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -50,7 +50,7 @@ const (
 	StateClean = "Clean"
 	StateDirty = "Healthy"
 
-	OvmLastUpdate = "ovm.last.update.time"
+	WdripLastUpdate = "wdrip.last.update.time"
 )
 
 var _ manager.Runnable = &Healet{}
@@ -285,6 +285,18 @@ func (m *Healet) FixNodePool(pool *api.NodePool) error {
 	// fix labels
 	detail, err := m.tripGetter.GetNodePoolECS(pool)
 	if err != nil {
+		//if strings.Contains(err.Error(), "InvalidVPC") {
+		//	// Fix InvalidVPC error
+		//	diff := func(copy runtime.Object) (client.Object, error) {
+		//		np := copy.(*api.NodePool)
+		//		np.Spec.Infra.Bind = nil
+		//		pool.Spec.Infra.Bind = nil
+		//		return np, nil
+		//	}
+		//	klog.Warningf("clear nodepool bind infra "+
+		//		"for invalid vpc: [%s], [%s]", pool.Name, pool.Spec.Infra.Bind)
+		//	return h.Patch(m.client, pool, diff, h.PatchSpec)
+		//}
 		return errors.Wrap(err, "get nodepool ecs")
 	}
 	nodes, err := h.NodeItems(m.client)
@@ -313,10 +325,10 @@ func (m *Healet) FixNodePool(pool *api.NodePool) error {
 			if node.Labels == nil {
 				node.Labels = map[string]string{}
 			}
-			node.Labels["np.ovm.io/id"] = pool.Name
+			node.Labels["np.wdrip.io/id"] = pool.Name
 			return node, nil
 		}
-		klog.Warningf("patch nodepool label [np.ovm.io/id=%s] for %s", pool.Name, n.Name)
+		klog.Warningf("patch nodepool label [np.wdrip.io/id=%s] for %s", pool.Name, n.Name)
 		err := h.Patch(m.client, &n, diff, h.PatchSpec)
 		if err != nil {
 			return errors.Wrapf(err, "patch nodepool labels")
@@ -325,18 +337,6 @@ func (m *Healet) FixNodePool(pool *api.NodePool) error {
 
 	trip, err := NewTripleWorker(m.tripGetter, pool)
 	if err != nil {
-		if strings.Contains(err.Error(), "InvalidVPC") {
-			// Fix InvalidVPC error
-			diff := func(copy runtime.Object) (client.Object, error) {
-				np := copy.(*api.NodePool)
-				np.Spec.Infra.Bind = nil
-				pool.Spec.Infra.Bind = nil
-				return np, nil
-			}
-			klog.Warningf("clear nodepool bind infra "+
-				"for invalid vpc: [%s], [%s]", pool.Name, pool.Spec.Infra.Bind)
-			return h.Patch(m.client, pool, diff, h.PatchSpec)
-		}
 		return errors.Wrap(err, "get Triple")
 	}
 	klog.Infof("[step 1] trying to ensure nodepool %s, %s", pool.Name, trip)
@@ -563,24 +563,24 @@ func (m *Healet) FixUpMeta(trip *Triple) error {
 	return m.FixMasterCRD(missed)
 }
 
-func (m *Healet) FixOVM() error {
-	//this function is for ovm monitor.
+func (m *Healet) FixWDRIP() error {
+	//this function is for wdrip monitor.
 	//There are failing cases that master node object has gone
-	//unexpectedly but controlplane still ready with ovm failed
+	//unexpectedly but controlplane still ready with wdrip failed
 	// to deploy on masters, because no available master nodes.
 	// The monitor programe is indicated for this case.
 
-	ovm := &app.Deployment{}
-	jkey := client.ObjectKey{Namespace: "kube-system", Name: "ovm"}
-	err := m.client.Get(mctx.TODO(), jkey, ovm)
+	wdrip := &app.Deployment{}
+	jkey := client.ObjectKey{Namespace: "kube-system", Name: "wdrip"}
+	err := m.client.Get(mctx.TODO(), jkey, wdrip)
 	if err != nil {
-		klog.Warningf("failed to query ovm status: %s", err.Error())
+		klog.Warningf("failed to query wdrip status: %s", err.Error())
 		return nil
 	}
 
-	if ovm.Status.ReadyReplicas != 0 {
-		// ovm replicas is good
-		klog.Infof("[FixOVM]desired ovm count[%d] is great than 0, skip", ovm.Status.ReadyReplicas)
+	if wdrip.Status.ReadyReplicas != 0 {
+		// wdrip replicas is good
+		klog.Infof("[FixWDRIP]desired wdrip count[%d] is great than 0, skip", wdrip.Status.ReadyReplicas)
 		return nil
 	}
 	// that means no master to schedule, trying to fix
@@ -591,17 +591,17 @@ func (m *Healet) FixOVM() error {
 	}
 	err = m.FixUpMeta(trip)
 	if err != nil {
-		return errors.Wrapf(err, "fix ovm and meta")
+		return errors.Wrapf(err, "fix wdrip and meta")
 	}
 	fixup := func(info *NodeInfo) error {
-		klog.Infof("trying to fix ovm: %s", info)
+		klog.Infof("trying to fix wdrip: %s", info)
 		nop, err := m.operation.NewOperation(trip)
 		if err != nil {
-			return errors.Wrapf(err, "[FixOVM] new operations")
+			return errors.Wrapf(err, "[FixWDRIP] new operations")
 		}
 		err = nop.RunCommand(info, "systemctl restart kubelet")
 		if err != nil {
-			klog.Warningf("[FixOVM] restart kubelet: %s", err.Error())
+			klog.Warningf("[FixWDRIP] restart kubelet: %s", err.Error())
 		}
 		lbl := map[string]string{
 			"node-role.kubernetes.io/master":        "",

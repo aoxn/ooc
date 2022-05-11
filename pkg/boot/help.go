@@ -2,8 +2,8 @@ package boot
 
 import (
 	"fmt"
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
 	"github.com/docker/distribution/uuid"
 	"k8s.io/cluster-bootstrap/token/util"
 )

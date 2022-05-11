@@ -2,8 +2,8 @@ package file
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	tar "github.com/verybluebot/tarinator-go"
 	"io/ioutil"
 	"os"

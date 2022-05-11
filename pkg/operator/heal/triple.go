@@ -2,10 +2,10 @@ package heal
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	pd "github.com/aoxn/ovm/pkg/iaas/provider"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"

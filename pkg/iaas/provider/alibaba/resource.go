@@ -3,8 +3,8 @@ package alibaba
 import (
 	"encoding/json"
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
 	"github.com/denverdino/aliyungo/common"
 	rosc "github.com/denverdino/aliyungo/ros/standard"
 )
@@ -48,7 +48,7 @@ func (n *Devel) GetStackOutPuts(ctx *provider.Context, id *api.ClusterId) (map[s
 				id.Spec.ResourceId = resp.Stacks[0].StackId
 			}
 			// continue find stack output by stackid
-		}else {
+		} else {
 			return nil, fmt.Errorf("id or name must be provided.")
 		}
 	}

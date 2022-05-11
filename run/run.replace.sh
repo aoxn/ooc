@@ -25,7 +25,7 @@ function validatedefault() {
     detecos
     if [[ "$PKG_BUCKET" == "" ]];
     then
-        PKG_BUCKET="host-ovm"
+        PKG_BUCKET="host-wdrip"
         echo "using oss bucket [oss://$PKG_BUCKET-$REGION] as package file server"
     fi
     if [[ "$REGION" == "" ]];
@@ -42,9 +42,9 @@ function validatedefault() {
     then
         NAMESPACE=default
     fi
-    if [[ "$OVM_VERSION" == "" ]];
+    if [[ "$WDRIP_VERSION" == "" ]];
     then
-        export OVM_VERSION=0.1.1
+        export WDRIP_VERSION=0.1.1
     fi
 
     if [[ "$CLOUD_TYPE" == "" ]];
@@ -65,27 +65,27 @@ function validatedefault() {
 
     echo "using beta version: [${NAMESPACE}]"
     wget --tries 10 --no-check-certificate -q \
-        -O /tmp/ovm.${ARCH}\
-        "${PKG_FILE_SERVER}"/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OS}/${ARCH}/ovm-${OVM_VERSION}.${ARCH}
-    chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm
+        -O /tmp/wdrip.${ARCH}\
+        "${PKG_FILE_SERVER}"/wdrip/${NAMESPACE}/${CLOUD_TYPE}/wdrip/${OS}/${ARCH}/wdrip-${WDRIP_VERSION}.${ARCH}
+    chmod +x /tmp/wdrip.${ARCH} ; mv /tmp/wdrip.${ARCH} /usr/local/bin/wdrip
 }
 
 function bootstrap() {
     echo run bootstrap init
     # run bootsrap init
-    nohup ovm bootstrap --token "${TOKEN}" --bootcfg /etc/ovm/ovm.cfg &
+    nohup wdrip bootstrap --token "${TOKEN}" --bootcfg /etc/wdrip/wdrip.cfg &
 }
 
 function init() {
     echo run master init
     # run master init
-    ovm init --role "${ROLE}" --token "${TOKEN}" --config /etc/ovm/ovm.cfg
+    wdrip init --role "${ROLE}" --token "${TOKEN}" --config /etc/wdrip/wdrip.cfg
 }
 
 function join() {
     echo run worker init
     # run master init
-    ovm init --role Worker --token "${TOKEN}" --config /etc/ovm/ovm.cfg
+    wdrip init --role Worker --token "${TOKEN}" --config /etc/wdrip/wdrip.cfg
 }
 
 function postcheck() {

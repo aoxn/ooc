@@ -16,7 +16,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/aoxn/ovm/pkg/node/meta"
+	"github.com/aoxn/wdrip/pkg/node/meta"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 

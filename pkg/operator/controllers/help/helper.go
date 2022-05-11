@@ -3,9 +3,9 @@ package help
 import (
 	"context"
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/iaas/provider/alibaba"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -80,6 +80,29 @@ func LoadStack(
 	return prvd.GetInfraStack(ctx, id)
 }
 
+func LoadStackFromSpec(
+	prvd provider.Interface,
+	ctx *provider.Context,
+	spec *api.ClusterSpec,
+) (map[string]provider.Value, error) {
+	if spec.Bind.ResourceId == "" {
+		resource, err := prvd.GetStackOutPuts(
+			provider.NewContextWithCluster(spec),
+			&api.ClusterId{ObjectMeta: metav1.ObjectMeta{Name: spec.ClusterID}},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("provider: list resource fail, %s", err.Error())
+		}
+		spec.Bind.ResourceId = resource[alibaba.StackID].Val.(string)
+	}
+	id := &api.ClusterId{
+		Spec: api.ClusterIdSpec{
+			ResourceId: spec.Bind.ResourceId,
+		},
+	}
+	return prvd.GetInfraStack(ctx, id)
+}
+
 func Cluster(
 	rclient client.Client,
 	name string,
@@ -126,7 +149,7 @@ func HasNodePoolID(node v1.Node, npid string) bool {
 	if node.Labels == nil {
 		return false
 	}
-	id,ok := node.Labels["np.ovm.io/id"]
+	id, ok := node.Labels["np.wdrip.io/id"]
 	if !ok {
 		return false
 	}
@@ -137,7 +160,7 @@ func NodePoolItems(
 	rclient client.Client, np *api.NodePool,
 ) ([]v1.Node, error) {
 	require, _ := labels.NewRequirement(
-		"np.ovm.io/id", "=", []string{np.Spec.NodePoolID},
+		"np.wdrip.io/id", "=", []string{np.Spec.NodePoolID},
 	)
 	mnode := &v1.NodeList{}
 	err := rclient.List(
@@ -149,7 +172,6 @@ func NodePoolItems(
 	)
 	return mnode.Items, err
 }
-
 
 func MasterNodes(
 	rclient client.Client,
@@ -216,7 +238,6 @@ func Master(
 	)
 	return master, err
 }
-
 
 func Node(
 	rclient client.Client,

@@ -18,9 +18,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/aoxn/ovm/pkg/generated/clientset/versioned"
-	ovmv1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
-	fakeovmv1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1/fake"
+	clientset "github.com/aoxn/wdrip/pkg/generated/clientset/versioned"
+	wdripv1 "github.com/aoxn/wdrip/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
+	fakewdripv1 "github.com/aoxn/wdrip/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -75,10 +75,10 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var (
 	_ clientset.Interface = &Clientset{}
-	_ testing.FakeClient  = &Clientset{}
+	//_ testing.FakeClient  = &Clientset{}
 )
 
-// OvmV1 retrieves the OvmV1Client
-func (c *Clientset) OvmV1() ovmv1.OvmV1Interface {
-	return &fakeovmv1.FakeOvmV1{Fake: &c.Fake}
+// WdripV1 retrieves the WdripV1Client
+func (c *Clientset) WdripV1() wdripv1.WdripV1Interface {
+	return &fakewdripv1.FakeWdripV1{Fake: &c.Fake}
 }

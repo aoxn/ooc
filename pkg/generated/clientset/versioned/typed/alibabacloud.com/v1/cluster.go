@@ -21,8 +21,8 @@ import (
 	"context"
 	"time"
 
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	scheme "github.com/aoxn/ovm/pkg/generated/clientset/versioned/scheme"
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	scheme "github.com/aoxn/wdrip/pkg/generated/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -56,7 +56,7 @@ type clusters struct {
 }
 
 // newClusters returns a Clusters
-func newClusters(c *OvmV1Client, namespace string) *clusters {
+func newClusters(c *WdripV1Client, namespace string) *clusters {
 	return &clusters{
 		client: c.RESTClient(),
 		ns:     namespace,

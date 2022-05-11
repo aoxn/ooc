@@ -1,10 +1,10 @@
 package check
 
 import (
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
-	"github.com/aoxn/ovm/pkg/operator/monit"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/operator/monit"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog/v2"
@@ -12,7 +12,7 @@ import (
 )
 
 func NewCheckEtcd(client client.Client, qps float32) (*CheckEtcd, error) {
-	spec, err := h.Cluster(client,"kubernetes-cluster")
+	spec, err := h.Cluster(client, "kubernetes-cluster")
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (m *CheckEtcd) Check() (bool, error) {
 	spec, err := h.Cluster(m.client, "kubernetes-cluster")
 	if err != nil {
 		klog.Warningf("find my cluster failed: %s", err.Error())
-	}else {
+	} else {
 		// in case of apiserver down, use cached spec & apiserver
 		m.Cluster = spec
 		master, err := h.MasterCRDS(m.client)

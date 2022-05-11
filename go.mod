@@ -1,4 +1,4 @@
-module github.com/aoxn/ovm
+module github.com/aoxn/wdrip
 
 go 1.16
 
@@ -56,5 +56,5 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.21.3
 	k8s.io/kubectl => k8s.io/kubectl v0.21.3
 	sigs.k8s.io/kustomize/api => sigs.k8s.io/kustomize/api v0.8.11
-//sigs.k8s.io/kustomize/kustomize => sigs.k8s.io/kustomize/kustomize v4
+	//sigs.k8s.io/kustomize/kustomize => sigs.k8s.io/kustomize/kustomize v4
 )

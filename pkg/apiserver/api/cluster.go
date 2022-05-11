@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
 	"net/http"
 )
 

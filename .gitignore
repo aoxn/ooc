@@ -1,6 +1,6 @@
 # build and test outputs
-build/bin/ovm
-build/bin/ovm.amd64
+build/bin/wdrip
+build/bin/wdrip.amd64
 _output/
 _artifacts/
 ossutil_output/

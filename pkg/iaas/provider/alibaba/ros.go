@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/utils"
-	logb "github.com/aoxn/ovm/pkg/utils/log"
-	"github.com/aoxn/ovm/pkg/utils/unstructed"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/utils"
+	logb "github.com/aoxn/wdrip/pkg/utils/log"
+	"github.com/aoxn/wdrip/pkg/utils/unstructed"
 	"github.com/denverdino/aliyungo/common"
 	"github.com/denverdino/aliyungo/oss"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,7 +66,7 @@ type Devel struct {
 }
 
 func (n *Devel) Initialize(ctx *provider.Context) error {
-	options := ctx.OvmOptions()
+	options := ctx.WdripOptions()
 	n.Cfg = &AlibabaDev{}
 	err := options.Default.CurrentPrvdCFG().Decode(n.Cfg)
 	if err != nil {
@@ -135,8 +135,8 @@ func (n *Devel) Recover(
 	if err != nil {
 		return id, errors.Wrapf(err, "replace system disk: %s", eid)
 	}
-	klog.Infof("Waiting for 90 seconds for node ready")
-	time.Sleep(90 * time.Second)
+	klog.Infof("Waiting for 120 seconds for node ready")
+	time.Sleep(120 * time.Second)
 	return id, nil
 }
 
@@ -245,7 +245,7 @@ func (n *Devel) Create(ctx *provider.Context) (*v1.ClusterId, error) {
 		Spec: v1.ClusterIdSpec{
 			Cluster:    *bootcfg,
 			ResourceId: response.StackId,
-			Options:    ctx.OvmOptions(),
+			Options:    ctx.WdripOptions(),
 			CreatedAt:  time.Now().Format("2006-01-02T15:04:05"),
 			UpdatedAt:  time.Now().Format("2006-01-02T15:04:05"),
 		},

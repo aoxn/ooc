@@ -20,7 +20,7 @@ package fake
 import (
 	"context"
 
-	alibabacloudcomv1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	alibabacloudcomv1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +31,7 @@ import (
 
 // FakeClusters implements ClusterInterface
 type FakeClusters struct {
-	Fake *FakeOvmV1
+	Fake *FakeWdripV1
 	ns   string
 }
 
@@ -116,7 +116,7 @@ func (c *FakeClusters) UpdateStatus(ctx context.Context, cluster *alibabacloudco
 // Delete takes name of the cluster and deletes it. Returns an error if one occurs.
 func (c *FakeClusters) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(clustersResource, c.ns, name), &alibabacloudcomv1.Cluster{})
+		Invokes(testing.NewDeleteActionWithOptions(clustersResource, c.ns, name, opts), &alibabacloudcomv1.Cluster{})
 
 	return err
 }

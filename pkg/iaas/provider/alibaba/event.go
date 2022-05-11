@@ -1,7 +1,7 @@
 package alibaba
 
 import (
-	"github.com/aoxn/ovm/pkg/utils/log"
+	"github.com/aoxn/wdrip/pkg/utils/log"
 	rosc "github.com/denverdino/aliyungo/ros/standard"
 	"time"
 )

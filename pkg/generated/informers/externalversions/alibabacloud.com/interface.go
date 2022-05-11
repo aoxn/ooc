@@ -18,8 +18,8 @@ limitations under the License.
 package alibabacloud
 
 import (
-	v1 "github.com/aoxn/ovm/pkg/generated/informers/externalversions/alibabacloud.com/v1"
-	internalinterfaces "github.com/aoxn/ovm/pkg/generated/informers/externalversions/internalinterfaces"
+	v1 "github.com/aoxn/wdrip/pkg/generated/informers/externalversions/alibabacloud.com/v1"
+	internalinterfaces "github.com/aoxn/wdrip/pkg/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

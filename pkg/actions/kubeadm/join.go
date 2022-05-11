@@ -22,8 +22,8 @@ package kubeadm
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"os"
@@ -43,7 +43,7 @@ func (a *ActionJoin) Execute(ctx *actions.ActionContext) error {
 		ctx.NodeObject(),
 		WithNodeName,
 	)
-	_ = os.MkdirAll("/etc/kubernetes/manifests",0755)
+	_ = os.MkdirAll("/etc/kubernetes/manifests", 0755)
 	status := <-cmd.NewCmd(
 		"kubeadm", "join",
 		// increase verbosity for debugging

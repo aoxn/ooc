@@ -3,9 +3,9 @@ package heal
 import (
 	"context"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	pd "github.com/aoxn/ovm/pkg/iaas/provider"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -83,7 +83,7 @@ func (m *NodeOperation) Restart(info *NodeInfo) error {
 	}
 	// todo: fix nodename
 
-	err = h.WaitHeartbeat(m.manager.client, info.GetNodeName(), 3 * time.Minute)
+	err = h.WaitHeartbeat(m.manager.client, info.GetNodeName(), 3*time.Minute)
 	if err != nil {
 		return errors.Wrapf(err, "wait node "+
 			"ready failed while restarting ecs: %s", info.Instance.Id)
@@ -105,20 +105,20 @@ func (m *NodeOperation) AdmitECS(info *NodeInfo, duration time.Duration) bool {
 		return false
 	}
 	// figure out whether we can reinitialize node.
-	// rule: `ovm.last.update.time` exists and has been at
+	// rule: `wdrip.last.update.time` exists and has been at
 	// least N minutes after last re-initialize.
-	// tag ecs with `ovm.last.update.time={now}` when not found.
+	// tag ecs with `wdrip.last.update.time={now}` when not found.
 	for _, t := range eid.Tags {
-		if t.Key == OvmLastUpdate {
-			klog.Infof("ovm last re-initialize node at [%s], duration=%s,now=[%s],"+
+		if t.Key == WdripLastUpdate {
+			klog.Infof("wdrip last re-initialize node at [%s], duration=%s,now=[%s],"+
 				" Admitted=%t", t.Val, duration/time.Second, h.Now(), h.After(t.Val.(string), duration))
 			return h.After(t.Val.(string), duration)
 		}
 	}
-	klog.Infof("tag %s not found, mark date and return", OvmLastUpdate)
+	klog.Infof("tag %s not found, mark date and return", WdripLastUpdate)
 	err := m.manager.prvd.TagECS(
 		pd.NewEmptyContext(), eid.Id,
-		pd.Value{Key: OvmLastUpdate, Val: h.Now()},
+		pd.Value{Key: WdripLastUpdate, Val: h.Now()},
 	)
 	if err != nil {
 		klog.Warningf("canAdmin: mark operation time,%s, %s", eid.Id, err.Error())
@@ -215,14 +215,14 @@ func (m *NodeOperation) Reset(info *NodeInfo) error {
 		time.Sleep(15 * time.Second)
 		return fmt.Errorf("replace system disk failed: %s", err.Error())
 	}
-	err = m.manager.prvd.TagECS(spectx, eid.Id, pd.Value{Key: OvmLastUpdate, Val: h.Now()})
+	err = m.manager.prvd.TagECS(spectx, eid.Id, pd.Value{Key: WdripLastUpdate, Val: h.Now()})
 	if err != nil {
 		klog.Warningf("[NodeOperation] replace"+
 			"succeed, but tag update time failed: %s", err.Error())
 	}
 	name := fmt.Sprintf("%s.%s", eid.Ip, eid.Id)
 	klog.Infof("[NodeOperation] wait for node becoming ready, %s", name)
-	err = h.WaitHeartbeat(m.manager.client, name, 3 * time.Minute)
+	err = h.WaitHeartbeat(m.manager.client, name, 3*time.Minute)
 	if err != nil {
 		return fmt.Errorf("repair failed, continue on next node, %s", err.Error())
 	}
@@ -302,14 +302,14 @@ func (m *NodeOperation) Cordon(info *NodeInfo, cordon bool) error {
 func (m *NodeOperation) RunCommand(info *NodeInfo, cmd string) error {
 	eid := info.Instance
 	if eid == nil {
-		return fmt.Errorf("empty instance information: %s",info)
+		return fmt.Errorf("empty instance information: %s", info)
 	}
 	ctx := pd.NewContextWithCluster(&m.trip.cluster.Spec)
-	err := m.manager.prvd.RunCommand(ctx, eid.Id,cmd)
+	_, err := m.manager.prvd.RunCommand(ctx, eid.Id, cmd)
 	if err != nil {
 		return errors.Wrapf(err, "run command[%s]", cmd)
 	}
-	return h.WaitHeartbeat(m.manager.client, info.GetNodeName(), 30 * time.Second)
+	return h.WaitHeartbeat(m.manager.client, info.GetNodeName(), 30*time.Second)
 }
 
 func (m *NodeOperation) LabelNode(info *NodeInfo, lbl map[string]string) error {

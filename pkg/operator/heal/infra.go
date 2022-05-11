@@ -2,10 +2,10 @@ package heal
 
 import (
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	pd "github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/iaas/provider/alibaba"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -24,7 +24,7 @@ type InfraManager struct {
 func NewInfraManager(
 	cluster *api.Cluster,
 	prvd pd.Interface,
-) (Infra,error){
+) (Infra, error) {
 	var err error
 	infra := &InfraManager{spec: cluster, Infra: prvd}
 	if infra.spec.Spec.Bind.ResourceId == "" {
@@ -33,7 +33,7 @@ func NewInfraManager(
 			&api.ClusterId{ObjectMeta: metav1.ObjectMeta{Name: infra.spec.Spec.ClusterID}},
 		)
 		if err != nil {
-			return infra,errors.Wrap(err, "provider: list resource")
+			return infra, errors.Wrap(err, "provider: list resource")
 		}
 		infra.spec.Spec.Bind.ResourceId = resource[alibaba.StackID].Val.(string)
 	}
@@ -64,8 +64,7 @@ func (i *InfraManager) NodePoolECS(nps api.NodePool) (map[string]pd.Instance, er
 	)
 	if err != nil {
 
-		return detail.Instances,errors.Wrapf(err, "group %s detail", bind.ScalingGroupId)
+		return detail.Instances, errors.Wrapf(err, "group %s detail", bind.ScalingGroupId)
 	}
 	return detail.Instances, nil
 }
-

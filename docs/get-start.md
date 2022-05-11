@@ -1,39 +1,39 @@
 kubernetes已经成为云原生时代的分布式操作系统，其复杂性也在不断的增加，系统的稳定性，可扩展性，多集群管理，异构环境，外设管理等等变的更加复杂
-ovm
+wdrip
 
-[-] ovm遵循结构化原则，最小核心原则，模块化设计，因此具有非常高的灵活性。
+[-] wdrip遵循结构化原则，最小核心原则，模块化设计，因此具有非常高的灵活性。
 
-[-] ovm遵循面向终态的设计原则，配置即意图，不做实时性保证。
+[-] wdrip遵循面向终态的设计原则，配置即意图，不做实时性保证。
 
-[-] ovm实现了基础设施复原力，具有强大的自我修复能力，免运维能力。
+[-] wdrip实现了基础设施复原力，具有强大的自我修复能力，免运维能力。
 
-[-] 平台的标准化才能促进运维的自动化。 ovm致力于标准化的抽象。
+[-] 平台的标准化才能促进运维的自动化。 wdrip致力于标准化的抽象。
 
-[-] 兼容是商业的产物，是技术发展的拦路索，创新需要剔除技术兼容的包袱。ovm试图探索系统自治的闭环，只聊未来应该是什么样的，不聊过去是什么样的。
+[-] 兼容是商业的产物，是技术发展的拦路索，创新需要剔除技术兼容的包袱。wdrip试图探索系统自治的闭环，只聊未来应该是什么样的，不聊过去是什么样的。
 
 [-] 【规划】丰富的场景支持。异构场景、自治能力、动态扩展性、多集群、多云、混合云。
 
 注意：
 
-[x] ovm是一个概念及原型验证的实验性项目。在GA之前不提供生产稳定性保障，仅仅作为学术交流用途。
+[x] wdrip是一个概念及原型验证的实验性项目。在GA之前不提供生产稳定性保障，仅仅作为学术交流用途。
 
-[x] ovm 仍然在设计开发中，并且在快速迭代与试错阶段，因此不会保证API的稳定性，API会快速迭代。
+[x] wdrip 仍然在设计开发中，并且在快速迭代与试错阶段，因此不会保证API的稳定性，API会快速迭代。
 
-[x] ovm 快速拉起一个测试可用的集群，并且具有强大的故障自我恢复能力，您可以用于日常的开发迭代的快速原型验证。
+[x] wdrip 快速拉起一个测试可用的集群，并且具有强大的故障自我恢复能力，您可以用于日常的开发迭代的快速原型验证。
 
-[x] 楼主个人账号Hold k8s distro资源，费用有限，仅在阿里云杭州Region支持ovm集群管理。如果您对本项目有兴趣，或者想赞助开服其他Region，请加入文章末尾的微信群。
+[x] 楼主个人账号Hold k8s distro资源，费用有限，仅在阿里云杭州Region支持wdrip集群管理。如果您对本项目有兴趣，或者想赞助开服其他Region，请加入文章末尾的微信群。
 
 
 ## 准备工作
-下载最新版本ovm。 当前版本0.1.1
+下载最新版本wdrip。 当前版本0.1.1
 ```bash
-(base) ➜ curl -sSL --retry 3 https://host-ovm-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/ovm/install.sh |bash
-(base) ➜ ls -lht /usr/local/bin/ovm
+(base) ➜ curl -sSL --retry 3 https://host-wdrip-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/wdrip/install.sh |bash
+(base) ➜ ls -lht /usr/local/bin/wdrip
 
-# use ovm -h to see ovm help command
-(base) ➜ ovm -h 
+# use wdrip -h to see wdrip help command
+(base) ➜ wdrip -h 
 
-ovm: kubernetes cluster lifecycle management.
+wdrip: kubernetes cluster lifecycle management.
   ______   ____    ____ .___  ___.
  /  __  \  \   \  /   / |   \/   |
 |  |  |  |  \   \/   /  |  \  /  |
@@ -42,25 +42,25 @@ ovm: kubernetes cluster lifecycle management.
  \______/      \__/     |__|  |__|   
 
 
-ovm creates and manages local Kubernetes clusters
+wdrip creates and manages local Kubernetes clusters
 
 Usage:
-  ovm [command]
+  wdrip [command]
 
 Available Commands:
   bootstrap   Bootstrap a Kubernetes cluster
   build       Kubernetes cluster build package
   ......
 
-Use "ovm [command] --help" for more information about a command.
+Use "wdrip [command] --help" for more information about a command.
 ```
 
-配置ovm
+配置wdrip
 
-ovm 需要您的账号信息来帮助您管理您的云上k8s资源。将`replace-with-your-own-accessKeyId`及`replace-with-your-own-accessKeySecret`替换成您自己的主账号AK信息。
-ovm 会额外为您创建OSS bucket，用来备份集群，用来紧急修复。bucket名称见下面的ovm-index
+wdrip 需要您的账号信息来帮助您管理您的云上k8s资源。将`replace-with-your-own-accessKeyId`及`replace-with-your-own-accessKeySecret`替换成您自己的主账号AK信息。
+wdrip 会额外为您创建OSS bucket，用来备份集群，用来紧急修复。bucket名称见下面的wdrip-index
 ```bash
-(base) ➜ vi ~/.ovm/config
+(base) ➜ vi ~/.wdrip/config
 
 apiVersion: alibabacloud.com/v1
 contexts:
@@ -76,14 +76,14 @@ providers:
     value:
       accessKeyId: {replace-with-your-own-accessKeyId}
       accessKeySecret: {replace-with-your-own-accessKeySecret}
-      bucketName: ovm-index
+      bucketName: wdrip-index
       region: cn-hangzhou
 ```
 
 
 ## 创建集群
-ovm遵循结构化原则，最小核心原则，模块化设计，因此具有非常高的灵活性。
-ovm会首先在云上初始化一个单Master节点的k8s集群（最小可用原则），这个阶段的速度最快，并且具有最小的故障面，具有最高的系统稳定性。
+wdrip遵循结构化原则，最小核心原则，模块化设计，因此具有非常高的灵活性。
+wdrip会首先在云上初始化一个单Master节点的k8s集群（最小可用原则），这个阶段的速度最快，并且具有最小的故障面，具有最高的系统稳定性。
 以下配置为您创建一个最小k8s集群，仅有一个master节点。预计3分钟内完成。
 
 
@@ -93,7 +93,7 @@ ovm会首先在云上初始化一个单Master节点的k8s集群（最小可用�
               IMAGE_ID=centos_7_9_x64_20G_alibase_20210623.vhd \
               DISK_TYPE=cloud_essd \
               INSTANCE_TYPE=ecs.c6.xlarge \
-              TOKEN=$(/usr/local/bin/ovm token new)
+              TOKEN=$(/usr/local/bin/wdrip token new)
               
 (base) ➜ cat > config.yaml << EOF
 clusterid: "${CLUSTER_NAME}"
@@ -129,9 +129,9 @@ network:
   netMask: 25
 EOF
 
-(base) ➜ ovm create --config config.yaml 
+(base) ➜ wdrip create --config config.yaml 
 
-ovm: kubernetes cluster lifecycle management.
+wdrip: kubernetes cluster lifecycle management.
   ______   ____    ____ .___  ___.
  /  __  \  \   \  /   / |   \/   |
 |  |  |  |  \   \/   /  |  \  /  |
@@ -140,27 +140,27 @@ ovm: kubernetes cluster lifecycle management.
  \______/      \__/     |__|  |__|   
 
 I1002 15:31:37.593094   96000 provider.go:268] use HOME dir: [/Users/aoxn]
-I1002 15:31:37.593265   96000 provider.go:283] trying to load context config from: /Users/aoxn/.ovm/config
+I1002 15:31:37.593265   96000 provider.go:283] trying to load context config from: /Users/aoxn/.wdrip/config
 I1002 15:31:37.595669   96000 provider.go:52] use command line config as bootconfig: [config.yaml] with provider[alibaba]
-I1002 15:31:37.726288   96000 oss.go:32] oss get object from [oss://ovm-index/ovm/clusters/kubernetes-id-001.json]
+I1002 15:31:37.726288   96000 oss.go:32] oss get object from [oss://wdrip-index/wdrip/clusters/kubernetes-id-001.json]
 ....
 
-I1002 15:31:41.989201   96000 iaas.go:96] watch cluster create progress with command:  [ ovm watch --name kubernetes-id-001 ] 
+I1002 15:31:41.989201   96000 iaas.go:96] watch cluster create progress with command:  [ wdrip watch --name kubernetes-id-001 ] 
 ```
 
 ### 观测集群的创建过程
 创建的集群是一个异步的过程，因此我们提供了一个watch命令，用来观测创建的进度。执行watch命令前请将terminal窗口最大化，保证最佳输出效果。
 ```bash
-(base) ➜  aoxn ovm watch --name kubernetes-id-001 
+(base) ➜  aoxn wdrip watch --name kubernetes-id-001 
 I1002 15:42:05.600911   96142 provider.go:268] use HOME dir: [/Users/aoxn]
-I1002 15:42:05.601063   96142 provider.go:283] trying to load context config from: /Users/aoxn/.ovm/config
+I1002 15:42:05.601063   96142 provider.go:283] trying to load context config from: /Users/aoxn/.wdrip/config
 ✓ 【ALIYUN::ROS::Stack                  】(kubernetes-id-001         ) [CREATE_COMPLETE,23, 23] 2021-10-02T15:31:42 2021-10-02T15:35:52
 ✓ 【ALIYUN::ROS::WaitCondition          】(k8s_master_waiter         ) [CREATE_COMPLETE,23, 23] 2021-10-02T15:31:52 2021-10-02T15:35:51
 
 .....
 
 ✓ 【ALIYUN::RAM::Role                   】(KubernetesWorkerRole      ) [CREATE_COMPLETE,23, 23] 2021-10-02T15:31:42 2021-10-02T15:31:52
-✓ 【OVM::MESSAGE::OUTPUT                】(extra_mesage_id           ) [CREATE_COMPLETE,23, 23]  TimeElapse: 251s
+✓ 【WDRIP::MESSAGE::OUTPUT                】(extra_mesage_id           ) [CREATE_COMPLETE,23, 23]  TimeElapse: 251s
 I1002 15:42:14.446231   96142 ros.go:477] ===========================================================
 I1002 15:42:14.446254   96142 ros.go:478] StackName: kubernetes-id-001
 I1002 15:42:14.446259   96142 ros.go:479]   StackId: 2d302c6c-24b3-4535-8875-8c7dd9a48bd7
@@ -168,32 +168,32 @@ I1002 15:42:14.446259   96142 ros.go:479]   StackId: 2d302c6c-24b3-4535-8875-8c7
 ```
 
 ### 查看集群列表
-ovm提供了命令用来查看本账号的provider所创建的集群列表
+wdrip提供了命令用来查看本账号的provider所创建的集群列表
 ```bash
-(base) ➜ ovm get
+(base) ➜ wdrip get
 I1002 16:16:59.615092   97592 provider.go:268] use HOME dir: [/Users/aoxn]
-I1002 16:16:59.615225   97592 provider.go:283] trying to load context config from: /Users/aoxn/.ovm/config
-I1002 16:16:59.670775   97592 index.go:76] get cluster: [ovm/clusters/kubernetes-id-001.json]
-I1002 16:16:59.670802   97592 oss.go:32] oss get object from [oss://ovm-index/ovm/clusters/kubernetes-id-001.json]
-I1002 16:16:59.735396   97592 index.go:76] get cluster: [ovm/clusters/kubernetes-ovm-77.json]
-I1002 16:16:59.735420   97592 oss.go:32] oss get object from [oss://ovm-index/ovm/clusters/kubernetes-ovm-77.json]
+I1002 16:16:59.615225   97592 provider.go:283] trying to load context config from: /Users/aoxn/.wdrip/config
+I1002 16:16:59.670775   97592 index.go:76] get cluster: [wdrip/clusters/kubernetes-id-001.json]
+I1002 16:16:59.670802   97592 oss.go:32] oss get object from [oss://wdrip-index/wdrip/clusters/kubernetes-id-001.json]
+I1002 16:16:59.735396   97592 index.go:76] get cluster: [wdrip/clusters/kubernetes-wdrip-77.json]
+I1002 16:16:59.735420   97592 oss.go:32] oss get object from [oss://wdrip-index/wdrip/clusters/kubernetes-wdrip-77.json]
 I1002 16:16:59.807551   97592 iaas.go:190] 
 NAME                ENDPOINT                                
 kubernetes-id-001   47.96.27.46/192.168.0.75                
-kubernetes-ovm-77   116.62.24.127/192.168.0.53  
+kubernetes-wdrip-77   116.62.24.127/192.168.0.53  
 ```
-通过`ovm get -n kubernetes-id-001 -o yaml` 可以查看该集群的详细信息
+通过`wdrip get -n kubernetes-id-001 -o yaml` 可以查看该集群的详细信息
 
 ### 连接集群
 
-当集群创建完成后,可以通过ovm get命令下载kubeconfig文件来访问我们的集群。 当前ovm创建的集群通过EIP在公网暴露了apiserver，因此可以通过公网本地访问。
+当集群创建完成后,可以通过wdrip get命令下载kubeconfig文件来访问我们的集群。 当前wdrip创建的集群通过EIP在公网暴露了apiserver，因此可以通过公网本地访问。
 
 ```bash
-(base) ➜ ovm get -r kubeconfig -n kubernetes-id-001 -w ~/.kube/config.txt
+(base) ➜ wdrip get -r kubeconfig -n kubernetes-id-001 -w ~/.kube/config.txt
 
 I1002 16:14:38.136200   97541 provider.go:268] use HOME dir: [/Users/aoxn]
-I1002 16:14:38.136349   97541 provider.go:283] trying to load context config from: /Users/aoxn/.ovm/config
-I1002 16:14:38.136730   97541 oss.go:32] oss get object from [oss://ovm-index/ovm/clusters/kubernetes-id-001.json]
+I1002 16:14:38.136349   97541 provider.go:283] trying to load context config from: /Users/aoxn/.wdrip/config
+I1002 16:14:38.136730   97541 oss.go:32] oss get object from [oss://wdrip-index/wdrip/clusters/kubernetes-id-001.json]
 I1002 16:14:40.241796   97541 sign.go:223] sign kubernetes: []
 I1002 16:14:40.612558   97541 iaas.go:301] write kubeconfig to file [/Users/aoxn/.kube/config.txt]
 
@@ -205,7 +205,7 @@ NAME                                  STATUS   ROLES                  AGE    VER
 
 ## 添加工作节点
 ### 创建节点池
-ovm 提供了NodePool的概念，将一组具有相同的配置的节点组作为一个节点池统一管理。通过以下yaml可以创建具有N个节点的节点池。
+wdrip 提供了NodePool的概念，将一组具有相同的配置的节点组作为一个节点池统一管理。通过以下yaml可以创建具有N个节点的节点池。
 
 ```bash
 (base) ➜ kubectl --kubeconfig ~/.kube/config.txt apply -f - <<EOF
@@ -237,14 +237,14 @@ nodepool.alibabacloud.com/nodepool-01 created
 自动扩容节点池的功能Coming Soon。
 
 ```bash
-(base) ➜  ovm git:(main) ✗ kubectl --kubeconfig ~/.kube/config.txt
+(base) ➜  wdrip git:(main) ✗ kubectl --kubeconfig ~/.kube/config.txt
 ```
 
 ## 管理集群
 一切都是面向终态的
 
 ### 构建高可用的k8s集群
-单个Master的k8s集群不具备高可用，但已足够用作测试集群，经济适用。ovm同样提供了灵活简单的方式将已有集群扩展成高可用集群。ovm适用`MasterSet`的CRD资源代表Master节点组。
+单个Master的k8s集群不具备高可用，但已足够用作测试集群，经济适用。wdrip同样提供了灵活简单的方式将已有集群扩展成高可用集群。wdrip适用`MasterSet`的CRD资源代表Master节点组。
 以下命令扩展当前集群的Master副本数量到3个。
 
 ```bash
@@ -259,7 +259,7 @@ spec:
   replicas: 3
 EOF
 ```
-ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待。可以通过`kubectl --kubeconfig ~/.kube/config.txt get no -w` 观测Master节点的加入过程。
+wdrip需要2分钟左右的时间来初始化额外的2个Master节点，请等待。可以通过`kubectl --kubeconfig ~/.kube/config.txt get no -w` 观测Master节点的加入过程。
 
 ### 大规模集群场景
 当你的集群规模进一步扩大后，3个Master已经不能满足你的需求了，那么你也可以通过MasterSet的`replicas`方便快速的将Master副本数量调整成您喜欢的任意的数量，不过一般不建议超过7个。
@@ -284,7 +284,7 @@ ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待
 ## 基础设施复原力（自治）
 
 随着云原生的不断发展，k8s已经成为了容器时代的基础设施，基础设施的稳定及面临重大灾难时的复原力变成了系统管理的终极问题。
-我们是否真的为基础设施的故障做好了准备？如何从基础设施中复原，进一步如何从基础设施故障中自动无干预的复原并且代价最小？ovm致力于实现真正的k8s免运维，尤其是在灾难的场景下让k8s集群能够无干预的自动复原，强调的是基础设施的复原力，而且可以是零干预的复原力。
+我们是否真的为基础设施的故障做好了准备？如何从基础设施中复原，进一步如何从基础设施故障中自动无干预的复原并且代价最小？wdrip致力于实现真正的k8s免运维，尤其是在灾难的场景下让k8s集群能够无干预的自动复原，强调的是基础设施的复原力，而且可以是零干预的复原力。
 
 以下为3个Master副本的k8s集群的故障模拟与自动复原，其他数量Master副本数量的集群同理。
 
@@ -297,7 +297,7 @@ ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待
 5. 方法五：登录Master节点，删除ETCD数据、或者停止ETCD服务，或者删除Master节点。
 
 
-当然，你也可以自行组合这些操作，最坏的情况下是Crash掉整个集群，然后坐等ovm自行恢复。一个温柔的提醒在于，ovm还是一个原型验证项目，还不具备生产可用。
+当然，你也可以自行组合这些操作，最坏的情况下是Crash掉整个集群，然后坐等wdrip自行恢复。一个温柔的提醒在于，wdrip还是一个原型验证项目，还不具备生产可用。
 
 ### 模拟单个Master节点故障
 通过模拟Worker节点故障的3个方法，可以同样的模拟Master节点故障。删除Master对应的ECS，不会立即造成quorum Fail，集群不会出现不可用的情况，此时集群能自行恢复，全程无需人工干预。
@@ -306,38 +306,38 @@ ovm需要2分钟左右的时间来初始化额外的2个Master节点，请等待
 通过模拟Worker节点故障的三个方法可以模拟Master故障。
 但本次我们同时模拟总共3个master节点的情况下其中2个Master节点故障（比如直接删除2个Master节点对应的ECS）的情况，这样就仅剩下一个Master节点在运行，但由于3个节点中2个都已经故障，quorum会丢失，造成整个集群不可用。
 集群的管控面无法访问。可以通过`kubectl  --kubeconfig ~/.kube/config.txt get no`来验证管控面是否故障。
-ovm面向失败的设计能自行处理集群级别的故障，因此在等待几分钟后，您会发现集群管控面已自行恢复。全程无需人工干预，即使整个管控面已经故障。
+wdrip面向失败的设计能自行处理集群级别的故障，因此在等待几分钟后，您会发现集群管控面已自行恢复。全程无需人工干预，即使整个管控面已经故障。
 对于worker节点，只要不涉及到管控面访问相关的业务，恢复的过程中用户的业务将不受任何影响，实现业务的连续性。
 
 ### 模拟可用区故障
 可用区故障的不同表现形式，可以有不同的恢复方式。
 
 ### 模拟Region故障
-Region级别的故障无法在本Region直接恢复，ovm还无法自行从Region故障中恢复。目前ovm提供了手动一键将集群恢复到其他Region。
+Region级别的故障无法在本Region直接恢复，wdrip还无法自行从Region故障中恢复。目前wdrip提供了手动一键将集群恢复到其他Region。
 
 ### 模拟集群被意外删除
 
 
 ### 灾难恢复（手动）
 ```bash
-(base) ➜  ovm git:(main) ✗ ovm recover -n kubernetes-ovm-121 -f kubernetes-ovm-120
+(base) ➜  wdrip git:(main) ✗ wdrip recover -n kubernetes-wdrip-121 -f kubernetes-wdrip-120
 ```
 
 
 ## 备份机制
-ovm定期备份您的集群的k8s的etcd数据，用于发生集群级别故障的时候快速恢复。默认每10分钟备份一次，保留最近4个备份副本。
-您可用通过`ovm get -r backup`来查看当前的备份信息。
+wdrip定期备份您的集群的k8s的etcd数据，用于发生集群级别故障的时候快速恢复。默认每10分钟备份一次，保留最近4个备份副本。
+您可用通过`wdrip get -r backup`来查看当前的备份信息。
 ```bash
-(base) ➜ ovm get -r backup -n kubernetes-id-001
+(base) ➜ wdrip get -r backup -n kubernetes-id-001
 I1002 18:28:13.072037   98760 provider.go:268] use HOME dir: [/Users/aoxn]
-I1002 18:28:13.072184   98760 provider.go:283] trying to load context config from: /Users/aoxn/.ovm/config
-I1002 18:28:13.072557   98760 oss.go:32] oss get object from [oss://ovm-index/ovm/backup/kubernetes-id-001/index.json]
+I1002 18:28:13.072184   98760 provider.go:283] trying to load context config from: /Users/aoxn/.wdrip/config
+I1002 18:28:13.072557   98760 oss.go:32] oss get object from [oss://wdrip-index/wdrip/backup/kubernetes-id-001/index.json]
 I1002 18:28:13.140780   98760 iaas.go:243] 
 NAME                PREFIX              DATE                PATH                                                                            
-kubernetes-id-001   ovm/backup          20211002-1024       ovm/backup/kubernetes-id-001/20211002-1024/snapshot.db                          
-kubernetes-id-001   ovm/backup          20211002-1014       ovm/backup/kubernetes-id-001/20211002-1014/snapshot.db                          
-kubernetes-id-001   ovm/backup          20211002-1004       ovm/backup/kubernetes-id-001/20211002-1004/snapshot.db                          
-kubernetes-id-001   ovm/backup          20211002-0954       ovm/backup/kubernetes-id-001/20211002-0954/snapshot.db            
+kubernetes-id-001   wdrip/backup          20211002-1024       wdrip/backup/kubernetes-id-001/20211002-1024/snapshot.db                          
+kubernetes-id-001   wdrip/backup          20211002-1014       wdrip/backup/kubernetes-id-001/20211002-1014/snapshot.db                          
+kubernetes-id-001   wdrip/backup          20211002-1004       wdrip/backup/kubernetes-id-001/20211002-1004/snapshot.db                          
+kubernetes-id-001   wdrip/backup          20211002-0954       wdrip/backup/kubernetes-id-001/20211002-0954/snapshot.db            
 ```
 
 ## 节点轮转机制

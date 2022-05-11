@@ -6,13 +6,13 @@ package post
 import (
 	"bytes"
 	"fmt"
-	"github.com/aoxn/ovm"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/actions/post/addons"
-	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/crd"
+	"github.com/aoxn/wdrip"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions/post/addons"
+	v12 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/crd"
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -44,12 +44,12 @@ func NewActionPost() actions.Action {
 // Execute runs the ActionPost
 func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	// Addon was installed by operator
-	adds := ctx.OvmFlags().Addons
+	adds := ctx.WdripFlags().Addons
 	cfgadds := []addons.ConfigTpl{addons.KUBEPROXY_MASTER, addons.KUBEPROXY_WORKER}
 	if adds == "*" {
 		cfgadds = addons.AddonConfigsTpl()
 	}
-	err := addons.InstallAddons(ctx.ProviderCtx(),ctx.Config(), cfgadds)
+	err := addons.InstallAddons(ctx.ProviderCtx(), ctx.Config(), cfgadds)
 	if err != nil {
 		return fmt.Errorf("install addons: %s", err.Error())
 	}
@@ -66,8 +66,8 @@ func (a *ActionPost) Execute(ctx *actions.ActionContext) error {
 	if err != nil {
 		return fmt.Errorf("write public cluster info")
 	}
-	// Run ovm operator default
-	return RunOvm(ctx.Config())
+	// Run wdrip operator default
+	return RunWdrip(ctx.Config())
 }
 
 func WritePublicInfo(ctx *context.NodeContext) error {
@@ -76,29 +76,29 @@ func WritePublicInfo(ctx *context.NodeContext) error {
 		APIVersion: "v1",
 		Clusters: map[string]*clientcmdapi.Cluster{
 			"": {
-				Server: fmt.Sprintf("https://%s:6443",cfg.Spec.Endpoint.Intranet),
+				Server:                   fmt.Sprintf("https://%s:6443", cfg.Spec.Endpoint.Intranet),
 				CertificateAuthorityData: cfg.Spec.Kubernetes.RootCA.Cert,
 			},
 		},
 	}
-	data,err := clientcmd.Write(bcfg)
+	data, err := clientcmd.Write(bcfg)
 	if err != nil {
 		return errors.Wrapf(err, "write config")
 	}
 	cm := &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "ConfigMap",
+			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "cluster-info",
+			Name:      "cluster-info",
 			Namespace: metav1.NamespacePublic,
 		},
 		Data: map[string]string{
 			"kubeconfig": string(data),
 		},
 	}
-	return utils.ApplyYaml(utils.PrettyYaml(cm),"cluster-info")
+	return utils.ApplyYaml(utils.PrettyYaml(cm), "cluster-info")
 }
 
 func WriteClusterCR(ctx *context.NodeContext) error {
@@ -126,10 +126,10 @@ func WriteClusterCR(ctx *context.NodeContext) error {
 	)
 }
 
-func doRunOvm(ctx *v12.ClusterSpec) error {
-	cfg, err := RenderOvmYaml(ctx)
+func doRunWdrip(ctx *v12.ClusterSpec) error {
+	cfg, err := RenderWdripYaml(ctx)
 	if err != nil {
-		return fmt.Errorf("write ovm yaml: %s", err.Error())
+		return fmt.Errorf("write wdrip yaml: %s", err.Error())
 	}
 	return wait.Poll(
 		2*time.Second,
@@ -139,8 +139,8 @@ func doRunOvm(ctx *v12.ClusterSpec) error {
 				klog.Errorf("retry upload bootcfg fail: %s", err.Error())
 				return false, nil
 			}
-			if err := utils.ApplyYaml(cfg, "ovm"); err != nil {
-				klog.Errorf("retry wait for ovm addon: %s", err.Error())
+			if err := utils.ApplyYaml(cfg, "wdrip"); err != nil {
+				klog.Errorf("retry wait for wdrip addon: %s", err.Error())
 				return false, nil
 			}
 			return true, nil
@@ -148,8 +148,8 @@ func doRunOvm(ctx *v12.ClusterSpec) error {
 	)
 }
 
-func RunOvm(ctx *v12.ClusterSpec) error {
-	err := doRunOvm(ctx)
+func RunWdrip(ctx *v12.ClusterSpec) error {
+	err := doRunWdrip(ctx)
 	if err != nil {
 		return err
 	}
@@ -182,8 +182,8 @@ func BootCFG(spec *v12.ClusterSpec) error {
 	return utils.ApplyYaml(string(cmdata), "bootcfg")
 }
 
-func RenderOvmYaml(spec *v12.ClusterSpec) (string, error) {
-	t, err := template.New("ovm-file").Parse(ovmf)
+func RenderWdripYaml(spec *v12.ClusterSpec) (string, error) {
+	t, err := template.New("wdrip-file").Parse(wdripf)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to parse config template")
 	}
@@ -197,17 +197,17 @@ func RenderOvmYaml(spec *v12.ClusterSpec) (string, error) {
 			Registry string
 			UUID     string
 		}{
-			Version:  ovm.Version,
+			Version:  wdrip.Version,
 			Registry: fmt.Sprintf("%s/aoxn", filepath.Dir(spec.Registry)),
 			//Registry: "registry.cn-hangzhou.aliyuncs.com/aoxn",
-			UUID:     uuid.New().String(),
+			UUID: uuid.New().String(),
 		},
 	)
 	return buff.String(), err
 }
 
 var (
-	ovmf = `
+	wdripf = `
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -232,8 +232,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ovm
-  name: ovm
+    app: wdrip
+  name: wdrip
   namespace: kube-system
 spec:
   ports:
@@ -243,7 +243,7 @@ spec:
       protocol: TCP
       targetPort: 443
   selector:
-    app: ovm
+    app: wdrip
   sessionAffinity: None
   type: NodePort
 ---
@@ -251,35 +251,35 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ovm
+    app: wdrip
     random.uuid: "{{ .UUID }}"
-  name: ovm
+  name: wdrip
   namespace: kube-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ovm
+      app: wdrip
   template:
     metadata:
       labels:
-        app: ovm
+        app: wdrip
         random.uuid: "{{ .UUID }}"
     spec:
       hostNetwork: true
       priorityClassName: system-node-critical
       serviceAccount: admin
       containers:
-        - image: {{ .Registry }}/ovm:{{ .Version }}
+        - image: {{ .Registry }}/wdrip:{{ .Version }}
           imagePullPolicy: Always
-          name: ovm-net
+          name: wdrip-net
           command:
-            - /ovm
+            - /wdrip
             - operator
-            # - --bootcfg=/etc/ovm/boot.cfg
+            # - --bootcfg=/etc/wdrip/boot.cfg
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ovm/
+              mountPath: /etc/wdrip/
               readOnly: true
       nodeSelector:
         node-role.kubernetes.io/master: ""

@@ -2,17 +2,17 @@ package context
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/client/ovm"
-	"github.com/aoxn/ovm/pkg/context/base"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/node"
-	"github.com/aoxn/ovm/pkg/node/meta/alibaba"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/client/wdrip"
+	"github.com/aoxn/wdrip/pkg/context/base"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/node"
+	"github.com/aoxn/wdrip/pkg/node/meta/alibaba"
 )
 
 const (
-	OvmFlags     = "OvmFlags"
-	NodeMetaData = "NodeMetaData"
+	WdripFlags           = "WdripFlags"
+	NodeMetaData         = "NodeMetaData"
 	ProviderCtx          = "ProviderCtx"
 	ClusterClient        = "ClusterClient"
 	BootNodeClient       = "BootNodeClient"
@@ -21,24 +21,24 @@ const (
 )
 
 func NewNodeContext(
-	flags v1.OvmOptions,
+	flags v1.WdripOptions,
 ) (*NodeContext, error) {
 	ctxs := NodeContext{}
 	if flags.Endpoint != "" {
-		restc, err := ovm.RestClientForOVM(flags.Endpoint)
+		restc, err := wdrip.RestClientForWDRIP(flags.Endpoint)
 		if err != nil {
 			return nil, fmt.Errorf("construct rest client: %s", err.Error())
 		}
 		if restc != nil {
-			ctxs.SetKV(BootNodeClient, ovm.NewNodeClient(restc))
-			ctxs.SetKV(ClusterClient, ovm.NewClusterClient(restc))
-			ctxs.SetKV(BootCredentialClient, ovm.NewCredential(restc))
+			ctxs.SetKV(BootNodeClient, wdrip.NewNodeClient(restc))
+			ctxs.SetKV(ClusterClient, wdrip.NewClusterClient(restc))
+			ctxs.SetKV(BootCredentialClient, wdrip.NewCredential(restc))
 		}
 	}
 	// meta provider factory
 	meta := alibaba.NewMetaDataAlibaba(nil)
 
-	ctxs.SetKV(OvmFlags, flags)
+	ctxs.SetKV(WdripFlags, flags)
 	ctxs.SetKV(NodeMetaData, node.NewNodeInfo(meta))
 	return &ctxs, nil
 }
@@ -53,19 +53,19 @@ func (c *NodeContext) ProviderCtx() *provider.Context {
 	return c.Value(ProviderCtx).(*provider.Context)
 }
 
-// BootNodeClient ovm bootstrap client
-func (c *NodeContext) BootNodeClient() ovm.Interface {
-	return c.Value(BootNodeClient).(ovm.Interface)
+// BootNodeClient wdrip bootstrap client
+func (c *NodeContext) BootNodeClient() wdrip.Interface {
+	return c.Value(BootNodeClient).(wdrip.Interface)
 }
 
-// BootClusterClient ovm bootstrap client
-func (c *NodeContext) BootClusterClient() ovm.InterfaceCluster {
-	return c.Value(ClusterClient).(ovm.InterfaceCluster)
+// BootClusterClient wdrip bootstrap client
+func (c *NodeContext) BootClusterClient() wdrip.InterfaceCluster {
+	return c.Value(ClusterClient).(wdrip.InterfaceCluster)
 }
 
-// BootCredentialClient ovm bootstrp client for credentialcfg
-func (c *NodeContext) BootCredentialClient() ovm.InterfaceCredential {
-	return c.Value(BootCredentialClient).(ovm.InterfaceCredential)
+// BootCredentialClient wdrip bootstrp client for credentialcfg
+func (c *NodeContext) BootCredentialClient() wdrip.InterfaceCredential {
+	return c.Value(BootCredentialClient).(wdrip.InterfaceCredential)
 }
 
 // NodeObject for NodeInfo object
@@ -74,11 +74,11 @@ func (c *NodeContext) NodeObject() *v1.Master {
 }
 
 // ActionContext
-func (c *NodeContext) OvmFlags() v1.OvmOptions {
-	return c.Value(OvmFlags).(v1.OvmOptions)
+func (c *NodeContext) WdripFlags() v1.WdripOptions {
+	return c.Value(WdripFlags).(v1.WdripOptions)
 }
 
 // ActionContext
 func (c *NodeContext) ExpectedMasterCnt() int {
-	return c.Value(OvmFlags).(v1.OvmOptions).ExpectedMasterCnt
+	return c.Value(WdripFlags).(v1.WdripOptions).ExpectedMasterCnt
 }

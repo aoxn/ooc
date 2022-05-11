@@ -2,13 +2,13 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/actions/file"
-	"github.com/aoxn/ovm/pkg/actions/kubeadm"
-	"github.com/aoxn/ovm/pkg/actions/post"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions/file"
+	"github.com/aoxn/wdrip/pkg/actions/kubeadm"
+	"github.com/aoxn/wdrip/pkg/actions/post"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
 	"github.com/pkg/errors"
 )
 
@@ -28,8 +28,8 @@ func InitMasterAlone(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("init master call meta.ARCH: %s", err.Error())
 	}
-	oflag := ctx.OvmFlags()
-	// we use ~/.ovm/config to initializing provider
+	oflag := ctx.WdripFlags()
+	// we use ~/.wdrip/config to initializing provider
 	pctx, err := provider.NewContext(&oflag, &cfg.Spec)
 	if err != nil {
 		return errors.Wrap(err, "initialize provider")
@@ -38,7 +38,7 @@ func InitMasterAlone(ctx *context.NodeContext) error {
 
 	return actions.RunActions(
 		[]actions.Action{
-			NewConcurrentPkgDL(&cfg.Spec, os, arch,oflag.Bucket),
+			NewConcurrentPkgDL(&cfg.Spec, os, arch, oflag.Bucket),
 			kubeadm.NewActionKubelet(),
 			kubeadm.NewActionInit(),
 			kubeadm.NewActionCCMAuth(),
@@ -68,10 +68,10 @@ func InitWorker(ctx *context.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("init worker call meta.ARCH: %s", err.Error())
 	}
-	oflag := ctx.OvmFlags()
+	oflag := ctx.WdripFlags()
 	return actions.RunActions(
 		[]actions.Action{
-			NewConcurrentPkgDL(&cfg.Spec, os, arch,oflag.Bucket),
+			NewConcurrentPkgDL(&cfg.Spec, os, arch, oflag.Bucket),
 			kubeadm.NewActionKubelet(),
 			kubeadm.NewActionJoin(),
 		},
@@ -83,7 +83,7 @@ func InitWorker(ctx *context.NodeContext) error {
 
 func NewConcurrentPkgDL(
 	cfg *v1.ClusterSpec,
-	os, arch,bucket string,
+	os, arch, bucket string,
 ) actions.Action {
 
 	return actions.NewConcurrentAction(
@@ -98,12 +98,12 @@ func NewConcurrentPkgDL(
 							Pkg:       file.PKG_KUBERNETES,
 							CType:     cfg.CloudType,
 							Ftype:     file.FILE_BINARY,
-							Project:   "ovm",
+							Project:   "wdrip",
 							OS:        os,
 							Arch:      arch,
 						},
 						CacheDir: fmt.Sprintf("pkg/%s/", file.PKG_KUBERNETES),
-						Bucket: bucket,
+						Bucket:   bucket,
 					},
 				},
 			),
@@ -116,7 +116,7 @@ func NewConcurrentPkgDL(
 							Pkg:         file.PKG_CNI,
 							CType:       cfg.CloudType,
 							Ftype:       file.FILE_BINARY,
-							Project:     "ovm",
+							Project:     "wdrip",
 							OS:          os,
 							Arch:        arch,
 							Destination: "/opt/cni/bin/",

@@ -2,10 +2,10 @@ package addons
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/iaas/provider/alibaba"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -15,7 +15,7 @@ import (
 )
 
 type ConfigTpl struct {
-	UUID 					  string
+	UUID                      string
 	Name                      string
 	Replicas                  string
 	Namespace                 string
@@ -30,13 +30,13 @@ type ConfigTpl struct {
 	ProxyMode                 string
 	IntranetApiServerEndpoint string
 
-	IPStack                   string
-	ServiceCIDR               string
-	SecurityGroupID           string
-	PodVswitchId              string
+	IPStack         string
+	ServiceCIDR     string
+	SecurityGroupID string
+	PodVswitchId    string
 }
 
-func InstallAddons(pctx *provider.Context,spec *v1.ClusterSpec, cfg []ConfigTpl) error {
+func InstallAddons(pctx *provider.Context, spec *v1.ClusterSpec, cfg []ConfigTpl) error {
 	addon, err := defaultAddons(pctx, spec, cfg)
 	if err != nil {
 		return fmt.Errorf("generate default addon: %s", err.Error())
@@ -69,7 +69,7 @@ func AddonConfigsTpl() []ConfigTpl {
 	return []ConfigTpl{CCM, CORDDNS, TERWAY, INGRESS, KUBEPROXY_MASTER, KUBEPROXY_WORKER, METRICS_SERVER, CSI_PLUGIN, CSI_PROVISION}
 }
 
-func DefaultAddons(pctx *provider.Context,spec *v1.ClusterSpec) (map[string]string, error) {
+func DefaultAddons(pctx *provider.Context, spec *v1.ClusterSpec) (map[string]string, error) {
 	return defaultAddons(pctx, spec, []ConfigTpl{})
 }
 
@@ -83,7 +83,6 @@ func defaultAddons(pctx *provider.Context, spec *v1.ClusterSpec, cfgs []ConfigTp
 	daddons := make(map[string]string)
 	if len(cfgs) == 0 {
 		cfgs = AddonConfigsTpl()
-
 
 		sgid = alibaba.SecrityGroup(pctx.Stack())
 

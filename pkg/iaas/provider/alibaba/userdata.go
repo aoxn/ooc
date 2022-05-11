@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"text/template"
@@ -57,44 +57,44 @@ export ROLE=%s OS=centos ARCH=amd64 \
        TOKEN=%s \
        CLOUD_TYPE=%s \
        NAMESPACE=%s \
-       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
+       FILE_SERVER="http://host-wdrip-$REGION.oss-$REGION-internal.aliyuncs.com"
 echo "using beta version: [${NAMESPACE}]"
-mkdir -p /etc/ovm;
+mkdir -p /etc/wdrip;
 echo "
 %s
-" > /etc/ovm/ovm.cfg
+" > /etc/wdrip/wdrip.cfg
 wget --tries 10 --no-check-certificate -q \
      -O run.replace.sh\
-     ${FILE_SERVER}/ovm/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.%s.sh
+     ${FILE_SERVER}/wdrip/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.%s.sh
 time bash run.replace.sh |tee /var/log/init.log
 `
 
 type ConfigTpl struct {
-	Namespace  string
-	Token      string
-	OvmVersion string
-	Endpoint   string
-	Role       string
-	RunVersion string
-	CloudType  string
-	Arch       string
-	OS         string
-	Provider   string
+	Namespace    string
+	Token        string
+	WdripVersion string
+	Endpoint     string
+	Role         string
+	RunVersion   string
+	CloudType    string
+	Arch         string
+	OS           string
+	Provider     string
 }
 
 func NewWorkerUserData(ctx *provider.Context) (string, error) {
 	boot := ctx.BootCFG()
 	cfg := &ConfigTpl{
-		Namespace:  boot.Namespace,
-		Token:      boot.Kubernetes.KubeadmToken,
-		OvmVersion: "0.1.1",
-		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
-		Role:       "Worker",
-		RunVersion: "2.0",
-		CloudType:  "public",
-		Arch:       "amd64",
-		OS:         "centos",
-		Provider:   "alibaba",
+		Namespace:    boot.Namespace,
+		Token:        boot.Kubernetes.KubeadmToken,
+		WdripVersion: "0.1.1",
+		Endpoint:     fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
+		Role:         "Worker",
+		RunVersion:   "2.0",
+		CloudType:    "public",
+		Arch:         "amd64",
+		OS:           "centos",
+		Provider:     "alibaba",
 	}
 	tpl, err := template.New("userdata").Parse(WorkUserData)
 	if err != nil {
@@ -115,43 +115,43 @@ REGION=$(curl --retry 5 -sSL http://100.100.100.200/latest/meta-data/region-id)
 export REGION
 export NAMESPACE={{ .Namespace }} \
        TOKEN={{ .Token }} \
-       OVM_VERSION={{ .OvmVersion }} \
-       FILE_SERVER=http://host-ovm-${REGION}.oss-${REGION}-internal.aliyuncs.com \
+       WDRIP_VERSION={{ .WdripVersion }} \
+       FILE_SERVER=http://host-wdrip-${REGION}.oss-${REGION}-internal.aliyuncs.com \
        ENDPOINT={{ .Endpoint }} \
        ROLE={{ .Role }}
 wget --tries 10 --no-check-certificate -q \
      -O run.replace.sh\
-     ${FILE_SERVER}/ovm/${NAMESPACE}/{{ .CloudType }}/run/{{ .RunVersion }}/{{.Arch }}/{{ .OS }}/run.{{ .Provider }}.sh
+     ${FILE_SERVER}/wdrip/${NAMESPACE}/{{ .CloudType }}/run/{{ .RunVersion }}/{{.Arch }}/{{ .OS }}/run.{{ .Provider }}.sh
 time bash run.replace.sh |tee /var/log/init.log
 
 `
 
 func NewRecoverUserData(ctx *provider.Context) (string, error) {
 	boot := ctx.BootCFG()
-	opts := ctx.OvmOptions()
+	opts := ctx.WdripOptions()
 	cfg := &ConfigTpl{
-		Namespace:  boot.Namespace,
-		Token:      boot.Kubernetes.KubeadmToken,
-		OvmVersion: "0.1.1",
-		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
-		Role:       "Worker",
-		RunVersion: "2.0",
-		CloudType:  "public",
-		Arch:       "amd64",
-		OS:         "centos",
-		Provider:   "alibaba",
+		Namespace:    boot.Namespace,
+		Token:        boot.Kubernetes.KubeadmToken,
+		WdripVersion: "0.1.1",
+		Endpoint:     fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
+		Role:         "Worker",
+		RunVersion:   "2.0",
+		CloudType:    "public",
+		Arch:         "amd64",
+		OS:           "centos",
+		Provider:     "alibaba",
 	}
 	ctxCfg := provider.BuildContexCFG(boot)
 	me := struct {
 		ConfigTpl
 		RecoverFrom string
 		ClusterName string
-		OvmConfig   string
+		WdripConfig string
 		Bucket      string
 	}{
 		ConfigTpl:   *cfg,
 		Bucket:      opts.Bucket,
-		OvmConfig:   utils.PrettyYaml(ctxCfg),
+		WdripConfig: utils.PrettyYaml(ctxCfg),
 		ClusterName: opts.ClusterName,
 		RecoverFrom: opts.RecoverFrom,
 	}
@@ -177,42 +177,42 @@ export ROLE={{ .Role }} OS={{ .OS }} ARCH={{ .Arch }} \
        TOKEN={{ .Token }} \
        CLOUD_TYPE={{ .CloudType }} \
        NAMESPACE={{ .Namespace }} \
-       OVM_VERSION={{ .OvmVersion }} \
-       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
-# set ovm operator endpoint
+       WDRIP_VERSION={{ .WdripVersion }} \
+       FILE_SERVER="http://host-wdrip-$REGION.oss-$REGION-internal.aliyuncs.com"
+# set wdrip operator endpoint
 export ENDPOINT={{ .Endpoint }}
 echo "using beta version: [${NAMESPACE}]"
 
 echo "using beta version: [${NAMESPACE}]"
 wget --tries 10 --no-check-certificate -q \
-	-O /tmp/ovm.${ARCH}\
-	"${FILE_SERVER}"/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OVM_VERSION}/${ARCH}/${OS}/ovm.${ARCH}
-chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm; mkdir -p ~/.ovm/
-cat > ~/.ovm/config << EOF
-{{ .OvmConfig }}
+	-O /tmp/wdrip.${ARCH}\
+	"${FILE_SERVER}"/wdrip/${NAMESPACE}/${CLOUD_TYPE}/wdrip/${WDRIP_VERSION}/${ARCH}/${OS}/wdrip.${ARCH}
+chmod +x /tmp/wdrip.${ARCH} ; mv /tmp/wdrip.${ARCH} /usr/local/bin/wdrip; mkdir -p ~/.wdrip/
+cat > ~/.wdrip/config << EOF
+{{ .WdripConfig }}
 EOF
-/usr/local/bin/ovm recover --recover-mode node --name "{{ .ClusterName }}" --recover-from-cluster "{{ .RecoverFrom}}" {{ if .Bucket }} --bucket "{{.Bucket}}" {{ end }}
+/usr/local/bin/wdrip recover --recover-mode node --name "{{ .ClusterName }}" --recover-from-cluster "{{ .RecoverFrom}}" {{ if .Bucket }} --bucket "{{.Bucket}}" {{ end }}
 `
 
 var USER_DATA_JOIN_MASTER = `#!/bin/sh
 set -e -x
 REGION="$(curl 100.100.100.200/latest/meta-data/region-id)"
 export REGION
-# make sure ovm boot master from operator
+# make sure wdrip boot master from operator
 export BOOT_TYPE=operator
 export ROLE={{ .Role }} OS={{ .OS }} ARCH={{ .Arch }} \
        TOKEN={{ .Token }} \
        CLOUD_TYPE={{ .CloudType }} \
        NAMESPACE={{ .Namespace }} \
-       FILE_SERVER="http://host-ovm-$REGION.oss-$REGION-internal.aliyuncs.com"
-# set ovm operator endpoint
+       FILE_SERVER="http://host-wdrip-$REGION.oss-$REGION-internal.aliyuncs.com"
+# set wdrip operator endpoint
 export ENDPOINT={{ .Endpoint }}
 echo "using beta version: [${NAMESPACE}]"
-mkdir -p /etc/ovm;
+mkdir -p /etc/wdrip;
 wget --tries 10 --no-check-certificate -q \
      -O run.sh\
-     ${FILE_SERVER}/ovm/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.{{.Provider}}.sh
-time bash run.sh |tee /var/log/init.log.ovm
+     ${FILE_SERVER}/wdrip/${NAMESPACE}/${CLOUD_TYPE}/run/2.0/${ARCH}/${OS}/run.{{.Provider}}.sh
+time bash run.sh |tee /var/log/init.log.wdrip
 `
 
 func NewJoinMasterUserData(
@@ -220,16 +220,16 @@ func NewJoinMasterUserData(
 ) (string, error) {
 	boot := ctx.BootCFG()
 	cfg := &ConfigTpl{
-		Namespace:  boot.Namespace,
-		Token:      boot.Kubernetes.KubeadmToken,
-		OvmVersion: "0.1.1",
-		Endpoint:   fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
-		Role:       "Hybrid",
-		RunVersion: "2.0",
-		CloudType:  "public",
-		Arch:       "amd64",
-		OS:         "centos",
-		Provider:   "alibaba",
+		Namespace:    boot.Namespace,
+		Token:        boot.Kubernetes.KubeadmToken,
+		WdripVersion: "0.1.1",
+		Endpoint:     fmt.Sprintf("http://%s:9443", boot.Endpoint.Intranet),
+		Role:         "Hybrid",
+		RunVersion:   "2.0",
+		CloudType:    "public",
+		Arch:         "amd64",
+		OS:           "centos",
+		Provider:     "alibaba",
 	}
 	tpl, err := template.New("joinmaster").Parse(USER_DATA_JOIN_MASTER)
 	if err != nil {

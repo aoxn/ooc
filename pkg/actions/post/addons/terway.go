@@ -4,7 +4,7 @@ var TERWAY = ConfigTpl{
 	Name:         "terway",
 	Tpl:          terway,
 	ImageVersion: "v1.2.1",
-	IPStack:       "ipv4",
+	IPStack:      "ipv4",
 }
 
 var terway = `
@@ -118,7 +118,7 @@ data:
       "max_pool_size": 5,
       "min_pool_size": 0,
       "vswitches": {{.PodVswitchId}},
-      "eni_tags": {"ovm.io":"orz"},
+      "eni_tags": {"wdrip.io":"orz"},
       "service_cidr": "{{.ServiceCIDR}}",
       "security_group": "{{.SecurityGroupID}}",
       "ip_stack": "{{.IPStack}}",

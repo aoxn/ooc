@@ -252,7 +252,7 @@ func DefaultServerURL(host, apiPath string, groupVersion schema.GroupVersion, de
 // Kubernetes API or returns an error if any of the defaults are impossible or invalid.
 func SetDefaultUserAgent(config *Config) error {
 	if len(config.UserAgent) == 0 {
-		config.UserAgent = "ovm for kubernetes"
+		config.UserAgent = "wdrip for kubernetes"
 	}
 	return nil
 }
@@ -341,7 +341,7 @@ func dataFromSliceOrFile(data []byte, file string) ([]byte, error) {
 }
 
 func AddUserAgent(config *Config, userAgent string) *Config {
-	fullUserAgent := "ovm/" + userAgent
+	fullUserAgent := "wdrip/" + userAgent
 	config.UserAgent = fullUserAgent
 	return config
 }

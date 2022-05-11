@@ -3,8 +3,8 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/actions"
+	v12 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
 	"github.com/ghodss/yaml"
 	"html/template"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,7 +93,7 @@ func TestCCMAuthConfig(t *testing.T) {
 }
 
 func TestAnonyStruct(t *testing.T) {
-	tpl, err := template.New("ovm-file").Parse(ovmf)
+	tpl, err := template.New("wdrip-file").Parse(wdripf)
 	if err != nil {
 		panic("failed to parse config template")
 	}
@@ -115,14 +115,14 @@ func TestAnonyStruct(t *testing.T) {
 	fmt.Printf("%s", buff.Bytes())
 }
 
-var ovmf = `
+var wdripf = `
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: ovm
-  name: ovm
+    app: wdrip
+  name: wdrip
   namespace: default
 spec:
   ports:
@@ -132,7 +132,7 @@ spec:
       protocol: TCP
       targetPort: 443
   selector:
-    run: ovm
+    run: wdrip
   sessionAffinity: None
   type: NodePort
 ---
@@ -140,31 +140,31 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ovm
-  name: ovm
+    app: wdrip
+  name: wdrip
   namespace: kube-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ovm
+      app: wdrip
   template:
     metadata:
       labels:
-        app: ovm
+        app: wdrip
     spec:
       priorityClassName: system-node-critical
       containers:
-        - image: {{ .Registry }}/ovm:{{ .Version }}
+        - image: {{ .Registry }}/wdrip:{{ .Version }}
           imagePullPolicy: Always
-          name: ovm-net
+          name: wdrip-net
           command:
-            - ovm
+            - wdrip
             - operater
-            - --bootcfg /etc/ovm/boot.cfg
+            - --bootcfg /etc/wdrip/boot.cfg
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ovm/boot.cfg
+              mountPath: /etc/wdrip/boot.cfg
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:

@@ -1,9 +1,13 @@
 #!/bin/bash
 
-eval < ~/.security/ak.ovm
-echo "use AK config from [~/.security/ak.ovm] $(cat ~/.security/ak.ovm )"
+eval < ~/.security/ak.wdrip
+echo "use AK config from [~/.security/ak.wdrip] $(cat ~/.security/ak.wdrip )"
 
 echo "use kubeconfig from env KUBECONFIG=[$KUBECONFIG]"
+
+if [[ "$REGION" == "" || "$ACCESS_KEY_ID" == "" || "ACCESS_KEY_SECRET" == "" ]];then
+    echo "env REGION ACCESS_KEY_SECRET ACCESS_KEY_ID must not empty" ; exit 1
+fi
 
 kubectl --kubeconfig "$KUBECONFIG" apply -f - << EOF
 apiVersion: v1
@@ -78,7 +82,7 @@ spec:
       name: oss-secret
       namespace: default
     volumeAttributes:
-      bucket: "ovm-index"
+      bucket: "wdrip-index"
       url: "oss-${REGION}-internal.aliyuncs.com"
       otherOpts: "-o max_stat_cache_size=0 -o allow_other"
       path: "/"
@@ -104,8 +108,8 @@ metadata:
   name: oss-secret
   namespace: default
 stringData:
-  akId: ${ACCESS_KEY_ID}
-  akSecret: ${ACCESS_KEY_SECRET}
+  akId: "${ACCESS_KEY_ID}"
+  akSecret: "${ACCESS_KEY_SECRET}"
 
 EOF
 

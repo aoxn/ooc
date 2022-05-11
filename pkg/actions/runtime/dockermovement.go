@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/aoxn/ovm/pkg/message"
+	"github.com/aoxn/wdrip/pkg/message"
 	"k8s.io/klog/v2"
 )
 

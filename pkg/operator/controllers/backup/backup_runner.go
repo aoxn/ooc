@@ -3,10 +3,11 @@ package backup
 import (
 	"context"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	prvd "github.com/aoxn/ovm/pkg/iaas/provider"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	prvd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/index"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
@@ -25,20 +26,21 @@ func NewSnapshot() *Snapshot {
 	return recon
 }
 
-func NewBareSnapshot(index *prvd.Indexer) *Snapshot {
+func NewBareSnapshot(index *index.GenericIndexer) *Snapshot {
 	return &Snapshot{
 		index: index,
-		lock: &sync.RWMutex{},
+		lock:  &sync.RWMutex{},
 	}
 }
 
 var _ manager.Runnable = &Snapshot{}
 
 type Snapshot struct {
+	spec   *api.Cluster
 	lock   *sync.RWMutex
 	cache  cache.Cache
 	client client.Client
-	index  *prvd.Indexer
+	index  *index.GenericIndexer
 	//record event recorder
 	record record.EventRecorder
 }
@@ -61,8 +63,7 @@ func (s *Snapshot) Start(ctx context.Context) error {
 	if err := s.initialize(); err != nil {
 		return errors.Wrap(err, "start snapshot")
 	}
-	klog.Info("snapshot index data: ")
-	fmt.Printf(s.index.Index().String())
+	klog.Infof("snapshot index data: %s", s.spec.Spec.ClusterID)
 	go wait.Forever(s.CleanUp, 10*time.Minute)
 	klog.Infof("snapshot controller started... ")
 
@@ -81,20 +82,21 @@ func (s *Snapshot) initialize() error {
 	if err != nil {
 		return fmt.Errorf("member: spec not found,%s", err.Error())
 	}
-	ctx, err := prvd.NewContext(&api.OvmOptions{}, &spec.Spec)
+	s.spec = spec
+	ctx, err := prvd.NewContext(&api.WdripOptions{}, &spec.Spec)
 	if err != nil {
 		return errors.Wrapf(err, "new provider context")
 	}
-	s.index = ctx.Indexer()
-	return s.index.LoadIndex(spec.Spec.ClusterID)
+	s.index = index.NewGenericIndexer(spec.Spec.ClusterID, ctx.Provider())
+	return err
 }
 
 func (s *Snapshot) CleanUp() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	klog.Infof("start gc backups: %s", s.index.Index().Name)
-	err := s.index.BackupGC(s.index.Index().Name)
+	klog.Infof("start gc backups: %s", s.spec.Spec.ClusterID)
+	err := s.index.BackupGC()
 	if err != nil {
 		klog.Errorf("gc backup fail: %s", err.Error())
 	}
@@ -108,7 +110,7 @@ func (s *Snapshot) doBackup() error {
 		return fmt.Errorf("member master: %s", err.Error())
 	}
 	if len(masters) <= 0 {
-		return fmt.Errorf("master crd not found %d, abort backup",len(masters))
+		return fmt.Errorf("master crd not found %d, abort backup", len(masters))
 	}
 	spec, err := h.Cluster(s.client, api.KUBERNETES_CLUSTER)
 	if err != nil {
@@ -119,25 +121,28 @@ func (s *Snapshot) doBackup() error {
 }
 
 func (s *Snapshot) Backup(
-	spec    *api.Cluster,
+	spec *api.Cluster,
 	masters []api.Master,
 ) error {
+	if err := s.initialize(); err != nil {
+		return errors.Wrapf(err, "initialize snapshot backup failed")
+	}
 	metcd, err := etcd.NewEtcdFromCRD(masters, spec, etcd.ETCD_TMP)
 	if err != nil {
 		return fmt.Errorf("new etcd: %s", err.Error())
 	}
 
-	src := filepath.Join(prvd.SnapshotTMP)
+	src := filepath.Join(index.SnapshotTMP)
 	err = metcd.Snapshot(src)
 	if err != nil {
 		return errors.Wrap(err, "snapshot etcd")
 	}
-	mid, err := s.index.Get(spec.Spec.ClusterID)
+	mid, err := s.index.GetCluster(spec.Spec.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "load cluster id")
 	}
 	mid.Spec.Cluster = spec.Spec
-	err = s.index.Save(mid)
+	err = s.index.SaveCluster(mid)
 	if err != nil {
 		return errors.Wrapf(err, "save cluster spec")
 	}

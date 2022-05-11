@@ -4,7 +4,7 @@
 package file
 
 import (
-	"github.com/aoxn/ovm/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions"
 	"path/filepath"
 )
 

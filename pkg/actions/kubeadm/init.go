@@ -23,11 +23,11 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/actions/kubeadm/tpl"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions/kubeadm/tpl"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	"html/template"
 	"k8s.io/klog/v2"
 	"os"
@@ -35,7 +35,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/aoxn/ovm/pkg/utils/kustomize"
+	"github.com/aoxn/wdrip/pkg/utils/kustomize"
 	"io/ioutil"
 	"path/filepath"
 )

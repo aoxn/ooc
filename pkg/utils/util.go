@@ -131,8 +131,6 @@ users:
     client-key-data: {{ .ClientKey }}
 `
 
-
-
 func GetNamePrefix(p string) string {
 	// use the dash (if the name isn't too long) to make the pod name a bit prettier
 	prefix := fmt.Sprintf("%s-", p)

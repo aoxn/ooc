@@ -18,7 +18,7 @@ limitations under the License.
 package v1
 
 import (
-	internalinterfaces "github.com/aoxn/ovm/pkg/generated/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/aoxn/wdrip/pkg/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

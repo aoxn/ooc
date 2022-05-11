@@ -19,11 +19,11 @@ package master
 import (
 	"context"
 	"fmt"
-	ctx "github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/help"
-	"github.com/aoxn/ovm/pkg/operator/heal"
+	ctx "github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/operator/heal"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
@@ -41,7 +41,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/wdrip/api/v1"
 )
 
 func AddNode(

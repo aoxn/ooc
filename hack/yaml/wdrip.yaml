@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: admin
+    namespace: kube-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: wdrip
+  name: wdrip
+  namespace: kube-system
+spec:
+  ports:
+    - name: tcp
+      nodePort: 39443
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: wdrip
+  sessionAffinity: None
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: wdrip
+  name: wdrip
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wdrip
+  template:
+    metadata:
+      labels:
+        app: wdrip
+    spec:
+      serviceAccount: admin
+      priorityClassName: system-node-critical
+      containers:
+        - image: {{ .Registry }}/wdrip:{{ .Version }}
+          imagePullPolicy: Always
+          name: wdrip-net
+          command:
+            - /wdrip
+            - operator
+            - --bootcfg=/etc/wdrip/boot.cfg
+          volumeMounts:
+            - name: bootcfg
+              mountPath: /etc/wdrip/
+              readOnly: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+        - operator: Exists
+      volumes:
+        - name: bootcfg
+          secret:
+            # Provide the name of the ConfigMap containing the files you want
+            # to add to the container
+            secretName: bootcfg
+            items:
+              - key: bootcfg
+                path: boot.cfg

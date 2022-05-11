@@ -1,10 +1,10 @@
 package shared
 
 import (
-	"github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/context/base"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/heal"
+	"github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context/base"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/operator/heal"
 )
 
 const (

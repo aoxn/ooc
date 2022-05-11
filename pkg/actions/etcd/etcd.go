@@ -5,13 +5,13 @@ package etcd
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/actions"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/index"
 
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
-	"github.com/aoxn/ovm/pkg/utils/sign"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/utils/sign"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -57,15 +57,15 @@ func (a *action) Execute(ctx *actions.ActionContext) error {
 		return fmt.Errorf("flush etcd content file %s: %s", ETCD_UNIT_FILE, err.Error())
 	}
 
-	switch ctx.OvmFlags().BootType {
+	switch ctx.WdripFlags().BootType {
 	case utils.BootTypeOperator:
 		state = "existing"
 		err := BackOffJoinMember(etcd)
 		if err != nil {
-			return fmt.Errorf("join etcd peer on bootType=%s: %s", ctx.OvmFlags().BootType, err.Error())
+			return fmt.Errorf("join etcd peer on bootType=%s: %s", ctx.WdripFlags().BootType, err.Error())
 		}
 	case utils.BootTypeRecover:
-		err = etcd.Restore(node, provider.SnapshotTMP)
+		err = etcd.Restore(node, index.SnapshotTMP)
 		if err != nil {
 			return errors.Wrapf(err, "restore snapshot")
 		}
@@ -558,21 +558,21 @@ func (m *Etcd) WaitEndpoints(endpints string) error {
 }
 
 func (m *Etcd) EndpointHealth(ip string) error {
-	endpoint := advertise(ip, "2379")	
+	endpoint := advertise(ip, "2379")
 	cm := cmd.NewCmd(
-                "etcdctl",
-                "--endpoints", endpoint,
-                "--cacert",
-                certHome(m.Home(), "server-ca.crt"),
-                "--cert",
-                certHome(m.Home(), "client.crt"),
-                "--key",
-                certHome(m.Home(), "client.key"),
-                "endpoint", "health",
-        )
-        cm.Env = []string{"ETCDCTL_API=3"}
-        result := <-cm.Start()
-        return cmd.CmdError(result)
+		"etcdctl",
+		"--endpoints", endpoint,
+		"--cacert",
+		certHome(m.Home(), "server-ca.crt"),
+		"--cert",
+		certHome(m.Home(), "client.crt"),
+		"--key",
+		certHome(m.Home(), "client.key"),
+		"endpoint", "health",
+	)
+	cm.Env = []string{"ETCDCTL_API=3"}
+	result := <-cm.Start()
+	return cmd.CmdError(result)
 }
 
 func certHome(home, name string) string {

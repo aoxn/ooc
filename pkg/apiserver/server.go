@@ -2,8 +2,8 @@ package apiserver
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apiserver/auth"
-	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/wdrip/pkg/apiserver/auth"
+	"github.com/aoxn/wdrip/pkg/context"
 	"github.com/gorilla/mux"
 	"k8s.io/klog/v2"
 	"net"

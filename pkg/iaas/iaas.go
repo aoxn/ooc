@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	_ "github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/sign"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
+	_ "github.com/aoxn/wdrip/pkg/iaas/provider/alibaba"
+	"github.com/aoxn/wdrip/pkg/index"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/sign"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -22,34 +24,34 @@ import (
 	"time"
 )
 
-func Recover(cfg *v1.OvmOptions) error {
-	ctx, err := provider.NewContext(cfg, nil)
+func Recover(cfg *v1.WdripOptions) error {
+	ctx, err := pd.NewContext(cfg, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
-	index := provider.NewIndexer(ctx.Provider())
-	id, err := index.Get(cfg.ClusterName)
+	idx := index.NewGenericIndexer(cfg.ClusterName, ctx.Provider())
+	id, err := idx.GetCluster(cfg.ClusterName)
 	if err != nil {
 		return errors.Wrapf(err, "no cluster found by name %s", cfg.ClusterName)
 	}
 	if cfg.RecoverFrom != cfg.ClusterName {
 		// recover from another cluster
-		mindex := provider.NewIndexer(ctx.Provider())
-		from, err := mindex.Get(cfg.RecoverFrom)
+		mindex := index.NewGenericIndexer(cfg.RecoverFrom, ctx.Provider())
+		from, err := mindex.GetCluster(cfg.RecoverFrom)
 		if err != nil {
 			return errors.Wrapf(err, "no cluster found by name %s", cfg.ClusterName)
 		}
 
-		from.Spec.Cluster.Endpoint  = id.Spec.Cluster.Endpoint
+		from.Spec.Cluster.Endpoint = id.Spec.Cluster.Endpoint
 		from.Spec.Cluster.ClusterID = id.Spec.Cluster.ClusterID
-		from.Spec.Cluster.Bind.Provider   = id.Spec.Cluster.Bind.Provider
-		from.Spec.Cluster.Bind.Region     = id.Spec.Cluster.Bind.Region
+		from.Spec.Cluster.Bind.Provider = id.Spec.Cluster.Bind.Provider
+		from.Spec.Cluster.Bind.Region = id.Spec.Cluster.Bind.Region
 		from.Spec.Cluster.Bind.ResourceId = id.Spec.Cluster.Bind.ResourceId
 		// set back
 		id.Spec.Cluster = from.Spec.Cluster
 	}
 	ctx.SetKV("BootCFG", &id.Spec.Cluster)
-	ctx.SetKV("OvmOptions", cfg)
+	ctx.SetKV("WdripOptions", cfg)
 	pvd := ctx.Provider()
 	_, err = pvd.Recover(ctx, &id)
 	return err
@@ -65,10 +67,10 @@ func SetDefaultCA(spec *v1.ClusterSpec) {
 	}
 }
 
-func Create(cfg *v1.OvmOptions) error {
-	ctx, err := provider.NewContext(cfg, nil)
+func Create(cfg *v1.WdripOptions) error {
+	ctx, err := pd.NewContext(cfg, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
 	bootcfg := ctx.BootCFG()
 	// GetProvider will return error if bootcfg.BindInfra.Options.Name is not correct
@@ -89,8 +91,8 @@ func Create(cfg *v1.OvmOptions) error {
 			UpdatedAt: time.Now().Format("2006-01-02T15:04:05"),
 		},
 	}
-	indexer := ctx.Indexer()
-	_, err = indexer.Get(bootcfg.ClusterID)
+	indexer := index.NewGenericIndexer(bootcfg.ClusterID, ctx.Provider())
+	_, err = indexer.GetCluster(bootcfg.ClusterID)
 	if err == nil {
 		klog.Warningf("cluster [%s] already exists", bootcfg.ClusterID)
 		return errors.Wrapf(err, "cluster [%s] already exists", bootcfg.ClusterID)
@@ -98,7 +100,7 @@ func Create(cfg *v1.OvmOptions) error {
 	if !strings.Contains(err.Error(), "NoSuchKey") {
 		return errors.Wrapf(err, "create cluster")
 	}
-	err = indexer.Save(id)
+	err = indexer.SaveCluster(id)
 	if err != nil {
 		return errors.Wrapf(err, "create cluster: %s", id.Name)
 	}
@@ -108,22 +110,22 @@ func Create(cfg *v1.OvmOptions) error {
 		return fmt.Errorf("call provider [%s] create: %s", bootcfg.Bind.Provider.Name, err.Error())
 	}
 	// set id for defer function.
-	err = indexer.Save(*nid)
+	err = indexer.SaveCluster(*nid)
 	if err != nil {
 		klog.Errorf("save cluster cache after: %s", err.Error())
 	}
 	klog.Infof("cluster created: %s", utils.PrettyYaml(id))
-	klog.Infof("watch cluster create progress with command:  [ ovm watch --name %s ] ", bootcfg.ClusterID)
+	klog.Infof("watch cluster create progress with command:  [ wdrip watch --name %s ] ", bootcfg.ClusterID)
 	return nil
 }
 
-func Delete(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+func Delete(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
 	if options.ClusterName == "" {
 		return fmt.Errorf("cluster name must be provided with --name")
 	}
-	ctx, err := provider.NewContext(options, nil)
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
 
 	// GetProvider will return error if bootcfg.BindInfra.Options.Name is not correct
@@ -132,8 +134,8 @@ func Delete(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 		return fmt.Errorf("unexpected nil provider: %s", options.Default.CurrentContext)
 	}
 
-	index := ctx.Indexer()
-	id, err := index.Get(options.ClusterName)
+	idx := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+	id, err := idx.GetCluster(options.ClusterName)
 	if err != nil {
 		if strings.Contains(err.Error(), "NoSuchKey") {
 			klog.Infof("cluster[%s] not found, finish", options.ClusterName)
@@ -141,25 +143,36 @@ func Delete(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 		}
 		return errors.Wrapf(err, "delete cluster: %s", options.ClusterName)
 	}
-
+	nidx := index.NewNodePoolIndex(options.ClusterName, ctx.Provider())
+	nodepools, err := nidx.ListNodePools("")
+	if err != nil {
+		return errors.Wrapf(err, "get nodepool oss backups")
+	}
+	for _, np := range nodepools {
+		nodepool := np
+		klog.Infof("trying to delete nodepol [%s]", np.Name)
+		if err := pvd.DeleteNodeGroup(ctx, &nodepool); err != nil {
+			return errors.Wrapf(err, "delete nodegroup %s failed", np.Name)
+		}
+	}
 	err = pvd.Delete(ctx, &id)
 	if err != nil {
 		if cmdLine.ForceDelete {
-			klog.Infof("force delete: %s, %s, %s", options.ClusterName,id.Spec.ResourceId, err.Error())
-			return index.Remove(options.ClusterName)
+			klog.Infof("force delete: %s, %s, %s", options.ClusterName, id.Spec.ResourceId, err.Error())
+			return idx.RemoveCluster(options.ClusterName)
 		}
 		return fmt.Errorf("delete cluster: %s", err.Error())
 	}
-	return index.Remove(options.ClusterName)
+	return idx.RemoveCluster(options.ClusterName)
 }
 
-func Scale(options *v1.OvmOptions, name string, count int) error {
-	ctx, err := provider.NewContext(options, nil)
+func Scale(options *v1.WdripOptions, name string, count int) error {
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
-	index := ctx.Indexer()
-	id, err := index.Get(name)
+	idx := index.NewGenericIndexer(name, ctx.Provider())
+	id, err := idx.GetCluster(name)
 	if err != nil {
 		return errors.Wrapf(err, "scale cluster: %s", name)
 	}
@@ -172,10 +185,82 @@ func Scale(options *v1.OvmOptions, name string, count int) error {
 		return fmt.Errorf("scale cluster: %s", err.Error())
 	}
 	id.Spec.UpdatedAt = time.Now().Format("2006-01-02T15:04:05")
-	return index.Save(id)
+	return idx.SaveCluster(id)
 }
 
-func Get(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+func RunCommand(options *v1.WdripOptions, cmdline *v1.CommandLineArgs) error {
+	ctx, err := pd.NewContext(options, nil)
+	if err != nil {
+		return errors.Wrapf(err, "initialize wdrip context")
+	}
+
+	if cmdline.InstanceID == "" || cmdline.Command == "" {
+		return errors.Wrapf(err, "empty instance id or command")
+	}
+	result, err := ctx.Provider().RunCommand(ctx, cmdline.InstanceID, cmdline.Command)
+	if err != nil {
+		return errors.Wrapf(err, "run command fail: %s", err.Error())
+	}
+	klog.Infof("run command on instance [%s] [status=%s]", cmdline.InstanceID, result.Status)
+	klog.Infof("\n\n%s", result.OutPut)
+	return nil
+}
+
+func NodePoolOeration(options *v1.WdripOptions, cmdline *v1.CommandLineArgs) error {
+	ctx, err := pd.NewContext(options, nil)
+	if err != nil {
+		return errors.Wrapf(err, "initialize wdrip context")
+	}
+	if options.ClusterName == "" {
+		return fmt.Errorf("empty cluster name")
+	}
+	cidx := index.NewClusterIndex(options.ClusterName, ctx.Provider())
+	spec, err := cidx.GetCluster(options.ClusterName)
+	if err != nil {
+		return errors.Wrapf(err, "get cluster from oss backup")
+	}
+	stack, err := h.LoadStackFromSpec(ctx.Provider(), ctx, &spec.Spec.Cluster)
+	if err != nil {
+		return errors.Wrapf(err, "load stack")
+	}
+	ctx.WithStack(stack)
+
+	fmt.Printf("\n")
+	if cmdline.NodePoolID == "" {
+		idx := index.NewNodePoolIndex(options.ClusterName, ctx.Provider())
+		nodepools, err := idx.ListNodePools("")
+		if err != nil {
+			return errors.Wrapf(err, "list nodepool from oss backup")
+		}
+		fmt.Printf("%-20s%-40s%-40s%-40s\n", "NAME", "NODEPOOL_ID", "ESS_ID", "VSWITCH_IDS")
+		for _, np := range nodepools {
+			bind := np.Spec.Infra.Bind
+			if bind == nil {
+				bind = &v1.BindID{}
+			}
+			fmt.Printf("%-20s%-40s%-40s%-40s\n", np.Name, np.Spec.NodePoolID, bind.ScalingGroupId, bind.VswitchIDS)
+		}
+	} else {
+		idx := index.NewNodePoolIndex(options.ClusterName, ctx.Provider())
+		np, err := idx.GetNodePool(cmdline.NodePoolID)
+		if err != nil {
+			return errors.Wrapf(err, "get nodepool from oss backup")
+		}
+		fmt.Printf("%-20s%-40s%-40s%-20s%-20s\n", "NAME", "NODEPOOL_ID", "INSTANCE_ID", "IP", "STATUS")
+		bind := np.Spec.Infra.Bind
+		if bind == nil {
+			fmt.Printf("%-20s%-40s%-40s%-20s%-20s\n", np.Name, np.Spec.NodePoolID, "", "", "")
+			return nil
+		}
+		detail, err := ctx.Provider().ScalingGroupDetail(ctx, bind.ScalingGroupId, pd.Option{Action: "InstanceIDS"})
+		for _, d := range detail.Instances {
+			fmt.Printf("%-20s%-40s%-40s%-20s%-20s\n", np.Name, np.Spec.NodePoolID, d.Id, d.Ip, d.Status)
+		}
+	}
+	return nil
+}
+
+func Get(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
 	switch options.Resource {
 	case "backup":
 		return doGetBuckups(options, cmdLine)
@@ -185,43 +270,44 @@ func Get(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 	return doGetCluster(options, cmdLine)
 }
 
-func Edit(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+func Edit(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
 
 	if options.ClusterName == "" {
 		return fmt.Errorf("unexpected empty cluster name, specify with --name")
 	}
-	ctx, err := provider.NewContext(options, nil)
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "edit: initialize ovm context")
+		return errors.Wrapf(err, "edit: initialize wdrip context")
 	}
-	index := ctx.Indexer()
-	id, err := index.Get(options.ClusterName)
+	idx := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+	id, err := idx.GetCluster(options.ClusterName)
 	if err != nil {
 		return errors.Wrapf(err, "find cluster by name %s", options.ClusterName)
 	}
 	buf := bytes.NewBufferString(utils.PrettyYaml(id.Spec.Cluster))
 	edit := editor.NewDefaultEditor([]string{"EDITOR"})
-	edited, _, err := edit.LaunchTempFile(fmt.Sprintf("%s-edit-", filepath.Base(os.Args[0])),"cspec",buf)
+	edited, _, err := edit.LaunchTempFile(fmt.Sprintf("%s-edit-", filepath.Base(os.Args[0])), "cspec", buf)
 	if err != nil {
 		return errors.Wrapf(err, "edit with local editor")
 	}
 	cspec := &v1.ClusterSpec{}
-	err = yaml.Unmarshal(edited,cspec)
+	err = yaml.Unmarshal(edited, cspec)
 	if err != nil {
 		return errors.Wrapf(err, "unrecognized field or value")
 	}
 	id.Spec.Cluster = *cspec
-	return index.Save(id)
+	return idx.SaveCluster(id)
 }
 
-func doGetCluster(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
-	ctx, err := provider.NewContext(options, nil)
+func doGetCluster(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "get: initialize ovm context")
+		return errors.Wrapf(err, "get: initialize wdrip context")
 	}
-	index := ctx.Indexer()
+	index := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+
 	if options.ClusterName == "" {
-		ids, err := index.List(options.ClusterName)
+		ids, err := index.ListCluster(options.ClusterName)
 		if err != nil {
 			return errors.Wrapf(err, "ListCluster")
 		}
@@ -238,18 +324,18 @@ func doGetCluster(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 			}
 		default:
 			klog.Info()
-			fmt.Printf("%-20s%-40s\n", "NAME", "ENDPOINT")
+			fmt.Printf("%-30s%-40s\n", "NAME", "ENDPOINT")
 			for i := range ids {
 				endp := fmt.Sprintf("%s/%s",
 					ids[i].Spec.Cluster.Endpoint.Internet,
 					ids[i].Spec.Cluster.Endpoint.Intranet,
 				)
 
-				fmt.Printf("%-20s%-40s\n", ids[i].Name, endp)
+				fmt.Printf("%-30s%-40s\n", ids[i].Name, endp)
 			}
 		}
 	} else {
-		id, err := index.Get(options.ClusterName)
+		id, err := index.GetCluster(options.ClusterName)
 		if err != nil {
 			return errors.Wrapf(err, "get cluster: %s", options.ClusterName)
 		}
@@ -265,25 +351,25 @@ func doGetCluster(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 			fmt.Printf(utils.PrettyJson(id))
 		default:
 			klog.Info()
-			fmt.Printf("%-20s%-40s\n", "NAME", "ENDPOINT")
-			fmt.Printf("%-20s%-40s\n", id.Name,endp,)
+			fmt.Printf("%-30s%-40s\n", "NAME", "ENDPOINT")
+			fmt.Printf("%-30s%-40s\n", id.Name, endp)
 		}
 	}
 	return nil
 }
 
-func doGetBuckups(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+func doGetBuckups(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
 	if options.ClusterName == "" {
 		return fmt.Errorf("cluster name must be specified over [-n xxx]")
 	}
-	ctx, err := provider.NewContext(options, nil)
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
-	index := ctx.Indexer()
-	backups, err := index.ListBackups(options.ClusterName)
+	index := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+	backups, err := index.Snapshot()
 	if err != nil {
-		return errors.Wrapf(err, "get backup files")
+		return errors.Wrapf(err, "backup: get snapshot")
 	}
 	backups.SortBackups()
 	switch cmdLine.OutPutFormat {
@@ -301,16 +387,16 @@ func doGetBuckups(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
 	return nil
 }
 
-func doGetKubeConfig(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error {
+func doGetKubeConfig(options *v1.WdripOptions, cmdLine *v1.CommandLineArgs) error {
 	if options.ClusterName == "" {
 		return fmt.Errorf("cluster name must be specified over [-n xxx]")
 	}
-	ctx, err := provider.NewContext(options, nil)
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
-	index := ctx.Indexer()
-	id, err := index.Get(options.ClusterName)
+	index := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+	id, err := index.GetCluster(options.ClusterName)
 	if err != nil {
 		return errors.Wrapf(err, "scale cluster: %s", options.ClusterName)
 	}
@@ -346,7 +432,7 @@ func doGetKubeConfig(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error 
 		fmt.Printf(cfg)
 		return nil
 	} else {
-		//mpath := filepath.Join(os.Getenv("HOME"), ".kube/config.ovm")
+		//mpath := filepath.Join(os.Getenv("HOME"), ".kube/config.wdrip")
 		mpath := cmdLine.WriteTo
 		err = ioutil.WriteFile(mpath, []byte(cfg), 0755)
 		if err == nil {
@@ -358,13 +444,13 @@ func doGetKubeConfig(options *v1.OvmOptions, cmdLine *v1.CommandLineArgs) error 
 	return nil
 }
 
-func WatchResult(options *v1.OvmOptions, name string) error {
-	ctx, err := provider.NewContext(options, nil)
+func WatchResult(options *v1.WdripOptions, name string) error {
+	ctx, err := pd.NewContext(options, nil)
 	if err != nil {
-		return errors.Wrapf(err, "initialize ovm context")
+		return errors.Wrapf(err, "initialize wdrip context")
 	}
-	index := ctx.Indexer()
-	id, err := index.Get(name)
+	idx := index.NewGenericIndexer(options.ClusterName, ctx.Provider())
+	id, err := idx.GetCluster(name)
 	if err != nil {
 		return errors.Wrapf(err, "scale cluster: %s", name)
 	}
@@ -377,5 +463,5 @@ func WatchResult(options *v1.OvmOptions, name string) error {
 	if err != nil {
 		return fmt.Errorf("watch error: %s", err.Error())
 	}
-	return index.Save(id)
+	return idx.SaveCluster(id)
 }

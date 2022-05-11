@@ -132,12 +132,12 @@ type ClusterId struct {
 }
 
 type ClusterIdSpec struct {
-	ResourceId string      `json:"resourceId,omitempty" protobuf:"bytes,1,opt,name=resourceId"`
-	ExtraRIDs  []string    `json:"extraRIDs,omitempty" protobuf:"bytes,2,opt,name=extraRIDs"`
-	CreatedAt  string      `json:"createdAt,omitempty" protobuf:"bytes,3,opt,name=createdAt"`
-	UpdatedAt  string      `json:"updatedAt,omitempty" protobuf:"bytes,4,opt,name=updatedAt"`
-	Options    *OvmOptions `json:"options,omitempty" protobuf:"bytes,5,opt,name=options"`
-	Cluster    ClusterSpec `json:"cluster,omitempty" protobuf:"bytes,6,opt,name=cluster"`
+	ResourceId string        `json:"resourceId,omitempty" protobuf:"bytes,1,opt,name=resourceId"`
+	ExtraRIDs  []string      `json:"extraRIDs,omitempty" protobuf:"bytes,2,opt,name=extraRIDs"`
+	CreatedAt  string        `json:"createdAt,omitempty" protobuf:"bytes,3,opt,name=createdAt"`
+	UpdatedAt  string        `json:"updatedAt,omitempty" protobuf:"bytes,4,opt,name=updatedAt"`
+	Options    *WdripOptions `json:"options,omitempty" protobuf:"bytes,5,opt,name=options"`
+	Cluster    ClusterSpec   `json:"cluster,omitempty" protobuf:"bytes,6,opt,name=cluster"`
 }
 
 type Preempt struct {
@@ -193,9 +193,13 @@ type CommandLineArgs struct {
 	ForceDelete  bool
 	WriteTo      string
 	OutPutFormat string
+
+	InstanceID string
+	Command    string
+	NodePoolID string
 }
 
-type OvmOptions struct {
+type WdripOptions struct {
 	// Endpoint coordinator bootstrap server endpoint
 	Endpoint string
 	Role     string
@@ -243,7 +247,7 @@ type Cluster struct {
 
 	// Config expected cluster specification
 	// +optional
-	Spec   ClusterSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec ClusterSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 
 	// Status cluster current status.
 	// +optional
@@ -270,7 +274,7 @@ type ClusterSpec struct {
 	Token            string   `json:"token,omitempty" protobuf:"bytes,10,opt,name=token"`
 	Registry         string   `json:"registry,omitempty" protobuf:"bytes,11,opt,name=registry"`
 	Endpoint         Endpoint `json:"endpoint,omitempty" protobuf:"bytes,12,opt,name=endpoint"`
-	SilentTime		 int      `json:"silentTime,omitempty" protobuf:"bytes,12,opt,name=silentTime"`
+	SilentTime       int      `json:"silentTime,omitempty" protobuf:"bytes,12,opt,name=silentTime"`
 }
 
 type Kubernetes struct {
@@ -431,6 +435,13 @@ type NodePoolSpec struct {
 	NodePoolID string `json:"id,omitempty" protobuf:"bytes,1,opt,name=id"`
 	AutoHeal   bool   `json:"autoHeal,omitempty" protobuf:"bytes,2,opt,name=autoHeal"`
 	Infra      Infra  `json:"infra,omitempty" protobuf:"bytes,3,opt,name=infra"`
+}
+
+type Config struct {
+	OSConfig      OSConfiguration
+	KubeletConfig KubeletConfiguration
+}
+type OSConfiguration struct {
 }
 
 type Infra struct {

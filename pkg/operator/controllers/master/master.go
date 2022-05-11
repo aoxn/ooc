@@ -19,11 +19,11 @@ package master
 import (
 	"context"
 	"fmt"
-	v12 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	ctx "github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/help"
+	v12 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	ctx "github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
@@ -40,7 +40,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/wdrip/api/v1"
 )
 
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller

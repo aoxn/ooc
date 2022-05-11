@@ -3,7 +3,7 @@ package file
 import "path/filepath"
 
 /*
-	$base/$beta/public/ovm/$pkgName-$version.tar
+	$base/$beta/public/wdrip/$pkgName-$version.tar
 */
 
 type Tar interface {

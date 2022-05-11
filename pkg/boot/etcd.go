@@ -2,10 +2,10 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/actions/etcd"
-	"github.com/aoxn/ovm/pkg/actions/file"
-	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions/etcd"
+	"github.com/aoxn/wdrip/pkg/actions/file"
+	"github.com/aoxn/wdrip/pkg/context"
 )
 
 func InitEtcd(ctx *context.NodeContext) error {
@@ -25,7 +25,7 @@ func InitEtcd(ctx *context.NodeContext) error {
 		return fmt.Errorf("init etcd call meta.ARCH: %s", err.Error())
 	}
 
-	oflag := ctx.OvmFlags()
+	oflag := ctx.WdripFlags()
 
 	files := []file.File{
 		{
@@ -34,7 +34,7 @@ func InitEtcd(ctx *context.NodeContext) error {
 				Pkg:       file.PKG_ETCD,
 				CType:     cfg.Spec.CloudType,
 				Ftype:     file.FILE_BINARY,
-				Project:   "ovm",
+				Project:   "wdrip",
 				OS:        os,
 				Arch:      arch,
 				Version:   cfg.Spec.Etcd.Version,

@@ -2,9 +2,9 @@ package noderepair
 
 import (
 	"context"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
@@ -32,7 +32,7 @@ func newReconciler(
 	ctx *shared.SharedOperatorContext,
 ) reconcile.Reconciler {
 	recon := &ReconcileAutoRepair{
-		prvd: ctx.ProvdIAAS(),
+		prvd:   ctx.ProvdIAAS(),
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		record: mgr.GetEventRecorderFor("AutoHeal"),
@@ -78,7 +78,6 @@ type ReconcileAutoRepair struct {
 	record record.EventRecorder
 }
 
-
 func (r *ReconcileAutoRepair) Reconcile(
 	ctx context.Context, request reconcile.Request,
 ) (reconcile.Result, error) {
@@ -100,7 +99,5 @@ func (r *ReconcileAutoRepair) Reconcile(
 		return reconcile.Result{}, nil
 	}
 
-	return reconcile.Result{},nil
+	return reconcile.Result{}, nil
 }
-
-

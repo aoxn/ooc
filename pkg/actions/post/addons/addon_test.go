@@ -2,11 +2,11 @@ package addons
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"testing"
 )
 
-func TestAddon(t *testing.T)  {
+func TestAddon(t *testing.T) {
 	cfg := CCM
 	cfg.IntranetApiServerEndpoint = fmt.Sprintf("https://%s:6443", "xxxxxx")
 	cfg.ProxyMode = "iptables"

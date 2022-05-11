@@ -29,15 +29,15 @@ spec:
       priorityClassName: system-node-critical
       serviceAccount: admin
       containers:
-        - image: ${Registry}/ovm:${Version}
+        - image: ${Registry}/wdrip:${Version}
           imagePullPolicy: Always
           name: chaosmonkey-net
           command:
-            - /ovm
+            - /wdrip
             - monkey
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ovm/
+              mountPath: /etc/wdrip/
               readOnly: true
       tolerations:
         - operator: Exists

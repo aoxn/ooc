@@ -3,7 +3,7 @@ package etcd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"math/big"
 	"testing"
 )

@@ -25,7 +25,7 @@ function validatedefault() {
     detecos
     if [[ "$PKG_BUCKET" == "" ]];
     then
-        PKG_BUCKET="host-ovm"
+        PKG_BUCKET="host-wdrip"
         echo "using oss bucket [oss://$PKG_BUCKET-$REGION] as package file server"
     fi
     if [[ "$BOOT_TYPE" == "" ]];
@@ -47,9 +47,9 @@ function validatedefault() {
     then
         NAMESPACE=default
     fi
-    if [[ "$OVM_VERSION" == "" ]];
+    if [[ "$WDRIP_VERSION" == "" ]];
     then
-        export OVM_VERSION=0.1.1
+        export WDRIP_VERSION=0.1.1
     fi
 
     if [[ "$CLOUD_TYPE" == "" ]];
@@ -70,15 +70,15 @@ function validatedefault() {
 
     echo "using beta version: [${NAMESPACE}]"
     wget --tries 10 --no-check-certificate -q \
-        -O /tmp/ovm.${ARCH}\
-        "${PKG_FILE_SERVER}"/ovm/${NAMESPACE}/${CLOUD_TYPE}/ovm/${OVM_VERSION}/${ARCH}/${OS}/ovm.${ARCH}
-    chmod +x /tmp/ovm.${ARCH} ; mv /tmp/ovm.${ARCH} /usr/local/bin/ovm
+        -O /tmp/wdrip.${ARCH}\
+        "${PKG_FILE_SERVER}"/wdrip/${NAMESPACE}/${CLOUD_TYPE}/wdrip/${WDRIP_VERSION}/${ARCH}/${OS}/wdrip.${ARCH}
+    chmod +x /tmp/wdrip.${ARCH} ; mv /tmp/wdrip.${ARCH} /usr/local/bin/wdrip
 }
 
 function bootstrap() {
     echo run bootstrap init
     # run bootsrap init
-    nohup ovm bootstrap --token "${TOKEN}" --bootcfg /etc/ovm/ovm.cfg &
+    nohup wdrip bootstrap --token "${TOKEN}" --bootcfg /etc/wdrip/wdrip.cfg &
 }
 
 function init() {
@@ -86,11 +86,11 @@ function init() {
     case $BOOT_TYPE in
     "local")
       # run master init
-      ovm init --role "${ROLE}" --token "${TOKEN}" --config /etc/ovm/ovm.cfg
+      wdrip init --role "${ROLE}" --token "${TOKEN}" --config /etc/wdrip/wdrip.cfg
       ;;
     "operator")
       # run master init
-      ovm init --role "${ROLE}" --token "${TOKEN}" --boot-type "${BOOT_TYPE}" --endpoint "${ENDPOINT}"
+      wdrip init --role "${ROLE}" --token "${TOKEN}" --boot-type "${BOOT_TYPE}" --endpoint "${ENDPOINT}"
       ;;
     esac
 }
@@ -102,7 +102,7 @@ function join() {
     then
         echo "endpoint must be specified with env"; exit 1
     fi
-    ovm init --role Worker --token "${TOKEN}" --endpoint "${ENDPOINT}"  --boot-type operator
+    wdrip init --role Worker --token "${TOKEN}" --endpoint "${ENDPOINT}"  --boot-type operator
 }
 
 function postcheck() {

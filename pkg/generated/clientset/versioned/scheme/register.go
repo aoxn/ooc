@@ -18,7 +18,7 @@ limitations under the License.
 package scheme
 
 import (
-	ovmv1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	wdripv1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,7 +30,7 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
-	ovmv1.AddToScheme,
+	wdripv1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

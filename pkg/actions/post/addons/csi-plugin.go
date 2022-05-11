@@ -1,15 +1,15 @@
 package addons
 
 var CSI_PLUGIN = ConfigTpl{
-  Name:         "csi-plugin",
-  Tpl:          csi_plugin,
-  ImageVersion: "v1.20.4.0-65b2faa-aliyun",
+	Name:         "csi-plugin",
+	Tpl:          csi_plugin,
+	ImageVersion: "v1.20.4.0-65b2faa-aliyun",
 }
 
 var CSI_PROVISION = ConfigTpl{
-  Name:         "csi-provision",
-  Tpl:          csi_provision,
-  ImageVersion: "v1.20.4.0-65b2faa-aliyun",
+	Name:         "csi-provision",
+	Tpl:          csi_provision,
+	ImageVersion: "v1.20.4.0-65b2faa-aliyun",
 }
 
 var csi_plugin = `
@@ -328,8 +328,7 @@ spec:
     type: RollingUpdate
 `
 
-
-var csi_provision =`
+var csi_provision = `
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -652,5 +651,3 @@ spec:
               path: token-config
             secretName: addon.csi.token
 `
-
-

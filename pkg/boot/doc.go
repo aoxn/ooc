@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package boot implements ovm  cluster initialization
+// Package boot implements wdrip  cluster initialization
 package boot

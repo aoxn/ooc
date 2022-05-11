@@ -20,7 +20,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -53,11 +53,11 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	switch resource {
 	// Group=alibabacloud.com, Version=v1
 	case v1.SchemeGroupVersion.WithResource("clusters"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Ovm().V1().Clusters().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wdrip().V1().Clusters().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("masters"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Ovm().V1().Masters().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wdrip().V1().Masters().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("mastersets"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Ovm().V1().MasterSets().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wdrip().V1().MasterSets().Informer()}, nil
 
 	}
 

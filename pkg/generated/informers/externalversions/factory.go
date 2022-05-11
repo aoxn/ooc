@@ -22,9 +22,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/aoxn/ovm/pkg/generated/clientset/versioned"
-	alibabacloudcom "github.com/aoxn/ovm/pkg/generated/informers/externalversions/alibabacloud.com"
-	internalinterfaces "github.com/aoxn/ovm/pkg/generated/informers/externalversions/internalinterfaces"
+	versioned "github.com/aoxn/wdrip/pkg/generated/clientset/versioned"
+	alibabacloudcom "github.com/aoxn/wdrip/pkg/generated/informers/externalversions/alibabacloud.com"
+	internalinterfaces "github.com/aoxn/wdrip/pkg/generated/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -171,9 +171,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Ovm() alibabacloudcom.Interface
+	Wdrip() alibabacloudcom.Interface
 }
 
-func (f *sharedInformerFactory) Ovm() alibabacloudcom.Interface {
+func (f *sharedInformerFactory) Wdrip() alibabacloudcom.Interface {
 	return alibabacloudcom.New(f, f.namespace, f.tweakListOptions)
 }

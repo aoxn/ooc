@@ -11,11 +11,21 @@ import (
 	"strings"
 )
 
-func (n *Devel) CreateBucket(name string) error {
+func (n *Devel) BucketName() string { return n.Cfg.BucketName }
+
+func (n *Devel) EnsureBucket(name string) error {
 	if name == "" {
 		return fmt.Errorf("empyt bucket name")
 	}
-	return n.OSS.Bucket(name).PutBucket(oss.Private)
+	_, err := n.OSS.Bucket(name).Info()
+	if err != nil {
+		if strings.Contains(err.Error(), "NoSuchBucket") {
+			return n.OSS.Bucket(name).PutBucket(oss.Private)
+		}
+		return errors.Wrapf(err, "query bucket info")
+	}
+
+	return nil
 }
 
 func (n *Devel) GetObject(src string) ([]byte, error) {
@@ -119,4 +129,25 @@ func (n *Devel) DeleteObject(dst string) error {
 	klog.Infof("oss delete object [oss://%s/%s]", bName, mpath)
 	bucket := n.OSS.Bucket(bName)
 	return bucket.Del(mpath)
+}
+
+func (n *Devel) ListObject(prefix string) ([][]byte, error) {
+	bName := n.Cfg.BucketName
+	if err := n.EnsureBucket(bName); err != nil {
+		return nil, errors.Wrapf(err, "ensure bucket")
+	}
+
+	mlist, err := n.OSS.Bucket(bName).List(prefix, "", "", 1000)
+	if err != nil {
+		return nil, errors.Wrapf(err, "list object: %s", bName)
+	}
+	var result [][]byte
+	for _, v := range mlist.Contents {
+		data, err := n.GetObject(v.Key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "get object by key: %s", v.Key)
+		}
+		result = append(result, data)
+	}
+	return result, nil
 }

@@ -18,30 +18,30 @@ limitations under the License.
 package fake
 
 import (
-	v1 "github.com/aoxn/ovm/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
+	v1 "github.com/aoxn/wdrip/pkg/generated/clientset/versioned/typed/alibabacloud.com/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeOvmV1 struct {
+type FakeWdripV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeOvmV1) Clusters(namespace string) v1.ClusterInterface {
+func (c *FakeWdripV1) Clusters(namespace string) v1.ClusterInterface {
 	return &FakeClusters{c, namespace}
 }
 
-func (c *FakeOvmV1) Masters(namespace string) v1.MasterInterface {
+func (c *FakeWdripV1) Masters(namespace string) v1.MasterInterface {
 	return &FakeMasters{c, namespace}
 }
 
-func (c *FakeOvmV1) MasterSets(namespace string) v1.MasterSetInterface {
+func (c *FakeWdripV1) MasterSets(namespace string) v1.MasterSetInterface {
 	return &FakeMasterSets{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeOvmV1) RESTClient() rest.Interface {
+func (c *FakeWdripV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

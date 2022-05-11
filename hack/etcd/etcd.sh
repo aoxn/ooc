@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-etcdbin=http://host-ovm-cn-hangzhou.oss.aliyuncs.com/etcd/etcd
-etcdctlbin=http://host-ovm-cn-hangzhou.oss.aliyuncs.com/etcd/etcdctl
+etcdbin=http://host-wdrip-cn-hangzhou.oss.aliyuncs.com/etcd/etcd
+etcdctlbin=http://host-wdrip-cn-hangzhou.oss.aliyuncs.com/etcd/etcdctl
 
 function download(){
     wget -O etcd ${etcdbin}

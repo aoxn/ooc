@@ -6,7 +6,7 @@ iaas:
       region: cn-hangzhou
       accessKey: ak
       accessSecret: secret
-      template: /Users/aoxn/vaoxn/ovm/pkg/iaas/provider/ros/demo.alibaba.json
+      template: /Users/aoxn/vaoxn/wdrip/pkg/iaas/provider/ros/demo.alibaba.json
   secret:
   - type: Password
     name: pwd1

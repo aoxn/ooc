@@ -5,8 +5,8 @@ import (
 	"k8s.io/klog/v2"
 	"strings"
 
-	"github.com/aoxn/ovm/pkg/node/meta"
-	alibaba "github.com/aoxn/ovm/pkg/node/meta/alibaba"
+	"github.com/aoxn/wdrip/pkg/node/meta"
+	alibaba "github.com/aoxn/wdrip/pkg/node/meta/alibaba"
 )
 
 type Config struct {

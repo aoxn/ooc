@@ -2,9 +2,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -15,11 +15,11 @@ import (
 )
 
 func NewContext(
-	options *v1.OvmOptions, spec *v1.ClusterSpec,
+	options *v1.WdripOptions, spec *v1.ClusterSpec,
 ) (*Context, error) {
 	mctx := &Context{}
 	mctx.SetKV("BootCFG", spec)
-	mctx.SetKV("OvmOptions", options)
+	mctx.SetKV("WdripOptions", options)
 	return mctx, mctx.Initialize(options)
 }
 
@@ -33,8 +33,8 @@ func NewContextWithCluster(spec *v1.ClusterSpec) *Context {
 
 type Context struct{ sync.Map }
 
-func (n *Context) Initialize(opts *v1.OvmOptions) error {
-	n.SetKV("OvmOptions", opts)
+func (n *Context) Initialize(opts *v1.WdripOptions) error {
+	n.SetKV("WdripOptions", opts)
 	if opts.Default == nil {
 		opts.Default = BuildContexCFG(n.BootCFG())
 	}
@@ -54,7 +54,8 @@ func (n *Context) Initialize(opts *v1.OvmOptions) error {
 			"as bootconfig: [%s] with provider[%s]", opts.Config, dprvd.Name)
 	}
 
-	// GetProvider will return error if bootcfg.BindInfra.Options.Name is not correct
+	// GetProvider will return error if
+	// bootcfg.BindInfra.Options.Name is not correct
 	pvd := GetProvider(dprvd.Name)
 	if pvd == nil {
 		return fmt.Errorf("unexpected nil provider: %s", dprvd.Name)
@@ -63,18 +64,9 @@ func (n *Context) Initialize(opts *v1.OvmOptions) error {
 	if err != nil {
 		return fmt.Errorf("initialize provider: %s", err.Error())
 	}
-	n.SetKV("Provider", pvd)
-	n.SetKV("Indexer", NewIndexer(pvd))
-	return nil
-}
 
-func (n *Context) Indexer() *Indexer {
-	val, ok := n.Load("Indexer")
-	if !ok {
-		klog.Infof("Indexer not found")
-		return nil
-	}
-	return val.(*Indexer)
+	n.SetKV("Provider", pvd)
+	return nil
 }
 
 func (n *Context) Provider() Interface {
@@ -95,13 +87,13 @@ func (n *Context) BootCFG() *v1.ClusterSpec {
 	return val.(*v1.ClusterSpec)
 }
 
-func (n *Context) OvmOptions() *v1.OvmOptions {
-	val, ok := n.Load("OvmOptions")
+func (n *Context) WdripOptions() *v1.WdripOptions {
+	val, ok := n.Load("WdripOptions")
 	if !ok {
-		klog.Infof("OvmOptions not found")
-		return &v1.OvmOptions{}
+		klog.Infof("WdripOptions not found")
+		return &v1.WdripOptions{}
 	}
-	return val.(*v1.OvmOptions)
+	return val.(*v1.WdripOptions)
 }
 
 func (n *Context) Stack() map[string]Value {
@@ -145,7 +137,6 @@ const (
 )
 
 type Interface interface {
-	Storage
 	Resource
 	Scaling
 	ObjectStorage
@@ -177,12 +168,14 @@ type Option struct {
 }
 
 type ObjectStorage interface {
-	CreateBucket(name string) error
+	BucketName() string
+	EnsureBucket(name string) error
 	GetFile(src, dst string) error
 	PutFile(src, dst string) error
 	DeleteObject(f string) error
 	GetObject(src string) ([]byte, error)
 	PutObject(b []byte, dst string) error
+	ListObject(prefix string) ([][]byte, error)
 }
 
 type Resource interface {
@@ -191,7 +184,7 @@ type Resource interface {
 }
 
 type Scaling interface {
-	VSwitchs(ctx *Context) (string,error)
+	VSwitchs(ctx *Context) (string, error)
 
 	// ModifyScalingConfig etc. UserData
 	ModifyScalingConfig(ctx *Context, gid string, opt ...Option) error
@@ -226,7 +219,12 @@ type NodeOperation interface {
 
 	ReplaceSystemDisk(ctx *Context, id string, userdata string, opt Option) error
 
-	RunCommand(ctx *Context, id, cmd string) error
+	RunCommand(ctx *Context, id, cmd string) (Result, error)
+}
+
+type Result struct {
+	Status string
+	OutPut string
 }
 
 type ScaleGroupDetail struct {
@@ -272,10 +270,10 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 		klog.Warningf("failed to find HOME dir by $(pwd ~)")
 	}
 	klog.Infof("use HOME dir: [%s]", home)
-	cacheDir := filepath.Join(home, ".ovm/")
+	cacheDir := filepath.Join(home, ".wdrip/")
 	/*
 		sequence:
-		1. from local ovm config, ~/.ovm/config
+		1. from local wdrip config, ~/.wdrip/config
 		2. from cluster spec provider
 	*/
 	mctx := v1.ContextCFG{
@@ -289,7 +287,7 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 			klog.Infof("trying to load context config from: %s", mfi)
 			cfg, err := ioutil.ReadFile(mfi)
 			if err != nil {
-				klog.Warningf("read ovm default config: %s", err.Error())
+				klog.Warningf("read wdrip default config: %s", err.Error())
 			}
 			err = yaml.Unmarshal(cfg, &mctx)
 			if err != nil {
@@ -300,7 +298,7 @@ func BuildContexCFG(spec *v1.ClusterSpec) *v1.ContextCFG {
 					"or providers section: %s", mctx.CurrentContext, len(mctx.Contexts))
 			}
 		} else {
-			klog.Infof("ovm config[%s] does not exist", mfi)
+			klog.Infof("wdrip config[%s] does not exist", mfi)
 		}
 	}
 	if spec != nil {

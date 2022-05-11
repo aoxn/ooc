@@ -19,11 +19,11 @@ package master
 import (
 	"context"
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/operator/controllers/help"
-	"github.com/aoxn/ovm/pkg/operator/heal"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/help"
+	"github.com/aoxn/wdrip/pkg/operator/heal"
 	"github.com/pkg/errors"
 	gerr "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +42,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/wdrip/api/v1"
 )
 
 func AddMasterSet(
@@ -131,7 +131,7 @@ type MasterSetReconciler struct {
 
 func (m *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
-	if ! m.healet.Healthy() {
+	if !m.healet.Healthy() {
 		klog.Infof("master state still in UnHealthy state, trigger repair")
 		err := m.healet.FixMasterNode()
 		if err != nil {
@@ -194,7 +194,7 @@ func (m *MasterSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	scale := func(expect int) error {
 
 		klog.Infof("[QuorumScale] wait on member center to finish cluster heal")
-		if ! m.healet.Healthy(){
+		if !m.healet.Healthy() {
 			return errors.Wrapf(err, "[QuorumScale] controlplane not healthy, wait retry")
 		}
 

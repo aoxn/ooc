@@ -20,11 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions/post/addons"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/utils/kubeclient"
+	"github.com/aoxn/wdrip/pkg/actions/post/addons"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/utils/kubeclient"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
@@ -43,13 +43,13 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	//nodepoolv1 "gitlab.alibaba-inc.com/cos/ovm/api/v1"
+	//nodepoolv1 "gitlab.alibaba-inc.com/cos/wdrip/api/v1"
 )
 
 // Add creates a new Rolling Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, ctx *shared.SharedOperatorContext) error {
-	return add(mgr, newReconciler(mgr,ctx))
+	return add(mgr, newReconciler(mgr, ctx))
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -152,7 +152,7 @@ func (r *AddonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 		return ctrl.Result{}, fmt.Errorf("cluster intranet slb endpoint is not initialized, wait next retry")
 	}
-	adds, err := addons.DefaultAddons(r.ctx.ProviderCtx(),&cluster.Spec)
+	adds, err := addons.DefaultAddons(r.ctx.ProviderCtx(), &cluster.Spec)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -78,7 +78,7 @@ func (n *Devel) ScalingGroupDetail(
 		return result, fmt.Errorf("sgroupid [%s] not found[ScalingGroupNotFound]", gid)
 	}
 	if grps[0].VpcId != vpcid {
-		klog.Errorf("invalid vpcid [%s] for scaling group [%s], expect[%s]", grps[0].VpcId,gid, vpcid)
+		klog.Errorf("invalid vpcid [%s] for scaling group [%s], expect[%s]", grps[0].VpcId, gid, vpcid)
 		return result, fmt.Errorf("InvalidVPC")
 	}
 
@@ -108,7 +108,7 @@ func (n *Devel) ScalingGroupDetail(
 		}
 		for _, i := range attri.Instances.Instance {
 			is := provider.Instance{
-				Region: n.Cfg.Region,
+				Region:    n.Cfg.Region,
 				Id:        i.InstanceId,
 				Ip:        strings.Join(i.VpcAttributes.PrivateIpAddress.IpAddress, ","),
 				CreatedAt: normalize(i.CreationTime),

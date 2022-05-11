@@ -11,7 +11,7 @@ FROM alpine:3.8
 
 RUN apk add --no-cache --update ca-certificates
 COPY bin/etcdctl /usr/bin/
-COPY bin/ovm.amd64 /ovm
+COPY bin/wdrip.amd64 /wdrip
 COPY bin/etcdm.sh /usr/bin/
 
-ENTRYPOINT  ["/ovm"]
+ENTRYPOINT  ["/wdrip"]

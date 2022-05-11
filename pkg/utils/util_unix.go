@@ -5,7 +5,7 @@ package utils
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	"io/ioutil"
 )
 

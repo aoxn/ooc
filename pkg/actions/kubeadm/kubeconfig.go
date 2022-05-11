@@ -6,9 +6,9 @@ package kubeadm
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/sign"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/sign"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"os"
@@ -42,12 +42,12 @@ func (a *ActionKubeAuth) Execute(ctx *actions.ActionContext) error {
 	if err != nil {
 		return fmt.Errorf("sign kubernetes client crt: %s", err.Error())
 	}
-	err = os.MkdirAll("/etc/ovm", 0755)
+	err = os.MkdirAll("/etc/wdrip", 0755)
 	if err != nil {
-		return fmt.Errorf("make ovm dir: %s", err.Error())
+		return fmt.Errorf("make wdrip dir: %s", err.Error())
 	}
 	err = ioutil.WriteFile(
-		"/etc/ovm/ovm.cfg.gen",
+		"/etc/wdrip/wdrip.cfg.gen",
 		[]byte(utils.PrettyYaml(ctx.Config())), 0755,
 	)
 	if err != nil {

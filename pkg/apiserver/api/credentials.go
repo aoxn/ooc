@@ -1,13 +1,13 @@
 package api
 
 import (
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
 	"k8s.io/klog/v2"
 	"net/http"
 	"strings"
 
 	"fmt"
-	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context"
 )
 
 func Credentials(

@@ -18,51 +18,69 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/generated/clientset/versioned/scheme"
+	"net/http"
+
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
-type OvmV1Interface interface {
+type WdripV1Interface interface {
 	RESTClient() rest.Interface
 	ClustersGetter
 	MastersGetter
 	MasterSetsGetter
 }
 
-// OvmV1Client is used to interact with features provided by the alibabacloud.com group.
-type OvmV1Client struct {
+// WdripV1Client is used to interact with features provided by the alibabacloud.com group.
+type WdripV1Client struct {
 	restClient rest.Interface
 }
 
-func (c *OvmV1Client) Clusters(namespace string) ClusterInterface {
+func (c *WdripV1Client) Clusters(namespace string) ClusterInterface {
 	return newClusters(c, namespace)
 }
 
-func (c *OvmV1Client) Masters(namespace string) MasterInterface {
+func (c *WdripV1Client) Masters(namespace string) MasterInterface {
 	return newMasters(c, namespace)
 }
 
-func (c *OvmV1Client) MasterSets(namespace string) MasterSetInterface {
+func (c *WdripV1Client) MasterSets(namespace string) MasterSetInterface {
 	return newMasterSets(c, namespace)
 }
 
-// NewForConfig creates a new OvmV1Client for the given config.
-func NewForConfig(c *rest.Config) (*OvmV1Client, error) {
+// NewForConfig creates a new WdripV1Client for the given config.
+// NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
+// where httpClient was generated with rest.HTTPClientFor(c).
+func NewForConfig(c *rest.Config) (*WdripV1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
 	}
-	client, err := rest.RESTClientFor(&config)
+	httpClient, err := rest.HTTPClientFor(&config)
 	if err != nil {
 		return nil, err
 	}
-	return &OvmV1Client{client}, nil
+	return NewForConfigAndClient(&config, httpClient)
 }
 
-// NewForConfigOrDie creates a new OvmV1Client for the given config and
+// NewForConfigAndClient creates a new WdripV1Client for the given config and http client.
+// Note the http client provided takes precedence over the configured transport values.
+func NewForConfigAndClient(c *rest.Config, h *http.Client) (*WdripV1Client, error) {
+	config := *c
+	if err := setConfigDefaults(&config); err != nil {
+		return nil, err
+	}
+	client, err := rest.RESTClientForConfigAndClient(&config, h)
+	if err != nil {
+		return nil, err
+	}
+	return &WdripV1Client{client}, nil
+}
+
+// NewForConfigOrDie creates a new WdripV1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *OvmV1Client {
+func NewForConfigOrDie(c *rest.Config) *WdripV1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -70,9 +88,9 @@ func NewForConfigOrDie(c *rest.Config) *OvmV1Client {
 	return client
 }
 
-// New creates a new OvmV1Client for the given RESTClient.
-func New(c rest.Interface) *OvmV1Client {
-	return &OvmV1Client{c}
+// New creates a new WdripV1Client for the given RESTClient.
+func New(c rest.Interface) *WdripV1Client {
+	return &WdripV1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -90,7 +108,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *OvmV1Client) RESTClient() rest.Interface {
+func (c *WdripV1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

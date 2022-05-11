@@ -56,4 +56,3 @@ func TestDuration(t *testing.T) {
 func returnError() error {
 	return fmt.Errorf("error hahsh")
 }
-

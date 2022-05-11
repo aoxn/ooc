@@ -5,10 +5,10 @@ package kubeadm
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/cmd"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/cmd"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"os"
@@ -35,7 +35,7 @@ func (a *ActionKubelet) Execute(ctx *actions.ActionContext) error {
 	if node == nil {
 		return fmt.Errorf("node info nil: ActionKubelet")
 	}
-	switch ctx.OvmFlags().Role {
+	switch ctx.WdripFlags().Role {
 	case v1.NODE_ROLE_WORKER:
 		klog.Infof("skip config cert for worker node")
 	case v1.NODE_ROLE_MASTER, v1.NODE_ROLE_HYBRID:

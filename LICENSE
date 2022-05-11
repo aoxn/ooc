@@ -1,18 +1,18 @@
 BSD 3-Clause Clear License (Modified)
 
-For ovm software
+For wdrip software
 
-Copyright (c) 2019-present, ovm, Inc.
+Copyright (c) 2019-present, wdrip, Inc.
 All rights reserved.
 
-1.1. This license pertains to all ovm software; third party
-     software and source code included with the ovm software, such
+1.1. This license pertains to all wdrip software; third party
+     software and source code included with the wdrip software, such
      as rocksdb software or leveldb software, is governed by the
      applicable licenses set forth herein.
 
-1.2. ovm Inc. (“ovm”) hereby grants to you a personal,
+1.2. wdrip Inc. (“wdrip”) hereby grants to you a personal,
      non-exclusive, revocable, non-transferable license to use the
-     ovm software and source code (“Software”) internally for the
+     wdrip software and source code (“Software”) internally for the
      purposes and in accordance with the terms set forth in this
      license and the user documentation accompanying the software.
 
@@ -26,7 +26,7 @@ All rights reserved.
          copyright notice, this list of conditions and the following
          disclaimer in the documentation and/or other materials
          provided with the distribution.
-     (c) The name of ovm may not be used to endorse or promote
+     (c) The name of wdrip may not be used to endorse or promote
          products derived from this Software without specific prior
          written permission.
      (d) You may not Sell the Software. “Sell” means practicing any or
@@ -43,12 +43,12 @@ All rights reserved.
      (g) You may not authorize, permit or otherwise acquiesce in any
          other party engaging in any of the activities contrary to
          the terms of (a) – (f) above, or attempting to do so, and you
-         will indemnify ovm from and against any claims arising
+         will indemnify wdrip from and against any claims arising
          from your breach of these terms or the terms of any license
          relating to third party software and source code included with
-         the ovm software.
+         the wdrip software.
 
-1.4. You acknowledge that the Software is owned by ovm, who retains
+1.4. You acknowledge that the Software is owned by wdrip, who retains
      all right, title and interest therein, and is protected by
      Canadian, U.S. and international copyright laws. In addition, other
      intellectual property laws (including patent laws) and treaties may
@@ -57,10 +57,10 @@ All rights reserved.
      be construed as constituting a sale of the Software or any portion
      thereof to you.
 
-1.5. THE SOFTWARE IS PROVIDED BY ovm "AS IS" AND ANY EXPRESS OR
+1.5. THE SOFTWARE IS PROVIDED BY wdrip "AS IS" AND ANY EXPRESS OR
      IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
      WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-     ARE DISCLAIMED. IN NO EVENT SHALL ovm BE LIABLE FOR ANY DIRECT,
+     ARE DISCLAIMED. IN NO EVENT SHALL wdrip BE LIABLE FOR ANY DIRECT,
      INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
      (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
      SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)

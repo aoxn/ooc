@@ -4,22 +4,22 @@ import (
 	mctx "context"
 	"encoding/json"
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/apiserver"
-	"github.com/aoxn/ovm/pkg/apiserver/auth"
-	sctx "github.com/aoxn/ovm/pkg/context"
-	"github.com/aoxn/ovm/pkg/context/base"
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/iaas/provider/alibaba"
-	"github.com/aoxn/ovm/pkg/operator/controllers/backup"
-	"github.com/aoxn/ovm/pkg/operator/heal"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/apiserver"
+	"github.com/aoxn/wdrip/pkg/apiserver/auth"
+	sctx "github.com/aoxn/wdrip/pkg/context"
+	"github.com/aoxn/wdrip/pkg/context/base"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/iaas/provider/alibaba"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/backup"
+	"github.com/aoxn/wdrip/pkg/operator/heal"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 	"os"
 
-	//"github.com/aoxn/ovm/pkg/utils"
-	"github.com/aoxn/ovm/pkg/utils/crd"
+	//"github.com/aoxn/wdrip/pkg/utils"
+	"github.com/aoxn/wdrip/pkg/utils/crd"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +34,7 @@ import (
 )
 
 func NewOperatorServer(
-	options *api.OvmOptions,
+	options *api.WdripOptions,
 ) *Operator {
 
 	cfg := apiserver.Configuration{
@@ -59,7 +59,7 @@ type Operator struct {
 
 	RestCfg  *rest.Config
 	Shared   *shared.SharedOperatorContext
-	Options  *api.OvmOptions
+	Options  *api.WdripOptions
 	Mgr      ctrl.Manager
 	Client   client.Client
 	Provider provider.Interface
@@ -237,7 +237,7 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 			MetricsBindAddress:      ":8888",
 			Port:                    9443,
 			LeaderElection:          true,
-			LeaderElectionID:        "ovm.alibabacloud.com",
+			LeaderElectionID:        "wdrip.alibabacloud.com",
 			LeaderElectionNamespace: "kube-system",
 		},
 	)
@@ -269,7 +269,7 @@ func (v *Operator) startManager(spec *api.Cluster) error {
 		SkipWaitForDeleteTimeoutSeconds: 60,
 	}
 	// start member heal
-	mh, err := heal.NewHealet(spec,v.Mgr.GetClient(), v.Provider, drainer)
+	mh, err := heal.NewHealet(spec, v.Mgr.GetClient(), v.Provider, drainer)
 	if err != nil {
 		return errors.Wrap(err, "master heal")
 	}

@@ -1,11 +1,11 @@
 package operator
 
 import (
-	"github.com/aoxn/ovm/pkg/context/shared"
-	"github.com/aoxn/ovm/pkg/operator/controllers/addon"
-	"github.com/aoxn/ovm/pkg/operator/controllers/master"
-	"github.com/aoxn/ovm/pkg/operator/controllers/nodepool"
-	"github.com/aoxn/ovm/pkg/operator/controllers/noderepair"
+	"github.com/aoxn/wdrip/pkg/context/shared"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/addon"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/master"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/nodepool"
+	"github.com/aoxn/wdrip/pkg/operator/controllers/noderepair"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 

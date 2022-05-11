@@ -26,15 +26,15 @@ spec:
       priorityClassName: system-node-critical
       serviceAccount: admin
       containers:
-        - image: registry-vpc.cn-hangzhou.aliyuncs.com/aoxn/ovm:0.0.1-g3e8f84b
+        - image: registry-vpc.cn-hangzhou.aliyuncs.com/aoxn/wdrip:0.0.1-g3e8f84b
           imagePullPolicy: Always
           name: chaosmonkey-net
           command:
-            - /ovm
+            - /wdrip
             - monkey
           volumeMounts:
             - name: bootcfg
-              mountPath: /etc/ovm/
+              mountPath: /etc/wdrip/
               readOnly: true
       tolerations:
         - operator: Exists

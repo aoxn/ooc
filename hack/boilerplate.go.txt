@@ -3,9 +3,9 @@ Copyright 2020 aoxn.
 
 BSD 3-Clause Clear License (Modified)
 
-For ovm software
+For wdrip software
 
-Copyright (c) 2019-present, ovm, Inc.
+Copyright (c) 2019-present, wdrip, Inc.
 All rights reserved.
 
 */

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
+	pd "github.com/aoxn/wdrip/pkg/iaas/provider"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -16,8 +16,8 @@ import (
 )
 
 func (n *Devel) InstanceDetail(
-	ctx *provider.Context, id []string,
-) ([]provider.Instance, error) {
+	ctx *pd.Context, id []string,
+) ([]pd.Instance, error) {
 	data, _ := json.Marshal(id)
 	req := ecs.CreateDescribeInstancesRequest()
 	req.InstanceIds = string(data)
@@ -26,13 +26,13 @@ func (n *Devel) InstanceDetail(
 	if err != nil {
 		return nil, errors.Wrapf(err, "InstanceDetail")
 	}
-	var result []provider.Instance
+	var result []pd.Instance
 	for _, v := range r.Instances.Instance {
-		var mtag []provider.Value
+		var mtag []pd.Value
 		for _, t := range v.Tags.Tag {
-			mtag = append(mtag, provider.Value{Key: t.TagKey, Val: t.TagValue})
+			mtag = append(mtag, pd.Value{Key: t.TagKey, Val: t.TagValue})
 		}
-		result = append(result, provider.Instance{
+		result = append(result, pd.Instance{
 			Id:        v.InstanceId,
 			Status:    v.Status,
 			Tags:      mtag,
@@ -44,7 +44,7 @@ func (n *Devel) InstanceDetail(
 	return result, nil
 }
 
-func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
+func (n *Devel) RunCommand(ctx *pd.Context, id, cmd string) (pd.Result, error) {
 
 	content := base64.StdEncoding.EncodeToString([]byte(cmd))
 
@@ -70,7 +70,7 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 			//兼容
 			for _, i := range inv.Invocations.Invocation {
 				if i.InvocationStatus == "Running" {
-					cnt ++
+					cnt++
 					klog.Infof("command [%s.%s.%s] is still in running", id, i.InvokeId, i.CommandId)
 				}
 			}
@@ -84,7 +84,7 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 	}
 	err := waitInvocation(4 * time.Minute)
 	if err != nil {
-		return errors.Wrapf(err, "wait invocation: ")
+		return pd.Result{}, errors.Wrapf(err, "wait invocation: ")
 	}
 
 	// run command
@@ -98,7 +98,7 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 	klog.Infof("run command: [%s]", cmd)
 	rcmd, err := n.ECS.RunCommand(req)
 	if err != nil {
-		return errors.Wrapf(err, "run command")
+		return pd.Result{}, errors.Wrapf(err, "run command")
 	}
 
 	waitResult := func(ivk *ecs.Invocation, timeout time.Duration) error {
@@ -126,10 +126,21 @@ func (n *Devel) RunCommand(ctx *provider.Context, id, cmd string) error {
 		return wait.PollImmediate(4*time.Second, timeout, mfunc)
 	}
 	ivk := ecs.Invocation{}
-	return waitResult(&ivk, 4*time.Minute)
+	if err := waitResult(&ivk, 4*time.Minute); err != nil {
+		return pd.Result{}, errors.Wrapf(err, "wait command result")
+	}
+	r := ivk.InvocationResults.InvocationResult
+	if len(r) == 0 {
+		return pd.Result{}, nil
+	}
+	output, err := base64.StdEncoding.DecodeString(r[0].Output)
+	if err != nil {
+		return pd.Result{}, err
+	}
+	return pd.Result{Status: ivk.InvocationStatus, OutPut: string(output)}, nil
 }
 
-func (n *Devel) DeleteECS(ctx *provider.Context, id string) error {
+func (n *Devel) DeleteECS(ctx *pd.Context, id string) error {
 	if id == "" {
 		return fmt.Errorf("instance id must be provided")
 	}
@@ -165,7 +176,7 @@ func (n *Devel) DeleteECS(ctx *provider.Context, id string) error {
 	return err
 }
 
-func (n *Devel) StopECS(ctx *provider.Context, id string) error {
+func (n *Devel) StopECS(ctx *pd.Context, id string) error {
 	if id == "" {
 		return fmt.Errorf("instance id must be provided")
 	}

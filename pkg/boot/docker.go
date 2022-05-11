@@ -2,11 +2,11 @@ package boot
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/actions"
-	"github.com/aoxn/ovm/pkg/actions/file"
-	"github.com/aoxn/ovm/pkg/actions/runtime"
-	"github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/context"
+	"github.com/aoxn/wdrip/pkg/actions"
+	"github.com/aoxn/wdrip/pkg/actions/file"
+	"github.com/aoxn/wdrip/pkg/actions/runtime"
+	"github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/context"
 )
 
 func InitContainerRuntime(ctx *context.NodeContext) error {
@@ -32,19 +32,19 @@ func InitContainerRuntime(ctx *context.NodeContext) error {
 	case file.PKG_DOCKER:
 		// default docker
 	}
-	return initDocker(ctx, &cfg.Spec, os, arch,ctx.OvmFlags().Bucket)
+	return initDocker(ctx, &cfg.Spec, os, arch, ctx.WdripFlags().Bucket)
 }
 
 func initDocker(
 	ctx *context.NodeContext,
 	cfg *v1.ClusterSpec,
-	os, arch,bucket string,
+	os, arch, bucket string,
 ) error {
 	downs := file.NewAction(
 		[]file.File{
 			{
 				VersionedPath: file.Path{
-					Project:   "ovm",
+					Project:   "wdrip",
 					Pkg:       file.PKG_DOCKER,
 					CType:     cfg.CloudType,
 					Ftype:     file.FILE_BINARY,

@@ -3,8 +3,8 @@ package monit
 import (
 	mctx "context"
 	"fmt"
-	api "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	h "github.com/aoxn/ovm/pkg/operator/controllers/help"
+	api "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	h "github.com/aoxn/wdrip/pkg/operator/controllers/help"
 	"github.com/pkg/errors"
 	app "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

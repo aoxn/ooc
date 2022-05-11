@@ -2,7 +2,7 @@ package node
 
 import (
 	"fmt"
-	"github.com/aoxn/ovm/pkg/node/meta"
+	"github.com/aoxn/wdrip/pkg/node/meta"
 )
 
 func NewNodeInfo(

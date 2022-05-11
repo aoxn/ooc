@@ -5,9 +5,9 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
-	v1 "github.com/aoxn/ovm/pkg/apis/alibabacloud.com/v1"
-	"github.com/aoxn/ovm/pkg/iaas/provider"
-	"github.com/aoxn/ovm/pkg/utils"
+	v1 "github.com/aoxn/wdrip/pkg/apis/alibabacloud.com/v1"
+	"github.com/aoxn/wdrip/pkg/iaas/provider"
+	"github.com/aoxn/wdrip/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"strings"
@@ -33,8 +33,8 @@ func Vswitchs(stack map[string]provider.Value) string {
 
 func ScalingGroupName(np *v1.NodePool, vpcid string) string {
 	name := fmt.Sprintf("%s.%s.%s",
-		"nodepool",vpcid,
-		strings.Replace(string(np.UID),"-", "",-1),
+		"nodepool", vpcid,
+		strings.Replace(string(np.UID), "-", "", -1),
 	)
 	if len(name) > 64 {
 		return name[0:63]
@@ -43,10 +43,10 @@ func ScalingGroupName(np *v1.NodePool, vpcid string) string {
 }
 
 func ScalingGroupCfgName(np *v1.NodePool) string {
-	return fmt.Sprintf("%s-%s","scaling-configuration", strings.Replace(string(np.UID),"-", "",-1))
+	return fmt.Sprintf("%s-%s", "scaling-configuration", strings.Replace(string(np.UID), "-", "", -1))
 }
 
-func (n *Devel) VSwitchs(ctx *provider.Context) (string,error) {
+func (n *Devel) VSwitchs(ctx *provider.Context) (string, error) {
 	boot := ctx.BootCFG()
 	if boot == nil {
 		return "", fmt.Errorf("create nodegroup: miss cluster spec")
@@ -60,7 +60,7 @@ func (n *Devel) VSwitchs(ctx *provider.Context) (string,error) {
 		return vsw, errors.Wrapf(err, "describe vswitch")
 	}
 	v := r.VSwitches.VSwitch
-	if len(v)!= 1 {
+	if len(v) != 1 {
 		return vsw, fmt.Errorf("not exact one vswitch matched: %d by name %s", len(v), vsw)
 	}
 	zone := v[0].ZoneId
@@ -132,7 +132,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.RegionId = region
 		sreq.ScalingGroupId = sgrpid
 		sreq.SecurityGroupId = SecrityGroup(ctx.Stack())
-		sreq.RamRoleName = fmt.Sprintf("KubernetesWorkerRole-%s",boot.Bind.ResourceId)
+		sreq.RamRoleName = fmt.Sprintf("KubernetesWorkerRole-%s", boot.Bind.ResourceId)
 		//sreq.InstanceType = ""
 		// cloud_essd|cloud_ssd|cloud_efficiency|cloud 20-500
 		sreq.SystemDiskCategory = "cloud_essd"
@@ -147,7 +147,7 @@ func (n *Devel) CreateNodeGroup(ctx *provider.Context, np *v1.NodePool) (*v1.Bin
 		sreq.UserData = data
 		sreq.Cpu = requests.NewInteger(np.Spec.Infra.CPU)
 		sreq.Memory = requests.NewInteger(np.Spec.Infra.Mem)
-		sreq.Tags = utils.PrettyJson(map[string]string{"ovm.com": np.Name})
+		sreq.Tags = utils.PrettyJson(map[string]string{"wdrip.com": np.Name})
 		//sreq.RamRoleName = ""
 		sreq.KeyPairName = ""
 		res, err := n.ESS.CreateScalingConfiguration(sreq)
