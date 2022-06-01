@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 
 REPOSITORY="https://host-wdrip-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com"

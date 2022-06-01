@@ -50,8 +50,9 @@ func NewCommand() *cobra.Command {
 	flags := &Flags{}
 	cmd := &cobra.Command{
 		Use:   "wdrip",
-		Short: "wdrip is a tool for managing local Kubernetes clusters",
-		Long:  fmt.Sprintf("%s\n%s", version.Logo, "wdrip creates and manages local Kubernetes clusters"),
+		Short: "wdrip creates and manages infrastructure agnostic Kubernetes clusters",
+		Long:  fmt.Sprintf("%s\n%s", version.Logo, "wdrip creates and manages infrastructure agnostic " +
+			"Kubernetes clusters and empower strong infrastructure resilience ability and easy recovery"),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return runE(flags, cmd, args)
 		},

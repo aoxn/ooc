@@ -93,6 +93,7 @@ func (a *action) Execute(ctx *actions.ActionContext) error {
 	return etcd.WaitEndpoints(advertise(node.Spec.IP, "2379"))
 }
 
+// Etcd todo: use etcd API to reimplement etcd operations
 type Etcd struct {
 	home string
 	// my IP addr
