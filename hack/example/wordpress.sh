@@ -2,6 +2,9 @@
 
 echo "use kubeconfig from env KUBECONFIG=[$KUBECONFIG]"
 
+if [[ "$KUBECONFIG" == "" ]];then
+    echo "env KUBECONFIG must not be empty" ; exit 1
+fi
 kubectl --kubeconfig "$KUBECONFIG" apply -f - << EOF
 apiVersion: v1
 kind: Secret
@@ -129,11 +132,15 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: wordpress:5.8
+      - image: wordpress:4.8-apache
         name: wordpress
         env:
         - name: WORDPRESS_DB_HOST
           value: wordpress-mysql
+        - name: WORDPRESS_DEBUG
+          value: "true"
+#        - name: WORDPRESS_DB_USER
+#          value: "root"
         - name: WORDPRESS_DB_PASSWORD
           valueFrom:
             secretKeyRef:

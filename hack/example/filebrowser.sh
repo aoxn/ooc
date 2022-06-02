@@ -1,12 +1,16 @@
 #!/bin/bash
 
-eval < ~/.security/ak.wdrip
-echo "use AK config from [~/.security/ak.wdrip] $(cat ~/.security/ak.wdrip )"
+securefile=~/.security/ak.wdrip
+if [[ -f "$securefile" ]];
+then
+        eval < ~/.security/ak.wdrip
+        echo "use AK config from [~/.security/ak.wdrip] $(cat ~/.security/ak.wdrip )"
+fi
 
 echo "use kubeconfig from env KUBECONFIG=[$KUBECONFIG]"
 
-if [[ "$REGION" == "" || "$ACCESS_KEY_ID" == "" || "ACCESS_KEY_SECRET" == "" ]];then
-    echo "env REGION ACCESS_KEY_SECRET ACCESS_KEY_ID must not empty" ; exit 1
+if [[ "$KUBECONFIG" == "" || "$REGION" == "" || "$ACCESS_KEY_ID" == "" || "$ACCESS_KEY_SECRET" == "" ]];then
+    echo "env KUBECONFIG REGION ACCESS_KEY_SECRET ACCESS_KEY_ID must not be empty" ; exit 1
 fi
 
 kubectl --kubeconfig "$KUBECONFIG" apply -f - << EOF

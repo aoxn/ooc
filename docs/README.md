@@ -15,3 +15,5 @@
 
 [**基础设施复原力**](zh/infrastructure-resilience.md)
 
+[**部署示例应用**](zh/demo-application.md)
+
