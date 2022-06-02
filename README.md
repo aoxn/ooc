@@ -29,3 +29,12 @@ git:(main) ✗ make omac
 # build binary and image, release package. need to config your oss ak first.
 git:(main) ✗ make build-all 
 ```
+
+## Attention
+- wdrip is a proto-type project for proof of concept, please do not rely on its API stability.
+
+## Contact
+
+Join us in wechat @AoxnKKB
+
+Mail to spacex_nice@163.com

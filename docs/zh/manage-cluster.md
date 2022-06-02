@@ -33,8 +33,8 @@ Use "wdrip [command] --help" for more information about a command.
 ```
 
 **配置wdrip**
-
-wdrip 需要您的账号信息来帮助您管理您的云上k8s资源。将`replace-with-your-own-accessKeyId`及`replace-with-your-own-accessKeySecret`替换成您自己的主账号AK信息。
+wdrip 目前仅支持阿里云上管理k8s集群，更多的CloudProvider未来会逐步加入。
+wdrip 需要您的阿里云账号信息来帮助您管理您的云上k8s资源。将`replace-with-your-own-accessKeyId`及`replace-with-your-own-accessKeySecret`替换成您自己的主账号AK信息。
 wdrip 会额外为您创建OSS bucket，用来备份集群，用来紧急修复。bucket名称见下面的`wdrip-index`
 ```bash
 (base) ➜ vi ~/.wdrip/config
@@ -138,7 +138,7 @@ I1002 15:42:05.601063   96142 provider.go:283] trying to load context config fro
 .....
 
 ✓ 【ALIYUN::RAM::Role                   】(KubernetesWorkerRole      ) [CREATE_COMPLETE,23, 23] 2021-10-02T15:31:42 2021-10-02T15:31:52
-✓ 【WDRIP::MESSAGE::OUTPUT                】(extra_mesage_id           ) [CREATE_COMPLETE,23, 23]  TimeElapse: 251s
+✓ 【WDRIP::MESSAGE::OUTPUT              】(extra_mesage_id           ) [CREATE_COMPLETE,23, 23]  TimeElapse: 251s
 I1002 15:42:14.446231   96142 ros.go:477] ===========================================================
 I1002 15:42:14.446254   96142 ros.go:478] StackName: kubernetes-id-001
 I1002 15:42:14.446259   96142 ros.go:479]   StackId: 2d302c6c-24b3-4535-8875-8c7dd9a48bd7
@@ -226,7 +226,7 @@ nodepool.alibabacloud.com/nodepool-01 created
 以下命令扩展当前集群的Master副本数量到3个。
 
 ```bash
-(base) ➜ kubectl --kubeconfig ~/.kube/config.txt apply -f - <<EOF
+(base) ➜ kubectl --kubeconfig ~/.kube/config.txt edit masterset 
 apiVersion: alibabacloud.com/v1
 kind: MasterSet
 metadata:
@@ -235,7 +235,6 @@ metadata:
   namespace: kube-system
 spec:
   replicas: 3
-EOF
 ```
 wdrip需要2分钟左右的时间来初始化额外的2个Master节点，请等待。可以通过`kubectl --kubeconfig ~/.kube/config.txt get no -w` 观测Master节点的加入过程。
 
