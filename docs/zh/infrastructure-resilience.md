@@ -86,6 +86,16 @@ wdrip精心抽象了管控的恢复流程，操作前会尽量确保etcd quorum�
 
 ```
 
+### ChaosMonkey
+为了测试基础设施复原力我们专门编写了ChaosMonkey部署在集群中，他能够定期破坏集群(删除集群ECS资源、停止关键组件)，等待系统自愈。
+
+如何使用
+```shell
+(base) ➜  export CLUSTER_NAME=xxxx
+(base) ➜  bash hack/wdrip.sh config 
+(base) ➜  bash hack/wdrip.sh chaos
+(base) ➜  kubectl --kubeconfig ~/.kube/config.wdrip -n kube-system get po|grep monkey
+```
 
 ## 小结
 

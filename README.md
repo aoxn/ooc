@@ -5,11 +5,11 @@
 
 Its small and beauty.
 
-Infrastructure agnostic kubernetes cluster management platform with powerful auto heal ability. High Availability, Easy Recovery
+Infrastructure agnostic kubernetes cluster management platform with powerful infrastructure resilience ability. High Availability, Easy Recovery
 
 `wdrip` is a kubernetes cluster management operator which API is in alpha state, and might be changed rapidly. You cannot rely on its API stability for now.
 
-**name convention** `wdrip` names from 'water drop' which is the probe ship send by the Three-Body civilization. **Its small and powerful.** 
+**name convention** `wdrip` names from 'water drop' which is the probe ship send by the Three-Body civilization. **Its small but powerful.** 
 
 ## GET-STARTED
 
