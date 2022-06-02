@@ -41,8 +41,6 @@ func doRegisterCRD(cfg *rest.Config) error {
 		NewMasterCRD(client),
 		NewMasterSetCRD(client),
 		NewNodePoolCRD(client),
-		NewRollingCRD(client),
-		NewTaskCRD(client),
 	} {
 		err := crd.Initialize()
 		if err != nil {
@@ -237,95 +235,3 @@ func (p *NodePoolCRD) GetListerWatcher() cache.ListerWatcher {
 
 // GetObject satisfies resource.crd interface (and retrieve.Retriever).
 func (p *NodePoolCRD) GetObject() runtime.Object { return &v1.NodePool{} }
-
-// RollingCRD is the cluster crd .
-type RollingCRD struct {
-	crdc Interface
-	//wdrip vcset.Interface
-}
-
-func NewRollingCRD(
-	//wdripClient vcset.Interface,
-	crdClient Interface,
-) *RollingCRD {
-	return &RollingCRD{
-		crdc: crdClient,
-		//wdrip: wdripClient,
-	}
-}
-
-// podTerminatorCRD satisfies resource.crd interface.
-func (p *RollingCRD) Initialize() error {
-	crd := Conf{
-		Kind:                    "Rolling",
-		NamePlural:              "rollings",
-		Group:                   v1.SchemeGroupVersion.Group,
-		Version:                 v1.SchemeGroupVersion.Version,
-		Scope:                   apiextv1beta1.NamespaceScoped,
-		EnableStatusSubresource: true,
-	}
-
-	return p.crdc.EnsurePresent(crd)
-}
-
-// GetListerWatcher satisfies resource.crd interface (and retrieve.Retriever).
-func (p *RollingCRD) GetListerWatcher() cache.ListerWatcher {
-	//return &cache.ListWatch{
-	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.wdrip.WdripV1().Clusters("").List(context.TODO(), options)
-	//	},
-	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.wdrip.WdripV1().Clusters("").Watch(context.TODO(),options)
-	//	},
-	//}
-	return nil
-}
-
-// GetObject satisfies resource.crd interface (and retrieve.Retriever).
-func (p *RollingCRD) GetObject() runtime.Object { return &v1.Rolling{} }
-
-// TaskCRD is the cluster crd .
-type TaskCRD struct {
-	crdc Interface
-	//wdrip vcset.Interface
-}
-
-func NewTaskCRD(
-	//wdripClient vcset.Interface,
-	crdClient Interface,
-) *TaskCRD {
-	return &TaskCRD{
-		crdc: crdClient,
-		//wdrip: wdripClient,
-	}
-}
-
-// podTerminatorCRD satisfies resource.crd interface.
-func (p *TaskCRD) Initialize() error {
-	crd := Conf{
-		Kind:                    "Task",
-		NamePlural:              "tasks",
-		Group:                   v1.SchemeGroupVersion.Group,
-		Version:                 v1.SchemeGroupVersion.Version,
-		Scope:                   apiextv1beta1.NamespaceScoped,
-		EnableStatusSubresource: true,
-	}
-
-	return p.crdc.EnsurePresent(crd)
-}
-
-// GetListerWatcher satisfies resource.crd interface (and retrieve.Retriever).
-func (p *TaskCRD) GetListerWatcher() cache.ListerWatcher {
-	//return &cache.ListWatch{
-	//	ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-	//		return p.wdrip.WdripV1().Clusters("").List(context.TODO(), options)
-	//	},
-	//	WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-	//		return p.wdrip.WdripV1().Clusters("").Watch(context.TODO(),options)
-	//	},
-	//}
-	return nil
-}
-
-// GetObject satisfies resource.crd interface (and retrieve.Retriever).
-func (p *TaskCRD) GetObject() runtime.Object { return &v1.Task{} }

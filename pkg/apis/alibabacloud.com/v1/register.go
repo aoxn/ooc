@@ -71,10 +71,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ClusterList{},
 		&NodePool{},
 		&NodePoolList{},
-		&Task{},
-		&TaskList{},
-		&Rolling{},
-		&RollingList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

@@ -1,4 +1,4 @@
-## Coming soon
+## DEMO-APPLICATION
 
 ### 示例应用一： 文件共享服务器
 `filebrowser` 应用提供文件共享服务，存储使用阿里云OSS存储系统。因此需要配置阿里云ACCESS_KEY_ID和ACCESS_KEY_SEC与REGION。

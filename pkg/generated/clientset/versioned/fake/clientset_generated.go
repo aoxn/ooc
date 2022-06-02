@@ -75,7 +75,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var (
 	_ clientset.Interface = &Clientset{}
-	//_ testing.FakeClient  = &Clientset{}
+	_ testing.FakeClient  = &Clientset{}
 )
 
 // WdripV1 retrieves the WdripV1Client

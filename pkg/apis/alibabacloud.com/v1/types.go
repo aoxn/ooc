@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -496,148 +495,10 @@ type NodePoolList struct {
 	Items           []NodePool `json:"items"`
 }
 
-// RollingSpec defines the desired state of Rolling
-type RollingSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
-	ActiveDeadlineSeconds int   `json:"activeDeadlineSeconds"`
-	RestartLimit          int32 `json:"restartLimit,omitempty"`
-	SlowStart             bool  `json:"slowStart,omitempty"`
-	MaxParallel           int32 `json:"maxParallel,omitempty"`
-	MaxUnavailable        int32 `json:"maxUnavailable,omitempty"`
-	Paused                bool  `json:"paused,omitempty"`
-	//SlowStart             bool                    `json:"slowStart,omitempty"`
-	FailurePolicy FailurePolicy `json:"failurePolicy,omitempty"`
-
-	NodeSelector NodesSet       `json:"nodeSelector,omitempty"`
-	Type         string         `json:"type,omitempty"`
-	TaskSpec     TaskSpec       `json:"taskSpec,omitempty"`
-	PodSpec      v1.PodTemplate `json:"podSpec,omitempty"`
-}
-
-type RollingTaskSpec struct {
-	ConfigTpl ConfigTpl `json:"configTpl,omitempty" protobuf:"bytes,1,opt,name=configTpl"`
-
-	// NodeName
-	// node which the task belongs to.
-	NodeName string `json:"nodeName,omitempty" protobuf:"bytes,2,opt,name=nodeName"`
-
-	UserData string `json:"userData,omitempty" protobuf:"bytes,3,opt,name=userData"`
-}
-
-type NodesSet struct {
-	Labels        map[string]string `json:"labels,omitempty"`
-	AutoScalingId string            `json:"autoScaling,omitempty"`
-	All           bool              `json:"all,omitempty"`
-}
-
-// RollingStatus defines the observed state of Rolling
-type RollingStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
-	Phase string `json:"phase,omitempty"`
-
-	// Represents time when the job was acknowledged by the job controller.
-	// It is not guaranteed to be set in happens-before order across separate operations.
-	// It is represented in RFC3339 form and is in UTC.
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-
-	// Represents time when the job was completed. It is not guaranteed to
-	// be set in happens-before order across separate operations.
-	// It is represented in RFC3339 form and is in UTC.
-	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
-
-	// The number of total running pods.
-	Total int32 `json:"total,omitempty"`
-
-	// The number of actively running pods.
-	Active int32 `json:"active,omitempty"`
-
-	// The number of pods which reached phase Succeeded.
-	Succeeded int32 `json:"succeeded,omitempty"`
-
-	// The number of pods which reached phase Failed.
-	Failed int32 `json:"failed,omitempty"`
-
-	// The number of current max parallel.
-	CurrentMaxParallel int32 `json:"currentMaxParallel,omitempty"`
-}
-
-type FailurePolicy string
-
 const (
-	FailurePolicyContinue FailurePolicy = "Continue"
-	FailurePolicyFailed   FailurePolicy = "Failed"
-	FailurePolicyPause    FailurePolicy = "Pause"
-)
-
-const (
-	PhaseCompleted   string = "Completed"
-	PhasePaused      string = "Paused"
-	PhaseFailed      string = "Failed"
-	PhaseInitialized        = "Initialized"
-	PhaseReconciling        = "Reconciling"
-)
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Rolling is the Schema for the rollings API
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:path=rollings,scope=Namespaced
-type Rolling struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   RollingSpec   `json:"spec,omitempty"`
-	Status RollingStatus `json:"status,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// RollingList contains a list of Rolling
-type RollingList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Rolling `json:"items"`
-}
-
-const (
-	RollingHashLabel  = "alibabacloud.com/rolling.hash"
 	NodePoolHashLabel = "alibabacloud.com/nodepool.hash"
 	NodePoolIDLabel   = "alibabacloud.com/nodepool-id"
 )
-
-const (
-	TaskReset       = "reset"
-	TaskTypeCommand = "Command"
-	TaskTypePod     = "Pod"
-)
-
-// TaskSpec defines the desired state of Task
-type TaskSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
-	// ConfigTpl
-	// config template which used to make upgrade decision
-	// and compute hash to see whether an upgrade is needed.
-	ConfigTpl ConfigTpl `json:"configTpl,omitempty" protobuf:"bytes,1,opt,name=configTpl"`
-
-	// TaskType
-	// Upgrade| AutoHeal| Command| Pod
-	TaskType string `json:"taskType,omitempty" protobuf:"bytes,4,opt,name=taskType"`
-
-	// NodeName
-	// node which the task belongs to.
-	NodeName string `json:"nodeName,omitempty" protobuf:"bytes,2,opt,name=nodeName"`
-
-	UserData string `json:"userData,omitempty" protobuf:"bytes,3,opt,name=userData"`
-}
 
 type ConfigTpl struct {
 	ImageId    string  `json:"imageid,omitempty" protobuf:"bytes,1,opt,name=imageid"`
@@ -679,26 +540,4 @@ type TaskStatus struct {
 type Progress struct {
 	Step        string `json:"step,omitempty"`
 	Description string `json:"description,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Task is the Schema for the tasks API
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:path=tasks,scope=Namespaced
-type Task struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   TaskSpec   `json:"spec,omitempty"`
-	Status TaskStatus `json:"status,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// TaskList contains a list of Task
-type TaskList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Task `json:"items"`
 }

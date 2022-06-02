@@ -19,7 +19,7 @@ Infrastructure agnostic kubernetes cluster management platform with powerful inf
 
 [**Infrastructure Resilience**](docs/zh/infrastructure-resilience.md)
 
-[**部署示例应用**](docs/zh/demo-application.md)
+[**Demo Applications**](docs/zh/demo-application.md)
 
 ## Build
 
