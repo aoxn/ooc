@@ -1,15 +1,15 @@
 # WDRIP
 
 ## Introduction
-`wdrip` is an experimental project for auto-managed distributed kubernetes operating systems which enables you focus on application develop without taking care of underline infrastructure.
+`wdrip` is an experimental project for autopilot distributed kubernetes operating systems which enables you focus on application develop without taking care of underline infrastructure.
 
 Its small and beauty.
 
-Infrastructure agnostic kubernetes cluster management platform with powerful infrastructure resilience ability. High Availability, Easy Recovery
+Infrastructure agnostic kubernetes cluster autopilot platform with powerful infrastructure resilience ability. High Availability, Easy Recovery
 
 `wdrip` is a kubernetes cluster management operator which API is in alpha state, and might be changed rapidly. You cannot rely on its API stability for now.
 
-**name convention** `wdrip` names from 'water drop' which is the probe ship send by the Three-Body civilization. **Its small but powerful.** 
+`wdrip` names from 'water drop' which is the probe ship send by the Three-Body civilization. **Its small but powerful.** 
 
 ## GET-STARTED
 

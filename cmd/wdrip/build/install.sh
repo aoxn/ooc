@@ -67,19 +67,19 @@ function config() {
 apiVersion: alibabacloud.com/v1
 contexts:
 - context:
-                provider-key: alibaba.dev
-        name: devEnv
+     provider-key: alibaba.dev
+  name: devEnv
 current-context: devEnv
 kind: Config
 providers:
 - name: alibaba.dev
-        provider:
-                name: alibaba
-                value:
-                        accessKeyId: {replace-with-your-own-accessKeyId}
-                        accessKeySecret: {replace-with-your-own-accessKeySecret}
-                        bucketName: wdrip-index
-                        region: cn-hangzhou
+  provider:
+    name: alibaba
+    value:
+      accessKeyId: {replace-with-your-own-accessKeyId}
+      accessKeySecret: {replace-with-your-own-accessKeySecret}
+      bucketName: wdrip-index
+      region: cn-hangzhou
 EOF
         echo "local provider config finished"
 }
