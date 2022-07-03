@@ -14,6 +14,7 @@ Infrastructure agnostic kubernetes cluster autopilot platform with powerful infr
 ## GET-STARTED
 
 [**Architecture**](docs/zh/architecture.md)
+[**Autopilot your cluster**](docs/zh/autopilot.md)
 
 [**ClusterManager**](docs/zh/manage-cluster.md)
 
